@@ -9,7 +9,7 @@ class Strategy:
 
         # Initialisation de la machine à états
         """STATES_FILE:strategy.dot"""
-    
+
     def run(self):
         pass
     
