@@ -2,6 +2,8 @@ import struct
 from enum import Enum
 from serial import Serial
 
+import time
+
 
 class Cloud:
     def __init__(self):
@@ -9,6 +11,8 @@ class Cloud:
         self.points = []
         self.max_angle = float('-inf')
         self.min_angle = float('inf')
+        self.distances = []
+        self.angles = []
     
     def add(self, distance, angle):
         if self.filter(distance):
@@ -16,6 +20,14 @@ class Cloud:
             self.points.append((distance, angle))
             self.max_angle = max(self.max_angle, angle)
             self.min_angle = min(self.min_angle, angle)
+            self.distances.append(distance)
+            self.angles.append(angle)
+
+    def reverse(self): 
+        self.distances.reverse()
+        self.angles.reverse()
+        # self.min_angle = self.angles[0]
+        # self.max_angle = self.angles[1]
 
     def filter(self, distance):
         # Return True if the point should be kept, False otherwise
@@ -36,10 +48,14 @@ class Part(Enum):
 
 
 class Driver:
-    def __init__(self):
+    def __init__(self, on_scan = lambda distance, theta: None):
         # Driver settings and state data
-        self.serial_port = '/dev/ttyUSB0' # TODO: Get serial port from settings
-        self.serial = Serial(self.serial_port, 230400)
+        self.serial_port = 'COM4' # TODO: Get serial port from settings
+        self.serial = Serial(port=self.serial_port, 
+                            baudrate=230400,
+                            bytesize=8,
+                            parity='N',
+                            stopbits=1)
         self.expected_type = Part.START
         self.expected_length = 1
         # Current message information
@@ -47,6 +63,7 @@ class Driver:
         # Point cloud
         self.total_angle = 0
         self.cloud = Cloud()
+        self.on_scan = on_scan
 
     def scan(self):
         while True:
@@ -79,26 +96,32 @@ class Driver:
 
                 # Extract point cloud
                 if end_angle < start_angle:
-                    step = (end_angle + 360 - start_angle) / self.count
+                    step = (end_angle + 360 - start_angle) / (self.count -1)
                 else:
-                    step = (end_angle - start_angle) / self.count
+                    step = (end_angle - start_angle) / (self.count -1)
 
                 self.total_angle += self.count * step
 
                 for i in range(self.count):
                     distance = struct.unpack('<H', message_data[3*i:3*i+2])[0]
                     quality = struct.unpack('<B', message_data[3*i+2:3*i+3])[0]
-                    angle = start_angle + i * step
+                    angle_clkwise = start_angle + i * step
 
-                    if angle >= 360:
-                        angle -= 360
+                    if angle_clkwise >= 360:
+                        angle_clkwise -= 360
 
-                    self.cloud.add(distance, angle)
+                    # conversion from clockwise to anticlockwise/trigonometric angle
+                    angle_anticlkwise = 360 - angle_clkwise
+                    distance_meter = distance / 1000 # conversion mm to m
+                    self.cloud.add(distance_meter, angle_anticlkwise)
+
+                # conversion from clockwise to anticlockwise/trigonometric angle
+                self.cloud.reverse()
 
                 if self.total_angle >= 360:
                     # The points are back to the beginning
                     print('count:', self.cloud.count, ', span:', self.cloud.span())
-
+                    self.on_scan(self.cloud.angles, self.cloud.distances)
                     # We can start a new point cloud
                     self.total_angle = 0
                     self.cloud = Cloud()
