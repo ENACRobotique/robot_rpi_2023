@@ -11,18 +11,16 @@ class Cloud:
         self.min_angle = float('inf')
     
     def add(self, distance, angle):
-        if self.filter(distance):
+        converted_distance = distance / 1000.0
+        if self.filter(converted_distance):
             self.count += 1
-            self.points.append((distance, angle))
+            self.points.append((converted_distance, angle))
             self.max_angle = max(self.max_angle, angle)
             self.min_angle = min(self.min_angle, angle)
 
     def filter(self, distance):
         # Return True if the point should be kept, False otherwise
-        return True
-
-    def span(self):
-        return self.max_angle - self.min_angle
+        return distance < 5.0
 
 
 # This enum contains the part of the lidar message that is expected by the driver
@@ -67,9 +65,9 @@ class Driver:
 
             elif self.expected_type == Part.DATA:
                 # Extract lidar state data
-                speed, = struct.unpack('<H', data[0:2])
+                speed = struct.unpack('<H', data[0:2])[0]
                 start_angle = struct.unpack('<H', data[2:4])[0] / 100
-                
+            
                 data_end = self.expected_length - 5
                 message_data = data[4:data_end]
                 
@@ -97,7 +95,7 @@ class Driver:
 
                 if self.total_angle >= 360:
                     # The points are back to the beginning
-                    print('count:', self.cloud.count, ', span:', self.cloud.span())
+                    print('count:', self.cloud.count)
 
                     # We can start a new point cloud
                     self.total_angle = 0
