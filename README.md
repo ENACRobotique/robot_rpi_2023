@@ -21,6 +21,6 @@ src
 │   │   launch_ecal.py - Takes lidar_data -> Publish cone_detection (stop_cons), lidar position
 │   │   launch_tests.py - unit test for loca_lidar part
 │   │   launch_vizualisation.py - Matplotlib Lidar, fixed_beacon positions, obstacle_cone visualization
-│   │   
+│   │   launch_check_obstacle.py - Service to use by navigation module to check if (x,y) free
 proto - protobuf definition folder & compiled for python
 ```

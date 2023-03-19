@@ -2,6 +2,7 @@
 
 from math import cos, radians
 import numpy as np
+from typing import Tuple
 from loca_lidar.PointsDataStruct import PolarPts, DistPts, AmalgamePolar, AmalgameCartesian, \
     PolarPts_t, AmalgamePolar_t
 import loca_lidar.config as config
@@ -165,9 +166,9 @@ def filter_amalgame_size(amalgames:AmalgamePolar_t) -> AmalgamePolar_t:
     return valid_amalgames
 
 # This function filter out list of points, to only keep center of amalgames in polar coords
-def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> tuple():
+def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> Tuple:
     last_i = np.max(np.nonzero(amalgames['center_polar']['distance']))
-    return tuple(amalgames[:last_i]['center_polar'])
+    return tuple(amalgames[:last_i+1]['center_polar'])
 
 if __name__ == '__main__':
     pass

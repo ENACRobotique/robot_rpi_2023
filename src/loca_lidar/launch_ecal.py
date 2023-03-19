@@ -13,11 +13,6 @@ import loca_lidar.robot_state_pb2 as robot_pb
 from loca_lidar.PointsDataStruct import PolarPts
 import loca_lidar.config as config
 
-"""TODO
-    - pour la gestion des déplacements sur la carte:
-    - la stratégie(module nav) demande: qqun à cet endroit là?
-    - le lidar répond: {"oui"; "non"}
-"""
 
 blue_beacons = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm))
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from functools import cache, lru_cache
+from functools import cache, lru_cache, cached_property
 from itertools import combinations
 from math import isclose, radians, pi, atan, degrees
 import numpy as np
@@ -14,11 +14,11 @@ from loca_lidar.PointsDataStruct import CartesianPts, DistPts
 # Regroupment of amalgame of 'same type' : fixed beacons, amalgames detected by lidar, ...
 @dataclass
 class GroupAmalgame: 
-    points: Tuple[Tuple[float, float], ] #((x, y), ...) Coordinate of (relative) center of these amalgames
+    points: Tuple[Tuple[float, float], ...] #((x, y), ...) Coordinate of (relative) center of these amalgames
 
+    @cached_property
     #calculate and return the distances between all amalgames in format ((amalgame1, amalgame2, distance), ...)
-    @cache
-    def get_distances(self) -> tuple[DistPts]:
+    def distances(self) -> tuple[DistPts]:
         temp_distances = []
         for point_combination in combinations(enumerate(self.points), 2): 
             #get all possible combination (unique permutation) of points : [((Index PT1, (x,y)), (Index Pt2, (x,y))), ...]
@@ -34,7 +34,7 @@ class GroupAmalgame:
 
 
 # Function to convert from polar to cartesian coordinates
-def _polar_lidar_to_cartesian(polar_coord: list[float, float]):
+def polar_lidar_to_cartesian(polar_coord: list[float, float]):
     #input : (r, theta) 
     # r = distance ; theta = angle in DEGREES
     r = polar_coord[0]
@@ -45,6 +45,7 @@ def _polar_lidar_to_cartesian(polar_coord: list[float, float]):
 
 class LinkFinder:
     # Tools to find the possible correspondances between two GroupAmalgame (ex : beacons amalgames + lidar amalgames)
+    # TODO : Filter the possible correspondances with angles known from the beacons and must be present beacons (experience or poteau fixe)
     def __init__(self, dist_pts_reference, error_margin): #DistPts, float
         self.dist_pts_reference = dist_pts_reference
         self.error_margin = error_margin
@@ -102,7 +103,7 @@ class LinkFinder:
         return tuple(candidates)
 
     def _generate_candidate_table_cache(self):
-        for squared_dist in self.dist_pts_reference['squared_dist']:
+        for squared_dist in self.dist_pts_reference:
             self._get_candidates_table_point(squared_dist)
 
 
@@ -134,7 +135,7 @@ def lidar_pos_wrt_table(lidar_to_table, lidar_amalgames, fixed_pts)-> tuple[floa
     known_idxs = [lidar_to_table[i] for i in lidar_idxs]
     
     # Convert lidar coordinates to cartesian coordinates
-    lidar_coords = np.array([_polar_lidar_to_cartesian(lidar_amalgames[i]) for i in lidar_idxs])
+    lidar_coords = np.array([polar_lidar_to_cartesian(lidar_amalgames[i]) for i in lidar_idxs])
     table_coords = np.array([fixed_pts[i] for i in known_idxs])
 
     #determine using least square the transform equation from lidar to table

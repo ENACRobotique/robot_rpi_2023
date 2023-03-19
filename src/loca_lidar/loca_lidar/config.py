@@ -1,6 +1,8 @@
 # general settings
 Debug = False #mainly visualisation tools
 
+#Check_obstacle settings
+obstacle_radius=0.2 # meters
 # CloudPoints settings
 
     # obstacle cone settings
