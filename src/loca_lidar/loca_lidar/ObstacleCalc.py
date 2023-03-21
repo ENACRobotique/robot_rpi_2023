@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from functools import lru_cache
 import numpy as np
-from typing import Tuple
+from typing import Tuple, List, Union
 
 
 @dataclass
@@ -18,10 +18,13 @@ class ObstacleCalc():
         if self.y_offset is None: self.y_offset = 0
         if self.theta_offset is None: self.theta_offset = 0
 
-    # Calculate and returns the cartesian coordinates of the obstacles 
-    # given the lidar polar points and the lidar position on the table
-    # !! Filter the obstacles outside the table
-    def calc_obstacles_wrt_table(self, robot_wrt_table: tuple, lidar_pts: Tuple[Tuple[float, float], ...]): 
+
+    def calc_obstacles_wrt_table(self, 
+        robot_wrt_table: tuple, lidar_pts: Tuple[Tuple[float, float], ...]) -> List[list[Union[float, float]]]: 
+        # Calculate and returns the cartesian coordinates of the obstacles 
+        # given the lidar polar points and the lidar position on the table
+        # !! Filter the obstacles outside the table
+        # !! theta angle is parallel to the y axis currently
         obstacles = []
         lidar_wrt_robot = self._lidar_wrt_robot(robot_wrt_table)
         for pt in lidar_pts: # May be possible to vectorize with numpy to avoid for loop

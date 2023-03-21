@@ -318,6 +318,7 @@ def test_obstacle_offset():
     robot_pose = (0.5, 1.5, 32.06)
     filtered_obstacles = obs_calc.calc_obstacles_wrt_table(robot_pose, amalgame_sample_2)
     assert True #breakpoint
+    raise NotImplementedError('calculation are not correct yet')
 
 
 
@@ -344,7 +345,7 @@ if __name__ == "__main__":
 
     # Test Obstacle Calc through request
     test_obstacle_calc()
-    test_obstacle_offset()
+    # TODO : test_obstacle_offset()
 
     # Test triangulation / Simultaneous Corresponance and Pose Estimation
     #test_all_fixed_no_obstacle_1()

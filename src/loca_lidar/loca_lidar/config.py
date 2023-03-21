@@ -2,7 +2,10 @@
 Debug = False #mainly visualisation tools
 
 #Check_obstacle settings
-obstacle_radius=0.2 # meters
+# !! Careful : offset are not implemented yet (value different from 0 may not work)
+lidar_x_offset = 0.0
+lidar_y_offset = 0.0
+lidar_theta_offset = 0.0
 # CloudPoints settings
 
     # obstacle cone settings
