@@ -1,21 +1,24 @@
 from dataclasses import dataclass
 from functools import cache, lru_cache, cached_property
-from itertools import combinations
+from itertools import combinations, chain
 from math import isclose, radians, pi, atan, degrees
 import numpy as np
 import time
-from typing import Tuple
+from typing import Tuple, NamedTuple
 import logging
 
 import loca_lidar.CloudPoints as cp
-from loca_lidar.PointsDataStruct import CartesianPts, DistPts
 
+DistPts = NamedTuple('DistPts', [
+    ('index_pt1', int), 
+    ('index_pt2', int), 
+    ('sqrd_dist', float)])
 
 # Regroupment of amalgame of 'same type' : fixed beacons, amalgames detected by lidar, ...
 @dataclass
 class GroupAmalgame: 
     points: Tuple[Tuple[float, float], ...] #((x, y), ...) Coordinate of (relative) center of these amalgames
-
+    cartesian: bool = True #True if points are in cartesian coordinates, False if in polar coordinates
     @cached_property
     #calculate and return the distances between all amalgames in format ((amalgame1, amalgame2, distance), ...)
     def distances(self) -> tuple[DistPts]:
@@ -26,7 +29,10 @@ class GroupAmalgame:
             pt1 = point_combination[0][1]
             index_pt2 = point_combination[1][0]
             pt2 = point_combination[1][1]
-            squared_dist = cp.get_squared_dist_cartesian(pt1, pt2) #calculate squared distance
+            if self.cartesian:
+                squared_dist = cp.get_squared_dist_cartesian(pt1, pt2) #calculate squared distance
+            else:
+                squared_dist = cp.get_squared_dist_polar(pt1, pt2)
             temp_distances.append(DistPts(index_pt1, index_pt2, squared_dist))
 
         #list of all the distances possibles between the points A/0, B/1, C/2, D/3, E/4   False example : ((0, 1, 2.0), (0,2, 4.4232)
@@ -50,8 +56,11 @@ class LinkFinder:
         self.dist_pts_reference = dist_pts_reference
         self.error_margin = error_margin
         self._generate_candidate_table_cache()
-        nb_pts = np.unique(np.append(self.dist_pts_reference['pt1'],self.dist_pts_reference['pt2'])).size
-        self.table_pivot_dist = {pivot_index: cp.get_distances_from_pivot(pivot_index, self.dist_pts_reference) 
+        nb_pts = len(set(chain.from_iterable(
+            (x.index_pt1, x.index_pt2) for x in self.dist_pts_reference)
+        )) # get the number of distinct points in the dist_pts
+        
+        self.table_pivot_dist = {pivot_index: self.get_distances_from_pivot(pivot_index, self.dist_pts_reference) 
             for pivot_index in range(nb_pts)}
         #example dictionnary {0: ((0, 1, 0.3242), (0, 2, 0.231)), ...}
         pass 
@@ -60,7 +69,8 @@ class LinkFinder:
         #return dict lidar_to_table association
         #calculate all amalgame distances squared and find if any distance match the ones in self.distances
         #perform a search to find possible matching distances (if nothing found, it's not a corners fixed known of the map)
-        if dist_pts_lidar.size <= 1:
+        lidar_to_table_corr = []
+        if len(dist_pts_lidar) <= 1:
             raise ValueError("dist_pts_lidar size <= 1 | can't find pattern with 2 points or less")
         for detected_DistPts in dist_pts_lidar:
             #TODO : convert to binary search ?
@@ -70,10 +80,17 @@ class LinkFinder:
                 
                 #Test candidate_table_point - finding others distance of candidate/Beacon :
                 lidar_to_table_pts = self._lidar2table_from_pivot(candidate_table_point, dists_from_pivot, table_dists)
-                if len(lidar_to_table_pts) >= 3:  #at least 3 points have been "correlated" between lidar & table frame
-                    return lidar_to_table_pts
+                if lidar_to_table_pts is not None and len(lidar_to_table_pts) >= 3:  #at least 3 points have been "correlated" between lidar & table frame
+                    lidar_to_table_corr.append(lidar_to_table_pts)
+        return self._filter_candidate_corr(lidar_to_table_corr)
                 
         return None #no pattern found
+    def _filter_candidate_corr(self, lidar_to_table_corr): #list[dict(correspondances)]
+        #TODO : Filter the possible correspondances with angles known from the beacons and must be present beacons (experience or poteau fixe)
+        if len(lidar_to_table_corr) == 0:
+            return None
+        # Find the first dict in the list that has the most elements
+        return max(lidar_to_table_corr, key=len)
 
     def _lidar2table_from_pivot(self, candidate_table_point, dists_from_pivot, table_dists) -> dict():
         # returns : {i_from_pivot:i_from_table, ...} 
@@ -81,11 +98,11 @@ class LinkFinder:
         pt_lidar_to_table = {}
         for i, dist_pivot in enumerate(dists_from_pivot):
             for j, dist_table in enumerate(table_dists):
-                if np.isclose(dist_pivot['squared_dist'], dist_table['squared_dist'], rtol=self.error_margin):
-                    pt_lidar_to_table[dist_pivot['pt2']] = dist_table['pt2']
+                if np.isclose(dist_pivot.sqrd_dist, dist_table.sqrd_dist, rtol=self.error_margin):
+                    pt_lidar_to_table[dist_pivot.index_pt2] = dist_table.index_pt2
                     #break #Distances are non_unique and we need to match all, so keep it commented?
         if len(pt_lidar_to_table) >= 2:
-            pt_lidar_to_table[candidate_table_point] = dists_from_pivot[0]['pt1']
+            pt_lidar_to_table[candidate_table_point] = dists_from_pivot[0].index_pt1
             return pt_lidar_to_table
         return None
 
@@ -103,21 +120,21 @@ class LinkFinder:
         return tuple(candidates)
 
     def _generate_candidate_table_cache(self):
-        for squared_dist in self.dist_pts_reference:
-            self._get_candidates_table_point(squared_dist)
+        for dist_pts in self.dist_pts_reference:
+            self._get_candidates_table_point(dist_pts.sqrd_dist)
 
     @staticmethod
-    def get_distances_from_pivot(pt_index: np.int64, pt_distances: np.ndarray):
+    def get_distances_from_pivot(pt_index: np.int64, pt_distances: list[DistPts]) -> list[DistPts]:
         #return all sqred_distances from the pt given by pt_index 
         #returns format : ((pt_index, other point, squared_dist)) of type DistPts
         
-        a = np.where(pt_distances['pt1'] == pt_index)
-        b = np.where(pt_distances['pt2'] == pt_index)
-        distances_of_pivot = np.take(pt_distances,  np.unique(np.append(a, b)))  #np.unique(...) -> np.ndarray which contains all index of distances that contain at least pt_index
-        
-        for i in range(len(distances_of_pivot)): #'sort' the array, so that the order is for each element always (pt_index, other_pt, dist) and not (other_pt, pt_index, dist)
-            if distances_of_pivot[i][0] != pt_index:
-                distances_of_pivot[i] = (distances_of_pivot[i][1], distances_of_pivot[i][0], distances_of_pivot[i][2])
+        distances_of_pivot = []
+        for pt_dist in pt_distances:
+            if pt_dist.index_pt1 == pt_index:
+                distances_of_pivot.append(DistPts(pt_dist[0], pt_dist[1], pt_dist[2]))
+            elif pt_dist.index_pt2 == pt_index:
+                distances_of_pivot.append(DistPts(pt_dist[1], pt_dist[0], pt_dist[2]))  #'sort' the array, so that the order is for each element always (pt_index, other_pt, dist) and not (other_pt, pt_index, dist)
+
         return distances_of_pivot
 
 
@@ -230,7 +247,8 @@ def lidar_angle_wrt_table(lidar_wrt_table, lidar_to_table, lidar_amalgames, fixe
 
 
 if __name__ == "__main__":
-    finder = LinkFinder(fp.known_distances(), 0.02)
-    lidar2table = finder.find_pattern(cp.get_distances())
+    pass
+    # finder = LinkFinder(fp.known_distances(), 0.02)
+    # lidar2table = finder.find_pattern(cp.distances)
     #lidarpos = Triangulate.lidar_pos_wrt_table(lidar2table, cp.amalgame_sample_1)
     #print(Triangulate.lidar_angle_wrt_table(lidarpos, lidar2table, cp.amalgame_sample_1))

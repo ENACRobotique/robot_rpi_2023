@@ -65,10 +65,9 @@ def obstacle_in_cone(pts: PolarPts_t, angle: float) -> int:
     )]
 
     # check the minimal distance from the detected obstacle in cone
-    print(np.argmin(obstacles['distance']))
     if obstacles.size == 0:
         return 0 # OK
-    elif np.argmin(obstacles['distance']) < config.cone_stop_dist:
+    elif obstacles['distance'][np.argmin(obstacles['distance'])] < config.cone_stop_dist: #find the min distance
         return 2 # STOP
     else:
         return 1 # WARNING
@@ -175,4 +174,4 @@ if __name__ == '__main__':
     pass
     # get_distances(amalgame_sample_1)
     
-    #print(get_distances_from_pivot(1, get_distances()))
+    #print(get_distances_from_pivot(1, distances))
