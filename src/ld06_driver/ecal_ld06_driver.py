@@ -1,4 +1,4 @@
-import amaury_ld06_driver as lidar
+import ld06_driver as lidar
 import ecal.core.core as ecal_core
 from ecal.core.publisher import ProtoPublisher
 

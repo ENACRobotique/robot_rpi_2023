@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
 
@@ -7,12 +8,13 @@ from matplotlib.widgets import Button
 import sys
 import loca_lidar.lidar_data_pb2 as lidar_data
 import time
+import typing
 
 
 class LidarCloudDisplay(): 
     """ Manages subscription tu an eCAL Topic of type "Lidar" and display the cloud point associated
     """
-    def __init__(self, fig: plt.figure, topic_name: str, color: str, y_button = 0.1):
+    def __init__(self, fig: plt.figure, topic_name: str, color: str, y_button = 0.1): #type: ignore
         """_summary_
 
         Args:
@@ -30,8 +32,8 @@ class LidarCloudDisplay():
         self.button_ax.get_yaxis().set_visible(False)
 
         # Drawing Button
-        self.bdisplay = Button(self.button_ax, topic_name, color=color)
-        self.bdisplay.label.set_fontsize(8)
+        self.bdisplay = Button(self.button_ax, topic_name, color=color) #type: ignore
+        self.bdisplay.label.set_fontsize(8) #type: ignore
         self.bdisplay.on_clicked(self.on_button_click)
 
         # Datas to display
@@ -50,6 +52,23 @@ class LidarCloudDisplay():
     def on_button_click(self, event): 
         self.is_displaying = not self.is_displaying
 
+class Zoom():
+    def __init__(self, fig: plt.figure, y_lim = 3.1): #type: ignore
+        self.fig = fig
+        self.y_lim = y_lim
+
+        # Drawing cloudpoint
+        self.button_ax = self.fig.add_axes([0.005, 0.05, 0.04, 0.05])
+        self.button_ax.get_xaxis().set_visible(False)
+        self.button_ax.get_yaxis().set_visible(False)
+        # Drawing Zoom Button
+        self.zoom = Button(self.button_ax, "zoom", color='grey') #type: ignore
+        self.zoom.label.set_fontsize(8) #type: ignore
+        self.zoom.on_clicked(self.on_button_click)
+
+    def on_button_click(self, event):
+        self.y_lim = 1.0 if self.y_lim == 3.1 else 3.1
+
 
 plt.style.use('ggplot')
 fig = plt.figure()
@@ -67,8 +86,7 @@ ax = fig.add_subplot(projection='polar')
 # real_position
 
 if __name__ == "__main__":
-    print("CHANGE Y LIMIT TO 3.1 meters for display !")
-    print("angle display set to clockwise to keep coherencewith current lidar data")
+    print("visualization node")
     # Init ecal Communication
     ecal_core.initialize(sys.argv, "ecal_lidar_vizualisation")
 
@@ -78,13 +96,15 @@ if __name__ == "__main__":
         LidarCloudDisplay(fig, 'lidar_filtered', 'g', 0.3),
         LidarCloudDisplay(fig, 'amalgames', 'b', 0.5),
     )
+    zoom_butt = Zoom(fig, 3.1)
+
     # Init matplotlib plot
     plt.show(block=False)
     while ecal_core.ok():
         ax.cla() # clear last cloud points
-        ax.set_theta_zero_location("N") # North
+        ax.set_theta_zero_location("N") # North #type: ignore
         # https://stackoverflow.com/questions/26906510/rotate-theta-0-on-matplotlib-polar-plot
-        ax.set_ylim([0, 3.1]) # maximum is 3 m after basic filter, so no need to see further
+        ax.set_ylim([0.0, zoom_butt.y_lim]) # maximum is 3 m after basic filter, so no need to see further #type: ignore
 
         for cloud in cloud_pts: # Plot each cloud point from various data stream
             if cloud.is_displaying: #button clicked or not

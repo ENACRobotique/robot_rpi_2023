@@ -34,7 +34,7 @@ class GroupAmalgame:
 
 
 # Function to convert from polar to cartesian coordinates
-def polar_lidar_to_cartesian(polar_coord: list[float, float]):
+def polar_lidar_to_cartesian(polar_coord: list[float]): # distance, degrees
     #input : (r, theta) 
     # r = distance ; theta = angle in DEGREES
     r = polar_coord[0]
@@ -66,7 +66,7 @@ class LinkFinder:
             #TODO : convert to binary search ?
             for candidate_table_point in self._get_candidates_table_point(detected_DistPts[2]): #check only the first point as "pivot"
                 table_dists = self.table_pivot_dist[candidate_table_point]
-                dists_from_pivot = cp.get_distances_from_pivot(detected_DistPts[0], dist_pts_lidar)
+                dists_from_pivot = self.get_distances_from_pivot(detected_DistPts[0], dist_pts_lidar)
                 
                 #Test candidate_table_point - finding others distance of candidate/Beacon :
                 lidar_to_table_pts = self._lidar2table_from_pivot(candidate_table_point, dists_from_pivot, table_dists)
@@ -106,19 +106,19 @@ class LinkFinder:
         for squared_dist in self.dist_pts_reference:
             self._get_candidates_table_point(squared_dist)
 
-
-def get_distances_from_pivot(pt_index: np.int64, pt_distances: np.ndarray):
-    #return all sqred_distances from the pt given by pt_index 
-    #returns format : ((pt_index, other point, squared_dist)) of type DistPts
-    
-    a = np.where(pt_distances['pt1'] == pt_index)
-    b = np.where(pt_distances['pt2'] == pt_index)
-    distances_of_pivot = np.take(pt_distances,  np.unique(np.append(a, b)))  #np.unique(...) -> np.ndarray which contains all index of distances that contain at least pt_index
-    
-    for i in range(len(distances_of_pivot)): #'sort' the array, so that the order is for each element always (pt_index, other_pt, dist) and not (other_pt, pt_index, dist)
-        if distances_of_pivot[i][0] != pt_index:
-            distances_of_pivot[i] = (distances_of_pivot[i][1], distances_of_pivot[i][0], distances_of_pivot[i][2])
-    return distances_of_pivot
+    @staticmethod
+    def get_distances_from_pivot(pt_index: np.int64, pt_distances: np.ndarray):
+        #return all sqred_distances from the pt given by pt_index 
+        #returns format : ((pt_index, other point, squared_dist)) of type DistPts
+        
+        a = np.where(pt_distances['pt1'] == pt_index)
+        b = np.where(pt_distances['pt2'] == pt_index)
+        distances_of_pivot = np.take(pt_distances,  np.unique(np.append(a, b)))  #np.unique(...) -> np.ndarray which contains all index of distances that contain at least pt_index
+        
+        for i in range(len(distances_of_pivot)): #'sort' the array, so that the order is for each element always (pt_index, other_pt, dist) and not (other_pt, pt_index, dist)
+            if distances_of_pivot[i][0] != pt_index:
+                distances_of_pivot[i] = (distances_of_pivot[i][1], distances_of_pivot[i][0], distances_of_pivot[i][2])
+        return distances_of_pivot
 
 
 #https://stackoverflow.com/questions/20546182/how-to-perform-coordinates-affine-transformation-using-python-part-2?answertab=votes#tab-top

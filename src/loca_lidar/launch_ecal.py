@@ -77,6 +77,8 @@ def on_lidar_scan(topic_name, proto_msg, time):
     amalgames = cp.amalgames_from_cloud(pos_filtered_scan)
     send_lidar(pub_amalgames, amalgames['center_polar']['distance'], amalgames['center_polar']['angle']) # Display filtered data for debugging purposes
 
+    #position calculation
+    
    
 if __name__ == "__main__":
 
