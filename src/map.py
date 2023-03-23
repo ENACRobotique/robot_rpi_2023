@@ -14,8 +14,8 @@ class Graph(object):
 
     def add_edge(self, u, v):
         """Ajoute l'arete (u, v) au graphe"""
-        self.adj[u].append(v)
-        self.adj[v].append(u)
+        self.adj.setdefault(u, []).append(v)
+        self.adj.setdefault(v, []).append(u)
 
     def size(self):
         """Renvoie le nombre de noeuds du graphe"""
@@ -30,6 +30,21 @@ class Graph(object):
         return self.adj[u]
 
 
-l =  [(775,1275),(275,1275),(-275,1275),(-775,1275),(-387.50,1000),(387.5,1000),(387.701166538,825),(0,725),(-387.70166538,825)]
-points = Graph()
-points.add_node()
+def read_graph(file):
+    g = Graph()
+    neighbours = []
+    points = []
+    with open(file) as f:
+        for line in f:
+            l = line.split()
+            g.add_node((l[0],float(l[1]),float(l[2]))) #nom x y 
+            points.append(l[0])
+            neighbours.append(l[3])
+    for count, x in enumerate(neighbours):
+        for y in x:
+            g.add_edge(l[count],y)
+    return g
+
+file = "C:\Etude\Clubrobot\robot_rpi_2023\src\graph.txt"
+
+g = read_graph(file)
