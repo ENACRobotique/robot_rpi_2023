@@ -1,0 +1,5 @@
+#init Init
+digraph statemachine {
+    Init [comment="init_on_enter/init_on_leave"]
+    Init -> End [label="init_to_end_ontr/init_to_end_guard"]
+}
