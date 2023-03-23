@@ -4,3 +4,49 @@ croisement_NW 0.500 0.6125 (plate_B_1;corne_NW;centre_N;interet_NW)
 centre_N 0.775 1.0 (croisement_NW;croisement_NE;interet_marron_N)
 interet_marron_N 0.83453 1.0 (centre_N,interet_marron_int_N)
 entree_assiette_V_5 1.125 0.450 (assiette_V_5;interet_NW;centre_W)
+
+interet_NW	675	612,3
+centre_W	1500	450
+assiette_V_5	1125	225
+cerise_W	1500	225
+ic_cerise_w_N	1350	225
+interet_marron_N_int	1415,47	1000
+		  
+plate_V_1	225	1775
+corne _NE	225	1275
+croisemennt_NE	500	1387,5
+		
+		
+entree_assiette_B_5	1125	1550
+interet_NE	675	1387,7
+centre_E	1500	1550
+assiette_B_5	1125	1775
+cerise_E	1500	1775
+ic_cerise_w_E	1350	1775
+		
+		
+assiette_V_4	2775	225
+assiette_B_3	2775	725
+croisement_SW	2500	612,5
+centre_S	2225	1000
+interet_marron_S	2165,47	1000
+entree_assiette_B_2	1875	450
+intere_SW	2325	612,3
+		
+assiette_B_2	1875	225
+		
+ic_cerise_w_S	1650	225
+interet_marron_S_int	1584,53	1000
+		
+		
+assiette_B_4	2775	1775
+assiette_V_3	2775	1275
+croisement_SE	2500	1387,5
+		
+		
+entree_assiette_V_2	1875	1550
+intere_SE	2325	1387,7
+		
+assiette_V_2	1875	1775
+		
+ic_cerise_E_S	1650	1775
