@@ -1,0 +1,6 @@
+plate_B_1 0.225 0.225 (croisement_NW)
+corne_NW 0.225 0.725 (croisement_NW)
+croisement_NW 0.500 0.6125 (plate_B_1;corne_NW;centre_N;interet_NW)
+centre_N 0.775 1.0 (croisement_NW;croisement_NE;interet_marron_N)
+interet_marron_N 0.83453 1.0 (centre_N,interet_marron_int_N)
+entree_assiette_V_5 1.125 0.450 (assiette_V_5;interet_NW;centre_W)
