@@ -3,9 +3,7 @@ build: clean
 	@echo "[MAKE] Copying files"
 	@cp src _build/ -r
 	@echo "[MAKE] Building strategy files"
-	@for file in *.dot; do \
-		`cd _build && g2s $$file >> g2s_builds.make.log`; \
-	done
+	@`cd _build && g2s *.dot >> g2s_builds.make.log`
 	@echo "[MAKE] Done"
 
 push_pi: build
