@@ -14,6 +14,7 @@ DistPts = NamedTuple('DistPts', [
     ('index_pt2', int), 
     ('sqrd_dist', float)])
 
+
 # Regroupment of amalgame of 'same type' : fixed beacons, amalgames detected by lidar, ...
 @dataclass
 class GroupAmalgame: 
@@ -37,8 +38,7 @@ class GroupAmalgame:
 
         #list of all the distances possibles between the points A/0, B/1, C/2, D/3, E/4   False example : ((0, 1, 2.0), (0,2, 4.4232)
         return tuple(temp_distances)
-
-
+    
 # Function to convert from polar to cartesian coordinates
 def polar_lidar_to_cartesian(polar_coord: list[float]): # distance, degrees
     #input : (r, theta) 
@@ -49,11 +49,27 @@ def polar_lidar_to_cartesian(polar_coord: list[float]): # distance, degrees
     y = r * np.sin(theta)
     return np.array([x, y])
 
+def angle_3_pts(a: tuple, b: tuple, c:tuple, is_cartesian = True)-> float:
+    # return the angle between 3 points in degrees
+    if not is_cartesian:
+        b = polar_lidar_to_cartesian(b) # type: ignore
+        a = polar_lidar_to_cartesian(a) # type: ignore
+        c = polar_lidar_to_cartesian(c) # type: ignore
+    angle = np.arctan2(c[1] - b[1], c[0] - b[0]) - \
+                np.arctan2(a[1] - b[1], a[0] - b[0])
+    return np.rad2deg(angle)
+
+def angle(p1, p2):
+    dx = p2[0] - p1[0]
+    dy = p2[1] - p1[1]
+    return np.arctan2(dy, dx)
+
 class LinkFinder:
     # Tools to find the possible correspondances between two GroupAmalgame (ex : beacons amalgames + lidar amalgames)
     # TODO : Filter the possible correspondances with angles known from the beacons and must be present beacons (experience or poteau fixe)
-    def __init__(self, dist_pts_reference, error_margin): #DistPts, float
-        self.dist_pts_reference = dist_pts_reference
+    def __init__(self, amalg, error_margin): #DistPts, float
+        self.table = amalg
+        self.dist_pts_reference = amalg.distances
         self.error_margin = error_margin
         self._generate_candidate_table_cache()
         nb_pts = len(set(chain.from_iterable(
@@ -65,10 +81,11 @@ class LinkFinder:
         #example dictionnary {0: ((0, 1, 0.3242), (0, 2, 0.231)), ...}
         pass 
 
-    def find_pattern(self, dist_pts_lidar):
+    def find_pattern(self, amalg):
         #return dict lidar_to_table association
         #calculate all amalgame distances squared and find if any distance match the ones in self.distances
         #perform a search to find possible matching distances (if nothing found, it's not a corners fixed known of the map)
+        dist_pts_lidar = amalg.distances
         lidar_to_table_corr = []
         if len(dist_pts_lidar) <= 1:
             raise ValueError("dist_pts_lidar size <= 1 | can't find pattern with 2 points or less")
@@ -82,14 +99,37 @@ class LinkFinder:
                 lidar_to_table_pts = self._lidar2table_from_pivot(candidate_table_point, dists_from_pivot, table_dists)
                 if lidar_to_table_pts is not None and len(lidar_to_table_pts) >= 3:  #at least 3 points have been "correlated" between lidar & table frame
                     lidar_to_table_corr.append(lidar_to_table_pts)
-        return self._filter_candidate_corr(lidar_to_table_corr)
+        print(lidar_to_table_corr)
+        print(self._filter_candidate_corr(lidar_to_table_corr, amalg))
+        return self._filter_candidate_corr(lidar_to_table_corr, amalg)
                 
         return None #no pattern found
-    def _filter_candidate_corr(self, lidar_to_table_corr): #list[dict(correspondances)]
+    def _filter_candidate_corr(self, lidar_to_table_corr, amalg): #list[dict(correspondances)]
         #TODO : Filter the possible correspondances with angles known from the beacons and must be present beacons (experience or poteau fixe)
         if len(lidar_to_table_corr) == 0:
             return None
-        # Find the first dict in the list that has the most elements
+        
+        # Filter the possible correspondances with angles known from the beacons :
+        pts = amalg.points
+        if not amalg.cartesian:
+            pts = [polar_lidar_to_cartesian(p) for p in pts]
+        # 1) Reference Direction angle 
+        # computes the reference direction and angle (ref_angle) using the lidar and table points with the smallest x-coordinate. 
+        table_ref_index = min(range(len(self.table.points)), key=lambda i: self.table.points[i][0])
+        lidar_ref_index = min(range(len(pts)), key=lambda i: pts[i][0])
+        lidar_ref_point = pts[lidar_ref_index]
+        table_ref_point = self.table.points[table_ref_index]
+        ref_angle = angle(lidar_ref_point, table_ref_point)
+
+        threshold = np.deg2rad(5.0) # (1.5)
+        for possible_corr in lidar_to_table_corr:
+            angles = {}
+            for lidar_index, table_index in possible_corr.items():
+                lidar_point = pts[lidar_index]
+                table_point = self.table.points[table_index]
+                angles[lidar_index] = angle(lidar_ref_point, lidar_point) - angle(table_ref_point, table_point) - ref_angle
+            valid_corr = {lidar_index: table_index for lidar_index, table_index in possible_corr.items() if abs(angles[lidar_index]) < threshold}
+            pass
         return max(lidar_to_table_corr, key=len)
 
     def _lidar2table_from_pivot(self, candidate_table_point, dists_from_pivot, table_dists) -> dict():
@@ -102,7 +142,10 @@ class LinkFinder:
                     pt_lidar_to_table[dist_pivot.index_pt2] = dist_table.index_pt2
                     #break #Distances are non_unique and we need to match all, so keep it commented?
         if len(pt_lidar_to_table) >= 2:
-            pt_lidar_to_table[candidate_table_point] = dists_from_pivot[0].index_pt1
+            #add the pivot point :
+            lidar_i = dists_from_pivot[0].index_pt1
+            pt_lidar_to_table[lidar_i] = candidate_table_point
+
             return pt_lidar_to_table
         return None
 
@@ -240,8 +283,8 @@ def lidar_angle_wrt_table(lidar_wrt_table, lidar_to_table, lidar_amalgames, fixe
 
     #TODO : remove after enough testing below testing : 
     averaged_angle = np.array(computed_angle).mean()
-    if np.any((computed_angle < averaged_angle - 0.5)|(computed_angle > averaged_angle + 0.5)):
-        logging.warning(f"angle triangulation determined mean deviation of more than 0.5° \n \
+    if np.any((computed_angle < averaged_angle - 1.5)|(computed_angle > averaged_angle + 1.5)):
+        logging.warning(f"angle triangulation determined mean deviation of more than 1.5° \n \
             angles are {computed_angle} for beacons {table_coords} ")
     return np.array(computed_angle).mean()
 

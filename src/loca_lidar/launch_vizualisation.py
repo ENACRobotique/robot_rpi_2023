@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import ecal.core.core as ecal_core
-from ecal.core.subscriber import ProtoSubscriber
+from ecal.core.subscriber import ProtoSubscriber, StringSubscriber
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -74,6 +74,26 @@ plt.style.use('ggplot')
 fig = plt.figure()
 ax = fig.add_subplot(projection='polar')
 
+class CorrespondanceDisplay():
+    def __init__(self, amalgames: LidarCloudDisplay):
+        self.amalgames = amalgames #access to the amalgames cloud point
+        self.text = []
+        self.r = []
+        self.theta = []
+        self.sub_lidar2table = StringSubscriber("beacons")
+        self.sub_lidar2table.set_callback(self.on_lidar2table)
+
+    def on_lidar2table(self, topic_name, msg, time):
+        # prepare the data for annotation in text, r and theta
+        lidar2table = eval(msg) #str to dict
+        self.text = list(lidar2table.values()) # put the index of the table beacon ([0-4])
+        self.r = [self.amalgames.lidar_dist[i] for i in lidar2table.keys()] # find the coordinate of the amalgame associated
+        self.theta = [self.amalgames.lidar_theta[i] for i in lidar2table.keys()]
+    
+    def display(self, ax):
+        for i in range(len(self.text)):
+            ax.text(np.deg2rad(self.theta[i]), self.r[i] ,self.text[i], color="r")
+    
 # on_lidar_scan
 
 
@@ -96,6 +116,7 @@ if __name__ == "__main__":
         LidarCloudDisplay(fig, 'lidar_filtered', 'g', 0.3),
         LidarCloudDisplay(fig, 'amalgames', 'b', 0.5),
     )
+    corr_disp = CorrespondanceDisplay(cloud_pts[2])
     zoom_butt = Zoom(fig, 3.1)
 
     # Init matplotlib plot
@@ -113,6 +134,10 @@ if __name__ == "__main__":
                     cloud.lidar_dist, 
                     color=cloud.color
                 )
+                
+        #display lidar2table
+        corr_disp.display(ax)
+                    
 
         plt.pause(0.1)
 

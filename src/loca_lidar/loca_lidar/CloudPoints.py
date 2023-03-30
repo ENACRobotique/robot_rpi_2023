@@ -112,6 +112,8 @@ def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
     #TODO : optimize below using numpy
     # Known limitation : if an amalgame made of two points is present only at the beggining and end of filtered scan, it won't be detected
     # But we consider that an amalgame should be made of at least three points
+    # sort pts by angle
+    pts = np.sort(pts, order='angle')
     for i, pt in enumerate(pts):
         #initialize first cur_pt
         if amalg_pt_count == 0: 
@@ -157,11 +159,20 @@ def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
             amalgames[0] = _fusion_amalgames(amalgames[0], amalgames[amalg_i-1])
             amalgames[amalg_i-1] = np.zeros((1, ))
 
+    amalgames = remove_none_amalgames(amalgames)
     return amalgames
 
 def filter_amalgame_size(amalgames:AmalgamePolar_t) -> AmalgamePolar_t:
     #if amalgame is valid ("coherent size" ex :  not a wall, not a referee, ...)
     mask = np.where((amalgames['size'] > config.amalg_min_size) & (amalgames['size'] < config.amalg_max_size))
+    valid_amalgames = amalgames[mask]
+    return valid_amalgames
+
+def remove_none_amalgames(amalgames:AmalgamePolar_t) -> AmalgamePolar_t:
+    #if amalgame is valid ("coherent size" ex :  not a wall, not a referee, ...)
+    mask = np.where(np.logical_and(
+        amalgames['center_polar']['distance'] != 0, amalgames['center_polar']['angle'] != 0)
+    )
     valid_amalgames = amalgames[mask]
     return valid_amalgames
 

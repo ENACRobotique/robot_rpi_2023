@@ -18,7 +18,7 @@ max_lidar_dist = 3.0
 
     #amalgames settings
 # maximum squared absolute distance between two points within the cloud points to be considerered as one same amalgame
-amalgame_squared_dist_max = 0.05 # meters
+amalgame_squared_dist_max = 0.025 # meters
 
 amalg_min_size = 0.08 # meters
 amalg_max_size = 0.15 # meters
