@@ -13,7 +13,7 @@ FloatValue = struct.Struct( '<f' )
 DoubleValue = struct.Struct( '<d' )
 
 class NatNetClient:
-    def __init__( self, server="192.168.1.231", multicast="239.255.42.99", commandPort=1510, dataPort=1511, rigidBodyListener=None, newFrameListener=None, rigidBodyListListener=None, markerSetListener=None, verbose=False, version=(3,0,0,0) ):
+    def __init__( self, server="127.0.0.1", multicast="239.255.42.99", commandPort=1510, dataPort=1511, rigidBodyListener=None, newFrameListener=None, rigidBodyListListener=None, markerSetListener=None, verbose=False, version=(3,0,0,0) ):
         # IP address of the NatNet server.
         self.serverIPAddress = server
 
@@ -430,7 +430,7 @@ class NatNetClient:
                 offset += self.__unpackSkeletonDescription( data[offset:] )
             
     def __dataThreadFunction( self, sock ):
-        sock.settimeout(0.01)
+        sock.settimeout(0.1)
         while self.running:
             # Block for input
             try:
@@ -438,7 +438,6 @@ class NatNetClient:
                 if( len( data ) >= 4):
                     self.__processMessage( data )
             except socket.timeout:
-                self.__trace("socket timeout")
                 pass
 
     def __processMessage( self, data ):
@@ -452,7 +451,6 @@ class NatNetClient:
         
         if not len( data ) - 4 >= packetSize:
           # Not enough data
-          self.__trace("not enough data")
           return
 
         offset = 4

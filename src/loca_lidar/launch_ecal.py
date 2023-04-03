@@ -1,6 +1,7 @@
+import logging
 import sys
 import time
-from typing import Tuple
+from typing import Tuple, Union
 import numpy as np
 
 import ecal.core.core as ecal_core
@@ -29,6 +30,7 @@ pub_filtered_pts = ProtoPublisher("lidar_filtered", lidar_pb.Lidar)
 pub_amalgames = ProtoPublisher("amalgames", lidar_pb.Lidar)
 pub_beacons = StringPublisher("beacons") # Only up to 5 points are sent, the index correspond to the fixed_point
 pub_lidar_pos = ProtoPublisher("lidar_pos", robot_pb.Position)
+pub_obstacles = ProtoPublisher("obstacles_wrt_table", lidar_pb.Obstacles)
 
 last_known_moving_angle = 0 #angle in degrees from where the robot is moving 
 last_known_lidar = (0, 0, 0) #x, y, theta (meters, degrees)
@@ -39,6 +41,16 @@ OBSTACLE_CALC = ObstacleCalc(
 BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm), True)
 FINDER = pf.LinkFinder(BLUE_BEACONS, 0.02)
 
+def send_obstacles_wrt_table(obstacles: list[list[Union[float, float]]]):
+    msg = lidar_pb.Obstacles()
+    x, y = [], []
+    for obstacle in obstacles:
+        x.append(obstacle[0])
+        y.append(obstacle[1])
+    msg.x.extend(x)
+    msg.y.extend(y)
+    pub_obstacles.send(msg, ecal_core.getmicroseconds()[1])
+    
 def send_stop_cons(closest_distance: float, action: int):
     # msg = lidar_pb.Proximity()
     # msg.action = lidar_pb.Action. ????
@@ -70,22 +82,32 @@ def on_robot_pos(topic_name, pos_msg, time):
 def on_lidar_scan(topic_name, proto_msg, time):
     global last_known_moving_angle, robot_pose, last_known_lidar
 
-    # Obstacle avoidance
+    if robot_pose == (0.0, 0.0, 0.0):
+        logging.warning("Robot pose not received yet - invalid obstacle avoidance")
+
+    t = ecal_core.getmicroseconds()[1]
+    # Filter lidar_scan
     lidar_scan =  np.rec.fromarrays([proto_msg.distances, proto_msg.angles], dtype=PolarPts)
     basic_filtered_scan = cp.basic_filter_pts(lidar_scan)
-    obstacle_consigne = cp.obstacle_in_cone(basic_filtered_scan, last_known_moving_angle)
-    send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
-
-    # advanced filtering
-    x,y,theta = last_known_lidar[0], last_known_lidar[1], last_known_lidar[2]
-    pos_filtered_scan = cp.position_filter_pts(basic_filtered_scan, x, y, theta)
     # TODO : position filter is unimplemented | it returns everything
+    pos_filtered_scan = cp.position_filter_pts(basic_filtered_scan, 
+                        robot_pose[0], robot_pose[1], robot_pose[2])
+    obs = OBSTACLE_CALC.calc_obstacles_wrt_table(robot_pose, pos_filtered_scan) #type: ignore
+    mask = OBSTACLE_CALC.mask_filter_obs(obs) # truth list if on table 
+    # TODO : rework position_filter_pts to return a mask instead of giving the work to OBSTACLE_CALC
+    pos_filtered_scan = pos_filtered_scan[mask]
+
+    #obstacle avoidance
+    obstacle_consigne = cp.obstacle_in_cone(pos_filtered_scan, last_known_moving_angle)
+    send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
+    filtered_obs = [obs[i] for i in range(len(obs)) if mask[i]]
+    send_obstacles_wrt_table(filtered_obs)
 
     # Obstacle Calculation
-    obs = OBSTACLE_CALC.calc_obstacles_wrt_table(robot_pose, pos_filtered_scan) #type: ignore
     # Sending filtered & amalgames data for visualization
     send_lidar_scan(pub_filtered_pts, pos_filtered_scan['distance'], pos_filtered_scan['angle']) # Display filtered data for debugging purposes
-    amalgames = cp.amalgames_from_cloud(pos_filtered_scan)
+    # amalgames don't use position filter because it removes points outside the table
+    amalgames = cp.amalgames_from_cloud(basic_filtered_scan)
     send_lidar_scan(pub_amalgames, amalgames['center_polar']['distance'], amalgames['center_polar']['angle']) # Display filtered data for debugging purposes
 
     #position calculation
@@ -95,6 +117,8 @@ def on_lidar_scan(topic_name, proto_msg, time):
     pub_beacons.send(str(lidar2table))
     send_lidar_pos(*lidar_pose)
 
+    t2 = ecal_core.getmicroseconds()[1] - t
+    print(t2)
 
 def calculate_lidar_pose(amalgame_scan, corr_out = {}) -> Tuple[float, float, float]:
     """_summary_

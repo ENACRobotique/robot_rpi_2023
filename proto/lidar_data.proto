@@ -20,3 +20,8 @@ message Proximity {
     Action action = 2;
 }
 
+message Obstacles {
+    repeated float x = 1;
+    repeated float y = 2;
+}
+

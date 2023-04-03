@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 import numpy as np
 from typing import Tuple, List, Union
+from loca_lidar.config import table_x_min, table_x_max, table_y_min, table_y_max
 
 
 @dataclass
@@ -42,8 +43,21 @@ class ObstacleCalc():
             pt_wrt_table = (v_C_A[0], v_C_A[1])
             obstacles.append(pt_wrt_table)
 
-        return self._filter_obstacles(obstacles)
+        return obstacles
 
+    @staticmethod
+    def mask_filter_obs(obstacles: list[bool]):
+        # keep obstacles inside the "table" area (taking into account edge offset)
+        # [True, False] = [Obstacle in table, Obstacle outside table]
+        filtered_obstacles = []
+        for obs in obstacles:
+            if not (obs[0] < table_x_min or obs[0] > table_x_max 
+                    or obs[1] < table_y_min or obs[1] > table_y_max):
+                filtered_obstacles.append(True)
+            else:
+                filtered_obstacles.append(False)
+        return filtered_obstacles
+    
     @staticmethod
     def polar_lidar_to_cartesian(polar_coord: tuple[float, float]):
     #input : (r, theta) 
@@ -81,14 +95,7 @@ class ObstacleCalc():
         v_C_A = np.dot(self.t_lidar_to_robot, v_C_B)
         return (v_C_A[0], v_C_A[1]) 
 
-    @staticmethod
-    def _filter_obstacles(obstacles: list[tuple[float, float]]):
-        # removes obstacles outside the table
-        filtered_obstacles = []
-        for obs in obstacles:
-            if not (obs[0] < 0 or obs[0] > 2.0 or obs[1] < 0 or obs[1] > 3.0):
-                filtered_obstacles.append(obs)
-        return filtered_obstacles
+
 
     
 

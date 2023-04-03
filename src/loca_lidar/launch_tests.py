@@ -378,11 +378,12 @@ if __name__ == "__main__":
     # Test obstacle avoidance
     test_cone_detection()
 
+    temporary_test()
     # Test Obstacle Calc through request
     test_obstacle_calc()
     # TODO : test_obstacle_offset()
 
-    temporary_test()
+
     # Test triangulation / Simultaneous Corresponance and Pose Estimation
     test_all_fixed_no_obstacle_1()
     test_partial_fixed_no_obstacle_1()

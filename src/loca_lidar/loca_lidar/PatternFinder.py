@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import cache, lru_cache, cached_property
-from itertools import combinations, chain
+from itertools import combinations, chain, islice
 from math import isclose, radians, pi, atan, degrees
 import numpy as np
 import time
@@ -38,6 +38,13 @@ class GroupAmalgame:
 
         #list of all the distances possibles between the points A/0, B/1, C/2, D/3, E/4   False example : ((0, 1, 2.0), (0,2, 4.4232)
         return tuple(temp_distances)
+    
+    def sqrd_dist_to_origin(self, pt_i) -> float:
+        pt = self.points[pt_i]
+        if self.cartesian:
+            return cp.get_squared_dist_cartesian(pt, (0,0))
+        else:
+            return cp.get_squared_dist_polar(pt, (0,0))
     
 # Function to convert from polar to cartesian coordinates
 def polar_lidar_to_cartesian(polar_coord: list[float]): # distance, degrees
@@ -105,7 +112,6 @@ class LinkFinder:
                 
         return None #no pattern found
     def _filter_candidate_corr(self, lidar_to_table_corr, amalg): #list[dict(correspondances)]
-        #TODO : Filter the possible correspondances with angles known from the beacons and must be present beacons (experience or poteau fixe)
         if len(lidar_to_table_corr) == 0:
             return None
         
@@ -113,24 +119,55 @@ class LinkFinder:
         pts = amalg.points
         if not amalg.cartesian:
             pts = [polar_lidar_to_cartesian(p) for p in pts]
-        # 1) Reference Direction angle 
-        # computes the reference direction and angle (ref_angle) using the lidar and table points with the smallest x-coordinate. 
-        table_ref_index = min(range(len(self.table.points)), key=lambda i: self.table.points[i][0])
-        lidar_ref_index = min(range(len(pts)), key=lambda i: pts[i][0])
-        lidar_ref_point = pts[lidar_ref_index]
-        table_ref_point = self.table.points[table_ref_index]
-        ref_angle = angle(lidar_ref_point, table_ref_point)
+        copy_corr = lidar_to_table_corr.copy()
+        # check all possible correspondances
+        for corr_i, corr in enumerate(lidar_to_table_corr):
+            # check all pairs of angles
+            for i, first_lidar_i in enumerate(corr):
+                first_table_i = corr[first_lidar_i]
+                valid_corr = 0
+                sliced_corr = dict(islice(corr.items(), i+1, None)) # get all the other points to make pairs
+                for second_lidar_i in sliced_corr:
+                    second_table_i = corr[second_lidar_i]
 
-        threshold = np.deg2rad(5.0) # (1.5)
-        for possible_corr in lidar_to_table_corr:
-            angles = {}
-            for lidar_index, table_index in possible_corr.items():
-                lidar_point = pts[lidar_index]
-                table_point = self.table.points[table_index]
-                angles[lidar_index] = angle(lidar_ref_point, lidar_point) - angle(table_ref_point, table_point) - ref_angle
-            valid_corr = {lidar_index: table_index for lidar_index, table_index in possible_corr.items() if abs(angles[lidar_index]) < threshold}
-            pass
+                    # calculate origin of table on lidar frame
+                    # intersection of circle with points in lidar frame and radius = dist_to_origin
+                    table_pt1 = self.table.points[first_table_i]
+                    table_pt2 = self.table.points[second_table_i]
+                    if first_table_i == second_table_i: # skip if same table point
+                        continue
+                    lidar_pt1 = pts[first_lidar_i]
+                    radius1 = np.sqrt(self.table.sqrd_dist_to_origin(first_table_i))
+                    lidar_pt2 = pts[second_lidar_i]
+                    radius2 = np.sqrt(self.table.sqrd_dist_to_origin(second_table_i))
+                    center_real_rel = self._get_rel_pos(table_pt1, table_pt2, (0, 0))
+                    center1, center2 = self._calculate_intersection_circles(lidar_pt1, radius1, lidar_pt2, radius2)
+                    #check if real center should be on the left or right of the line between the two points
+                    center1_rel = self._get_rel_pos(lidar_pt1, lidar_pt2, center1)
+                    center2_rel = self._get_rel_pos(lidar_pt1, lidar_pt2, center2)
+                    if center1_rel * center_real_rel > 0 and center2_rel * center_real_rel > 0: #same sign
+                        print("same sign")
+                        # raise Exception("both calculated table origin points are on the same side of the line between the two points")
+                    if center1_rel == 0 or center2_rel == 0:
+                        print("alignment")
+                        # raise Exception("one of the calculated table origin points is on the line between the two points")
+                    center_wrt_lidar = center1 if center1_rel * center_real_rel > 0 else center2 # same sign
+                    # calculate two triangle angles between the two points and the center
+                    calc_angle1 = angle_3_pts(lidar_pt1, center_wrt_lidar, lidar_pt2)
+                    expected_angle1 = angle_3_pts(table_pt1, (0, 0), table_pt2)
+                    calc_angle2 = angle_3_pts(lidar_pt2, center_wrt_lidar, lidar_pt1)
+                    expected_angle2 = angle_3_pts(table_pt2, (0, 0), table_pt1)
+                    angle_tol = 1.5
+                    if (np.isclose(calc_angle1, expected_angle1, atol = angle_tol) and 
+                        np.isclose(calc_angle2, expected_angle2, atol = angle_tol)):
+                        valid_corr += 1
+                # remove the candidate if not enough valid correspondances
+                if valid_corr <= 2:
+                    copy_corr[corr_i].pop(first_lidar_i)
+
         return max(lidar_to_table_corr, key=len)
+
+
 
     def _lidar2table_from_pivot(self, candidate_table_point, dists_from_pivot, table_dists) -> dict():
         # returns : {i_from_pivot:i_from_table, ...} 
@@ -179,8 +216,43 @@ class LinkFinder:
                 distances_of_pivot.append(DistPts(pt_dist[1], pt_dist[0], pt_dist[2]))  #'sort' the array, so that the order is for each element always (pt_index, other_pt, dist) and not (other_pt, pt_index, dist)
 
         return distances_of_pivot
+    
+    @staticmethod
+    def _calculate_intersection_circles(pt1, radius1, pt2, radius2):
+        """_summary_
 
+        Args:
+            pt1 (_type_): _description_
+            pt2 (_type_): _description_
 
+        Returns:
+            Tuple : ((x1, y1), (x2, y2))
+        """
+        # https://stackoverflow.com/questions/3349125/circle-circle-intersection-points
+        d = np.sqrt((pt1[0] - pt2[0])**2 + (pt1[1] - pt2[1])**2)
+        a = (radius1**2 - radius2**2 + d**2) / (2 * d)
+        h = np.sqrt(radius1**2 - a**2)
+        x3 = pt1[0] + a * (pt2[0] - pt1[0]) / d
+        y3 = pt1[1] + a * (pt2[1] - pt1[1]) / d
+        x4a = x3 + h * (pt2[1] - pt1[1]) / d
+        x4b = x3 - h * (pt2[1] - pt1[1]) / d
+        y4a = y3 - h * (pt2[0] - pt1[0]) / d
+        y4b = y3 + h * (pt2[0] - pt1[0]) / d
+        return ((x4a, y4a), (x4b, y4b))
+    
+    @staticmethod
+    def _get_rel_pos(pt1, pt2, pt3) -> int:
+        #returns the relative position of pt3 to the line defined by pt1 and pt2
+        # returns 1 if pt3 is on the left side of the line, -1 if on the right side and 0 if on the line
+        # https://stackoverflow.com/questions/1560492/how-to-tell-whether-a-point-is-to-the-right-or-left-side-of-a-line
+        val = (pt2[1] - pt1[1]) * (pt3[0] - pt2[0]) - (pt2[0] - pt1[0]) * (pt3[1] - pt2[1])
+        if val == 0:
+            return 0
+        elif val > 0:
+            return 1
+        else:
+            return -1
+        
 #https://stackoverflow.com/questions/20546182/how-to-perform-coordinates-affine-transformation-using-python-part-2?answertab=votes#tab-top
 def lidar_pos_wrt_table(lidar_to_table, lidar_amalgames, fixed_pts)-> tuple[float, float]:
     """returns average computed (x,y, angle) in meters, meters, radians using Least Square

@@ -6,9 +6,15 @@ Debug = False #mainly visualisation tools
 lidar_x_offset = 0.0
 lidar_y_offset = 0.0
 lidar_theta_offset = 0.0
+
+# 10 cm offset from table edge
+table_x_min = 0.1 # meters
+table_x_max = 1.9 # meters
+table_y_min = 0.1 # meters
+table_y_max = 2.9 # meters
 # CloudPoints settings
 
-    # obstacle cone settings
+# obstacle cone settings
 cone_angle = 120 # degrees
 cone_warning_dist = 0.5 # meters
 cone_stop_dist = 0.25 #meFbters
