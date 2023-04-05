@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from functools import cache, lru_cache, cached_property
 from itertools import combinations, chain, islice
+from copy import deepcopy
 from math import isclose, radians, pi, atan, degrees
 import numpy as np
 import time
@@ -58,13 +59,14 @@ def polar_lidar_to_cartesian(polar_coord: list[float]): # distance, degrees
 
 def angle_3_pts(a: tuple, b: tuple, c:tuple, is_cartesian = True)-> float:
     # return the angle between 3 points in degrees
+    # b angle is the middle one
     if not is_cartesian:
-        b = polar_lidar_to_cartesian(b) # type: ignore
         a = polar_lidar_to_cartesian(a) # type: ignore
+        b = polar_lidar_to_cartesian(b) # type: ignore
         c = polar_lidar_to_cartesian(c) # type: ignore
-    angle = np.arctan2(c[1] - b[1], c[0] - b[0]) - \
-                np.arctan2(a[1] - b[1], a[0] - b[0])
-    return np.rad2deg(angle)
+    ang = np.rad2deg(np.arctan2(c[1]-b[1], c[0]-b[0]) - np.arctan2(a[1]-b[1], a[0]-b[0]))
+    return ang + 360 if ang < 0 else ang
+    
 
 def angle(p1, p2):
     dx = p2[0] - p1[0]
@@ -74,10 +76,11 @@ def angle(p1, p2):
 class LinkFinder:
     # Tools to find the possible correspondances between two GroupAmalgame (ex : beacons amalgames + lidar amalgames)
     # TODO : Filter the possible correspondances with angles known from the beacons and must be present beacons (experience or poteau fixe)
-    def __init__(self, amalg, error_margin): #DistPts, float
+    def __init__(self, amalg, error_margin, angle_err_marg = 1.5): #DistPts, float
         self.table = amalg
         self.dist_pts_reference = amalg.distances
         self.error_margin = error_margin
+        self.angle_err_marg = angle_err_marg
         self._generate_candidate_table_cache()
         nb_pts = len(set(chain.from_iterable(
             (x.index_pt1, x.index_pt2) for x in self.dist_pts_reference)
@@ -106,66 +109,41 @@ class LinkFinder:
                 lidar_to_table_pts = self._lidar2table_from_pivot(candidate_table_point, dists_from_pivot, table_dists)
                 if lidar_to_table_pts is not None and len(lidar_to_table_pts) >= 3:  #at least 3 points have been "correlated" between lidar & table frame
                     lidar_to_table_corr.append(lidar_to_table_pts)
-        print(lidar_to_table_corr)
-        print(self._filter_candidate_corr(lidar_to_table_corr, amalg))
         return self._filter_candidate_corr(lidar_to_table_corr, amalg)
                 
         return None #no pattern found
     def _filter_candidate_corr(self, lidar_to_table_corr, amalg): #list[dict(correspondances)]
         if len(lidar_to_table_corr) == 0:
             return None
-        
+
         # Filter the possible correspondances with angles known from the beacons :
         pts = amalg.points
         if not amalg.cartesian:
             pts = [polar_lidar_to_cartesian(p) for p in pts]
-        copy_corr = lidar_to_table_corr.copy()
+        valid_triangles = [{} for _ in range(len(lidar_to_table_corr)) ] # avoid having same dict duplicated
         # check all possible correspondances
         for corr_i, corr in enumerate(lidar_to_table_corr):
-            # check all pairs of angles
-            for i, first_lidar_i in enumerate(corr):
-                first_table_i = corr[first_lidar_i]
-                valid_corr = 0
-                sliced_corr = dict(islice(corr.items(), i+1, None)) # get all the other points to make pairs
-                for second_lidar_i in sliced_corr:
-                    second_table_i = corr[second_lidar_i]
+            pass
+            for triangle in combinations(corr, 3):
+                # check if the angle of the triangle is the same as the one in the table
 
-                    # calculate origin of table on lidar frame
-                    # intersection of circle with points in lidar frame and radius = dist_to_origin
-                    table_pt1 = self.table.points[first_table_i]
-                    table_pt2 = self.table.points[second_table_i]
-                    if first_table_i == second_table_i: # skip if same table point
-                        continue
-                    lidar_pt1 = pts[first_lidar_i]
-                    radius1 = np.sqrt(self.table.sqrd_dist_to_origin(first_table_i))
-                    lidar_pt2 = pts[second_lidar_i]
-                    radius2 = np.sqrt(self.table.sqrd_dist_to_origin(second_table_i))
-                    center_real_rel = self._get_rel_pos(table_pt1, table_pt2, (0, 0))
-                    center1, center2 = self._calculate_intersection_circles(lidar_pt1, radius1, lidar_pt2, radius2)
-                    #check if real center should be on the left or right of the line between the two points
-                    center1_rel = self._get_rel_pos(lidar_pt1, lidar_pt2, center1)
-                    center2_rel = self._get_rel_pos(lidar_pt1, lidar_pt2, center2)
-                    if center1_rel * center_real_rel > 0 and center2_rel * center_real_rel > 0: #same sign
-                        print("same sign")
-                        # raise Exception("both calculated table origin points are on the same side of the line between the two points")
-                    if center1_rel == 0 or center2_rel == 0:
-                        print("alignment")
-                        # raise Exception("one of the calculated table origin points is on the line between the two points")
-                    center_wrt_lidar = center1 if center1_rel * center_real_rel > 0 else center2 # same sign
-                    # calculate two triangle angles between the two points and the center
-                    calc_angle1 = angle_3_pts(lidar_pt1, center_wrt_lidar, lidar_pt2)
-                    expected_angle1 = angle_3_pts(table_pt1, (0, 0), table_pt2)
-                    calc_angle2 = angle_3_pts(lidar_pt2, center_wrt_lidar, lidar_pt1)
-                    expected_angle2 = angle_3_pts(table_pt2, (0, 0), table_pt1)
-                    angle_tol = 1.5
-                    if (np.isclose(calc_angle1, expected_angle1, atol = angle_tol) and 
-                        np.isclose(calc_angle2, expected_angle2, atol = angle_tol)):
-                        valid_corr += 1
-                # remove the candidate if not enough valid correspondances
-                if valid_corr <= 2:
-                    copy_corr[corr_i].pop(first_lidar_i)
+                table1_i, table2_i, table3_i = corr[triangle[0]], corr[triangle[1]], corr[triangle[2]]
+                if table1_i == table2_i or table1_i == table3_i or table2_i == table3_i:
+                    continue # the triangle is not valid
+                table_angle1 = angle_3_pts(self.table.points[table1_i], self.table.points[table2_i], self.table.points[table3_i])
+                lidar_angle1 = angle_3_pts(pts[triangle[0]], pts[triangle[1]], pts[triangle[2]])
+                table_angle2 = angle_3_pts(self.table.points[table2_i], self.table.points[table3_i], self.table.points[table1_i])
+                lidar_angle2 = angle_3_pts(pts[triangle[1]], pts[triangle[2]], pts[triangle[0]])
+                if (isclose(table_angle1, lidar_angle1, abs_tol=self.angle_err_marg) 
+                    and isclose(table_angle2, lidar_angle2, abs_tol=self.angle_err_marg)):
+                    # the triangle is valid (in terms of angles)
+                    valid_triangles[corr_i][triangle[0]] = table1_i
+                    valid_triangles[corr_i][triangle[1]] = table2_i
+                    valid_triangles[corr_i][triangle[2]] = table3_i
+        
+        print(valid_triangles)
+        return max(valid_triangles, key=len)
 
-        return max(lidar_to_table_corr, key=len)
 
 
 
@@ -175,7 +153,7 @@ class LinkFinder:
         pt_lidar_to_table = {}
         for i, dist_pivot in enumerate(dists_from_pivot):
             for j, dist_table in enumerate(table_dists):
-                if np.isclose(dist_pivot.sqrd_dist, dist_table.sqrd_dist, rtol=self.error_margin):
+                if isclose(dist_pivot.sqrd_dist, dist_table.sqrd_dist, rel_tol=self.error_margin):
                     pt_lidar_to_table[dist_pivot.index_pt2] = dist_table.index_pt2
                     #break #Distances are non_unique and we need to match all, so keep it commented?
         if len(pt_lidar_to_table) >= 2:
@@ -186,7 +164,7 @@ class LinkFinder:
             return pt_lidar_to_table
         return None
 
-    @cache
+    @cache 
     def _get_candidates_table_point(self, squared_dist)->tuple:
         #returns tuple of possible points in known_points from table reference for a certain squared_dist
         #Example : If distance is close to 2.5 m, it returns possible points (0, 1, 2)/(A,B,C)

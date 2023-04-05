@@ -26,8 +26,9 @@ max_lidar_dist = 3.0
 # maximum squared absolute distance between two points within the cloud points to be considerered as one same amalgame
 amalgame_squared_dist_max = 0.025 # meters
 
-amalg_min_size = 0.08 # meters
-amalg_max_size = 0.15 # meters
+amalg_min_size = 0.06 # meters # min size of detected pylones of 0.1m
+amalg_max_size = 0.41 # meters  # max calculable size for centrale pylone
+# max size for pylones is 0.1m
 amalg_max_nb_pts = 50
 
 # Fixed Points / Beacons coordinates

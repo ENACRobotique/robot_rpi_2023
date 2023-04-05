@@ -7,6 +7,9 @@ from loca_lidar.ObstacleCalc import ObstacleCalc
 from  loca_lidar.PointsDataStruct import PolarPts, AmalgamePolar
 import loca_lidar.config as config
 
+import time
+import cProfile
+
 
 ######### Test amalgame discovery from cloud points ############
 
@@ -65,7 +68,7 @@ def test_one_amalgame():
     assert np.isclose(amalgames[0]['center_polar']['angle'], 15.0)
     assert np.isclose(amalgames[0]['center_polar']['distance'], 1.0)
     filtered_amalgames = cp.filter_amalgame_size(amalgames)
-    assert filtered_amalgames.size == 0 #size is 0.18, above 0.15 so we shoudl'nt find amalgame
+    assert filtered_amalgames.size == 1 #size is 0.18, we should find amalgame
 
 def test_continuous_amalgame(): 
     #test one amalgame present at beggining and end of scan
@@ -106,7 +109,7 @@ def test_continuous_amalgame():
     amalgames = cp.amalgames_from_cloud(basic_filtered)
     filtered_amalgames = cp.filter_amalgame_size(amalgames)
     # Test filtration :
-    expected_filter = np.array([(2.5, 8.5)], dtype=PolarPts)
+    expected_filter = np.array([(2.5, 8.5), (1.5, 12.5)], dtype=PolarPts)
     assert filtered_amalgames['center_polar'] == expected_filter
     # Testing calculation of relative center : 
     tuple_amalgames = cp.amalgame_numpy_to_tuple(amalgames)
@@ -272,6 +275,7 @@ def temporary_test():
         (1.963, 251.56),
         (1.5682, 344.372),
     ) """
+    t = time.time()
     amalg = pf.GroupAmalgame(sample, False)
     lidar2table = finder.find_pattern(amalg)
     lidar_pos = pf.lidar_pos_wrt_table(
@@ -280,7 +284,7 @@ def temporary_test():
     # verify angle
     lidar_angle = pf.lidar_angle_wrt_table(
         lidar_pos, lidar2table, amalg.points, blue_beacons.points)
-
+    print(time.time()-t)
 
 def test_all_fixed_no_obstacle_1():
     # Robot origin is at x~0.5, y~1.5, theta ~32.06° left
@@ -370,6 +374,7 @@ def test_obstacle_offset():
     #assert all distances
 if __name__ == "__main__":
     # Test Amalgames detection
+    temporary_test()
     test_one_amalgame()
     test_continuous_amalgame()
     print("test_continuous_amalgame_two is broken")
@@ -378,7 +383,7 @@ if __name__ == "__main__":
     # Test obstacle avoidance
     test_cone_detection()
 
-    temporary_test()
+
     # Test Obstacle Calc through request
     test_obstacle_calc()
     # TODO : test_obstacle_offset()

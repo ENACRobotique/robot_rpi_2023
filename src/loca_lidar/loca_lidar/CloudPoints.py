@@ -18,6 +18,32 @@ def get_squared_dist_polar(pt1, pt2):
     theta2 = pt2[1]
     return r1**2 + r2**2 - 2 * r1 * r2 * cos(radians(theta2 - theta1))
 
+def fit_circle(point_set):
+    # https://github.com/tysik/obstacle_detector/blob/master/include/obstacle_detector/utilities/figure_fitting.h
+    # Conversion C++ -> Python by chatGPT
+    N = len(point_set)
+    assert N >= 3
+
+    input = np.zeros((N, 3))
+    output = np.zeros(N)
+    params = np.zeros(3)
+
+    i = 0
+    for point in point_set:
+        input[i, 0] = point[0]
+        input[i, 1] = point[1]
+        input[i, 2] = 1.0
+
+        output[i] = -(point[0]**2 + point[1]**2)
+        i += 1
+
+    # Find a_1, a_2 and a_3 coefficients from linear regression
+    params = np.linalg.pinv(input) @ output
+
+    center = (-params[0] / 2.0, -params[1] / 2.0)
+    radius = np.sqrt((params[0]**2 + params[1]**2) / 4.0 - params[2])
+
+    return center, radius
 # function to remove incoherent points from lidar scan (to pre-filter them)
 def basic_filter_pts(pts: PolarPts_t) -> PolarPts_t:
     # pt should be at least within 5 cm & 3 meters distance from lidar to be in the table
@@ -80,6 +106,8 @@ def _fill_amalgame(amalgame:AmalgamePolar_t) -> AmalgamePolar_t:
     avg_pts_angle = amalgame['list_pts']['angle'][:last_i+1].mean()
     amalgame['center_polar']['distance'] = avg_pts_dist
     amalgame['center_polar']['angle'] = avg_pts_angle
+
+    # TODO : TEST TO REMOVE ?
 
     # Calculate amalgame size :
     first_pt, last_pt = amalgame['list_pts'][0], amalgame['list_pts'][last_i]

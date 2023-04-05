@@ -39,7 +39,7 @@ OBSTACLE_CALC = ObstacleCalc(
     config.lidar_x_offset, config.lidar_y_offset, config.lidar_theta_offset)
 
 BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm), True)
-FINDER = pf.LinkFinder(BLUE_BEACONS, 0.02)
+FINDER = pf.LinkFinder(BLUE_BEACONS, 0.04, 1.5)
 
 def send_obstacles_wrt_table(obstacles: list[list[Union[float, float]]]):
     msg = lidar_pb.Obstacles()
@@ -97,6 +97,8 @@ def on_lidar_scan(topic_name, proto_msg, time):
     # TODO : rework position_filter_pts to return a mask instead of giving the work to OBSTACLE_CALC
     pos_filtered_scan = pos_filtered_scan[mask]
 
+    print(ecal_core.getmicroseconds()[1] - t)
+
     #obstacle avoidance
     obstacle_consigne = cp.obstacle_in_cone(pos_filtered_scan, last_known_moving_angle)
     send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
@@ -108,17 +110,19 @@ def on_lidar_scan(topic_name, proto_msg, time):
     send_lidar_scan(pub_filtered_pts, pos_filtered_scan['distance'], pos_filtered_scan['angle']) # Display filtered data for debugging purposes
     # amalgames don't use position filter because it removes points outside the table
     amalgames = cp.amalgames_from_cloud(basic_filtered_scan)
+    amalgames = cp.filter_amalgame_size(amalgames)
     send_lidar_scan(pub_amalgames, amalgames['center_polar']['distance'], amalgames['center_polar']['angle']) # Display filtered data for debugging purposes
 
     #position calculation
     lidar2table = {}
     #TODO : remove empty amalgames['centerpolar]
     lidar_pose = calculate_lidar_pose(amalgames['center_polar'], lidar2table)
-    pub_beacons.send(str(lidar2table))
-    send_lidar_pos(*lidar_pose)
+    if lidar_pose != (0, 0, 0):
+        pub_beacons.send(str(lidar2table))
+        send_lidar_pos(*lidar_pose)
 
     t2 = ecal_core.getmicroseconds()[1] - t
-    print(t2)
+    print("processing duration total in ms : ",t2)
 
 def calculate_lidar_pose(amalgame_scan, corr_out = {}) -> Tuple[float, float, float]:
     """_summary_
@@ -135,6 +139,11 @@ def calculate_lidar_pose(amalgame_scan, corr_out = {}) -> Tuple[float, float, fl
     lidar2table = FINDER.find_pattern(amalgame_1)
     corr_out |= lidar2table #fusion the two dicts, to make sure that outside the function the dict is not empty
 
+
+    if lidar2table == {}:
+        logging.warning("No correspondance found between lidar and table")
+        return (0, 0, 0)
+    
     # Get pose of lidar
     lidar_pos = pf.lidar_pos_wrt_table(
         lidar2table, amalgame_1.points, BLUE_BEACONS.points)
