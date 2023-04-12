@@ -20,13 +20,15 @@ cone_warning_dist = 0.5 # meters
 cone_stop_dist = 0.25 #meFbters
 
 min_lidar_dist = 0.15 # Meters (radius of the robot perimeter)
-max_lidar_dist = 3.0 
+max_lidar_dist = 3.5 # Meters (diagonal of the table is sqrt(13), rounded it) 
 
     #amalgames settings
 # maximum squared absolute distance between two points within the cloud points to be considerered as one same amalgame
 amalgame_squared_dist_max = 0.025 # meters
 
-amalg_min_size = 0.06 # meters # min size of detected pylones of 0.1m
+pylone_diam = 0.11 # diameter in meters - adding 0.01 as margin due to lidar imprecision
+pylone_radius = 0.05
+amalg_min_size = 0.05 # meters # min size of detected pylones of 0.1m
 amalg_max_size = 0.41 # meters  # max calculable size for centrale pylone
 # max size for pylones is 0.1m
 amalg_max_nb_pts = 50
@@ -36,6 +38,6 @@ known_points_in_mm = ( #(x,y) | Made from Eurobot2023_Rules_FR_FInale, Blue Side
     (-94, 50), #A (bottom left)     | (22+22+45+5) Bordure mur + Bordure Mur + Moitié + Moitié trou
     (2094, 1500), #B (middle right)
     (-94, 2950), #C (top left)
-    (1000, 3100), #D (Center of Support de Balise | Top middle)
+    (1000, 3022), #D (Center of Support de Balise | Top middle)
     (225, 3100) #E (Center of Experience | top middle left)
     ) 

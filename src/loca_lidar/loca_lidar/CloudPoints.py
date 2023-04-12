@@ -6,7 +6,8 @@ from typing import Tuple
 from loca_lidar.PointsDataStruct import PolarPts, DistPts, AmalgamePolar, AmalgameCartesian, \
     PolarPts_t, AmalgamePolar_t
 import loca_lidar.config as config
-
+from loca_lidar.SmallestEnclosingCircle import make_circle as make_enclosing_circle
+from loca_lidar.MinimumBoundingBox import MinimumBoundingBox as min_bounding_box
 def get_squared_dist_cartesian(pt1=(0,0), pt2= (0,0)): #x,y
     return (pt1[0] - pt2[0])**2 + (pt1[1] - pt2[1])**2
 
@@ -17,6 +18,19 @@ def get_squared_dist_polar(pt1, pt2):
     theta1 = pt1[1]
     theta2 = pt2[1]
     return r1**2 + r2**2 - 2 * r1 * r2 * cos(radians(theta2 - theta1))
+
+def cart2pol(x, y):
+    # returns phi in degrees
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    phi = np.rad2deg(phi)
+    phi = phi if phi >= 0 else phi + 360
+    return(rho, phi)
+
+def pol2cart(rho, phi):
+    x = rho * np.cos(phi)
+    y = rho * np.sin(phi)
+    return(x, y)
 
 def fit_circle(point_set):
     # https://github.com/tysik/obstacle_detector/blob/master/include/obstacle_detector/utilities/figure_fitting.h
@@ -98,20 +112,92 @@ def obstacle_in_cone(pts: PolarPts_t, angle: float) -> int:
     else:
         return 1 # WARNING
 
+def _calculate_intersection_circles(pt1, radius1, pt2, radius2):
+    """_summary_
 
+    Args:
+        pt1 (_type_): _description_
+        pt2 (_type_): _description_
+
+    Returns:
+        Tuple : ((x1, y1), (x2, y2))
+    """
+    # https://stackoverflow.com/questions/3349125/circle-circle-intersection-points
+    d = np.sqrt((pt1[0] - pt2[0])**2 + (pt1[1] - pt2[1])**2)
+    a = (radius1**2 - radius2**2 + d**2) / (2 * d)
+    h = np.sqrt(radius1**2 - a**2)
+    x3 = pt1[0] + a * (pt2[0] - pt1[0]) / d
+    y3 = pt1[1] + a * (pt2[1] - pt1[1]) / d
+    x4a = x3 + h * (pt2[1] - pt1[1]) / d
+    x4b = x3 - h * (pt2[1] - pt1[1]) / d
+    y4a = y3 - h * (pt2[0] - pt1[0]) / d
+    y4b = y3 + h * (pt2[0] - pt1[0]) / d
+    return ((x4a, y4a), (x4b, y4b))
+    
 def _fill_amalgame(amalgame:AmalgamePolar_t) -> AmalgamePolar_t:
     last_i = np.max(np.nonzero(amalgame['list_pts']['distance']))
+    pts = amalgame['list_pts'][:last_i+1]
+
+    # Calculate amalgame size :
+    first_pt, last_pt = amalgame['list_pts'][0], amalgame['list_pts'][last_i]
+    amalgame['size'] = np.sqrt(get_squared_dist_polar(first_pt, last_pt))
+
     # Calculate amalgame relative center 
     avg_pts_dist = amalgame['list_pts']['distance'][:last_i+1].mean()
     avg_pts_angle = amalgame['list_pts']['angle'][:last_i+1].mean()
     amalgame['center_polar']['distance'] = avg_pts_dist
     amalgame['center_polar']['angle'] = avg_pts_angle
 
-    # TODO : TEST TO REMOVE ?
+    # if size might be a pylone, more than 3 points => Find center of a circle through fit_circle 
+    if amalgame['size'] <= config.pylone_diam and amalgame['list_pts'][:last_i+1].size >= 3:
+        # calculate the center of pylone by finding the furthest point 
+        # made from the intersection of circle of pylone radius from the two extremities
+        first_pt_cart = tuple(pol2cart(pts[0][0], np.deg2rad(pts[0][1])))
+        second_pt_cart = tuple(pol2cart(pts[-1][0], np.deg2rad(pts[-1][1])))
+        possible_center_cart = _calculate_intersection_circles(first_pt_cart, config.pylone_radius, 
+                                        second_pt_cart, config.pylone_radius)
+        center_pol_1 = cart2pol(possible_center_cart[0][0], possible_center_cart[0][1])
+        center_pol_2 = cart2pol(possible_center_cart[1][0], possible_center_cart[1][1])
+        print(center_pol_1, center_pol_2)
+        # if no circle intersection : find half of line segment between first and last point
+        if center_pol_1[0] == None or center_pol_2[0] == None:
+            amalgame['center_polar']['distance'] = (pts[0]['distance'] + pts[-1]['distance'] )/2
+            amalgame['center_polar']['angle'] = (pts[0]['angle'] + pts[-1]['angle'] )/2
+        # if center_pol_1 is the furtest from lidar
+        elif center_pol_1[0] >= center_pol_2[0]:
+            amalgame['center_polar']['distance'] = center_pol_1[0]
+            amalgame['center_polar']['angle'] = center_pol_1[1]
+        elif center_pol_2[0] != None:
+            amalgame['center_polar']['distance'] = center_pol_2[0]
+            amalgame['center_polar']['angle'] = center_pol_2[1]
 
-    # Calculate amalgame size :
-    first_pt, last_pt = amalgame['list_pts'][0], amalgame['list_pts'][last_i]
-    amalgame['size'] = np.sqrt(get_squared_dist_polar(first_pt, last_pt))
+        # x,y, radius = make_enclosing_circle(cartesian_points)
+        # center_polar = cart2pol(x, y)
+        # amalgame['center_polar']['distance'] = center_polar[0]
+        # amalgame['center_polar']['angle'] = center_polar[1]
+        # center, radius = fit_circle(cartesian_points)
+        # center_polar = cart2pol(center[0], center[1])
+        # print(center, radius)
+        # print(pts)
+
+        # if really incorrect fit(difference of more than 0.06 meters)
+        # use the averaged to prevent fucked up center of amalgame (sometimes it calculates the lidar as the center for the obstacle)
+        # if abs(center_polar[0] - avg_pts_dist) <= 0.06:
+        #     amalgame['center_polar']['distance'] = center_polar[0]
+        #     amalgame['center_polar']['angle'] = center_polar[1]
+        # print(center_polar, radius)
+    # print(pts)
+    # print(amalgame['size'])
+    
+    if amalgame['size'] >= config.pylone_diam and amalgame['list_pts'][:last_i+1].size >= 3:
+        closest_pt = pts[np.argmin(pts['distance'])]
+        closest_dist = closest_pt['distance']
+
+        amalgame['center_polar']['distance'] = closest_pt['distance']
+        amalgame['center_polar']['angle'] = closest_pt['angle']
+    
+    print(pts)
+    print(amalgame['center_polar'], amalgame['size'])
     return amalgame
 
 def _fusion_amalgames(amalgame1:AmalgamePolar_t, amalgame2:AmalgamePolar_t, angle_norm = True) -> AmalgamePolar_t:

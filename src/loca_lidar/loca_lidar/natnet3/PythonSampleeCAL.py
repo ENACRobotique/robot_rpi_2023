@@ -11,10 +11,16 @@ publishers = {}
 def send_rigibody(id, x, y, theta):
   if id not in publishers:
     publishers[id] = ProtoPublisher(f"{id}_pos", robot_pb.Position)
-  publishers[id].send(robot_pb.Position(x=x, y=y, theta=theta),
-                      time=ecal_core.getmicroseconds())
+  print(x,y, theta)
+  msg = robot_pb.Position()
+  msg.x = float(x)
+  msg.y = float(y)
+  msg.theta = float(theta)
+  publishers[id].send(msg, 
+                      time=ecal_core.getmicroseconds()[1])
 
 def receiveRigidBodyFrame( rblist, stamp ):
+  print(stamp)
   for rb in rblist:
     id, pos, rot, valid = rb
     if valid:

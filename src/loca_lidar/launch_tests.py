@@ -373,6 +373,10 @@ def test_obstacle_offset():
 #def test_cloud_points():
     #assert all distances
 if __name__ == "__main__":
+    print(cp.make_enclosing_circle(
+         [(0, 0.2), (0,0), (-0.1, 0.2), (-0.2, 0.2), (-0.15, 0.2), (0, 0.14), (-0.1, 0.09)]
+        ))
+
     # Test Amalgames detection
     temporary_test()
     test_one_amalgame()

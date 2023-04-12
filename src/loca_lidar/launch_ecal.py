@@ -39,7 +39,7 @@ OBSTACLE_CALC = ObstacleCalc(
     config.lidar_x_offset, config.lidar_y_offset, config.lidar_theta_offset)
 
 BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm), True)
-FINDER = pf.LinkFinder(BLUE_BEACONS, 0.04, 1.5)
+FINDER = pf.LinkFinder(BLUE_BEACONS, 0.06, 1.5)
 
 def send_obstacles_wrt_table(obstacles: list[list[Union[float, float]]]):
     msg = lidar_pb.Obstacles()
@@ -58,6 +58,7 @@ def send_stop_cons(closest_distance: float, action: int):
 
 def send_lidar_scan(pub, distances, angles):
     lidar_msg = lidar_pb.Lidar()
+    lidar_msg.angle_increment = float(-1.0) # prevent empty message when sending empty lidar scan (eg no obstacle found)
     lidar_msg.angles.extend(angles)
     lidar_msg.distances.extend(distances)
     pub.send(lidar_msg, ecal_core.getmicroseconds()[1])
