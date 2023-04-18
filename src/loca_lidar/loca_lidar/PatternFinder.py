@@ -8,6 +8,7 @@ import time
 from typing import Tuple, NamedTuple
 import logging
 
+from loca_lidar.PointsDataStruct import hashabledict
 import loca_lidar.CloudPoints as cp
 
 DistPts = NamedTuple('DistPts', [
@@ -120,9 +121,10 @@ class LinkFinder:
         pts = amalg.points
         if not amalg.cartesian:
             pts = [polar_lidar_to_cartesian(p) for p in pts]
-        valid_triangles = [{} for _ in range(len(lidar_to_table_corr)) ] # avoid having same dict duplicated
+        valid_corr = set() # correspondances that seem valid using angle calc # [{} for _ in range(len(lidar_to_table_corr)) ] # avoid having same dict duplicated
         # check all possible correspondances
         for corr_i, corr in enumerate(lidar_to_table_corr):
+            cur_valid_corr = hashabledict() # {lidar_index: table_index} hashable dict in order to eliminate the same correspondances that appear multiple times
             pass
             for triangle in combinations(corr, 3):
                 # check if the angle of the triangle is the same as the one in the table
@@ -137,12 +139,16 @@ class LinkFinder:
                 if (isclose(table_angle1, lidar_angle1, abs_tol=self.angle_err_marg) 
                     and isclose(table_angle2, lidar_angle2, abs_tol=self.angle_err_marg)):
                     # the triangle is valid (in terms of angles)
-                    valid_triangles[corr_i][triangle[0]] = table1_i
-                    valid_triangles[corr_i][triangle[1]] = table2_i
-                    valid_triangles[corr_i][triangle[2]] = table3_i
+                    cur_valid_corr[triangle[0]] = table1_i
+                    cur_valid_corr[triangle[1]] = table2_i
+                    cur_valid_corr[triangle[2]] = table3_i
+            valid_corr.add(cur_valid_corr)
         
-        print(valid_triangles)
-        return max(valid_triangles, key=len)
+        # returns the correspondances with the maximum amount of beacons
+        max_len = len(max(valid_corr, key=len))
+        if max_len == 0:
+            return None
+        return set(x for x in valid_corr if len(x) == max_len) # max(valid_corr, key=len)
 
 
 
@@ -194,29 +200,6 @@ class LinkFinder:
                 distances_of_pivot.append(DistPts(pt_dist[1], pt_dist[0], pt_dist[2]))  #'sort' the array, so that the order is for each element always (pt_index, other_pt, dist) and not (other_pt, pt_index, dist)
 
         return distances_of_pivot
-    
-    @staticmethod
-    def _calculate_intersection_circles(pt1, radius1, pt2, radius2):
-        """_summary_
-
-        Args:
-            pt1 (_type_): _description_
-            pt2 (_type_): _description_
-
-        Returns:
-            Tuple : ((x1, y1), (x2, y2))
-        """
-        # https://stackoverflow.com/questions/3349125/circle-circle-intersection-points
-        d = np.sqrt((pt1[0] - pt2[0])**2 + (pt1[1] - pt2[1])**2)
-        a = (radius1**2 - radius2**2 + d**2) / (2 * d)
-        h = np.sqrt(radius1**2 - a**2)
-        x3 = pt1[0] + a * (pt2[0] - pt1[0]) / d
-        y3 = pt1[1] + a * (pt2[1] - pt1[1]) / d
-        x4a = x3 + h * (pt2[1] - pt1[1]) / d
-        x4b = x3 - h * (pt2[1] - pt1[1]) / d
-        y4a = y3 - h * (pt2[0] - pt1[0]) / d
-        y4b = y3 + h * (pt2[0] - pt1[0]) / d
-        return ((x4a, y4a), (x4b, y4b))
     
     @staticmethod
     def _get_rel_pos(pt1, pt2, pt3) -> int:

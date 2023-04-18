@@ -19,8 +19,28 @@
             <start_stop>
                 <target>DESKTOP-9P09591</target>
                 <runner_id>1</runner_id>
-                <algo>C:\Users\Jonathan\Documents\robot_rpi_2023\src\loca_lidar\launch_ecal.py</algo>
+                <algo>C:\Users\Jonathan\Documents\robot_rpi_2023\src\loca_lidar\launch_loca_ecal.py</algo>
                 <working_dir>C:\Users\Jonathan\Documents\robot_rpi_2023\src\loca_lidar</working_dir>
+                <launch_order>0</launch_order>
+                <timeout>0</timeout>
+                <visibility>normal</visibility>
+                <additional_cmd_line_args></additional_cmd_line_args>
+                <do_monitor>1</do_monitor>
+            </start_stop>
+            <monitoring>
+                <restart_by_beaconing>0</restart_by_beaconing>
+                <max_beacon_response_time>0</max_beacon_response_time>
+                <restart_by_severity>0</restart_by_severity>
+                <restart_below_severity>Critical</restart_below_severity>
+                <restart_below_severity_level>Level5</restart_below_severity_level>
+            </monitoring>
+        </task>
+        <task id="2" name="pos_fusion launch_ecal">
+            <start_stop>
+                <target>DESKTOP-9P09591</target>
+                <runner_id>1</runner_id>
+                <algo>C:\Users\Jonathan\Documents\robot_rpi_2023\src\position_fusion\launch_ecal.py</algo>
+                <working_dir>C:\Users\Jonathan\Documents\robot_rpi_2023\src\position_fusion</working_dir>
                 <launch_order>0</launch_order>
                 <timeout>0</timeout>
                 <visibility>normal</visibility>

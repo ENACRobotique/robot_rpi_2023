@@ -33,11 +33,13 @@ amalg_max_size = 0.41 # meters  # max calculable size for centrale pylone
 # max size for pylones is 0.1m
 amalg_max_nb_pts = 50
 
+odometry_tolerance = 0.1 # meters tolerance of odometry from robot motor, used to filter the possible position according to lidar
+
 # Fixed Points / Beacons coordinates
 known_points_in_mm = ( #(x,y) | Made from Eurobot2023_Rules_FR_FInale, Blue Side
     (-94, 50), #A (bottom left)     | (22+22+45+5) Bordure mur + Bordure Mur + Moitié + Moitié trou
     (2094, 1500), #B (middle right)
     (-94, 2950), #C (top left)
     (1000, 3022), #D (Center of Support de Balise | Top middle)
-    (225, 3100) #E (Center of Experience | top middle left)
+    # (225, 3100) #E (Center of Experience | top middle left)
     ) 

@@ -22,7 +22,7 @@ BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.kno
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
 sub_angle = ProtoSubscriber("robot_moving_angle", robot_pb.Travel)
-sub_robot_pos = ProtoSubscriber("robot_pos", robot_pb.Position)
+sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
 
 pub_stop_cons = StringPublisher("stop_cons") # pub_stop_cons = ProtoPublisher("stop_cons", lidar_pb.Action)
@@ -98,8 +98,6 @@ def on_lidar_scan(topic_name, proto_msg, time):
     # TODO : rework position_filter_pts to return a mask instead of giving the work to OBSTACLE_CALC
     pos_filtered_scan = pos_filtered_scan[mask]
 
-    print(ecal_core.getmicroseconds()[1] - t)
-
     #obstacle avoidance
     obstacle_consigne = cp.obstacle_in_cone(pos_filtered_scan, last_known_moving_angle)
     send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
@@ -117,7 +115,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
     #position calculation
     lidar2table = {}
     #TODO : remove empty amalgames['centerpolar]
-    lidar_pose = calculate_lidar_pose(amalgames['center_polar'], lidar2table)
+    lidar_pose = calculate_lidar_pose(amalgames['center_polar'], robot_pose, lidar2table)
     if lidar_pose != (0, 0, 0):
         pub_beacons.send(str(lidar2table))
         send_lidar_pos(*lidar_pose)
@@ -125,7 +123,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
     t2 = ecal_core.getmicroseconds()[1] - t
     print("processing duration total in ms : ",t2)
 
-def calculate_lidar_pose(amalgame_scan, corr_out = {}) -> Tuple[float, float, float]:
+def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out = {}) -> Tuple[float, float, float]:
     """_summary_
 
     Args:
@@ -135,22 +133,40 @@ def calculate_lidar_pose(amalgame_scan, corr_out = {}) -> Tuple[float, float, fl
     Returns:
         Tuple[float, float, float]: _description_
     """
-    #Find correspondance between lidar and table
+    #Find correspondances between lidar and table
     amalgame_1 = pf.GroupAmalgame(amalgame_scan, False)
-    lidar2table = FINDER.find_pattern(amalgame_1)
-    corr_out |= lidar2table #fusion the two dicts, to make sure that outside the function the dict is not empty
+    lidar2table_set = FINDER.find_pattern(amalgame_1)
 
-
-    if lidar2table == {}:
+    if lidar2table_set == None:
         logging.warning("No correspondance found between lidar and table")
         return (0, 0, 0)
-    
-    # Get pose of lidar
-    lidar_pos = pf.lidar_pos_wrt_table(
-        lidar2table, amalgame_1.points, BLUE_BEACONS.points)
-    lidar_angle = pf.lidar_angle_wrt_table(
-        lidar_pos, lidar2table, amalgame_1.points, BLUE_BEACONS.points)
-    return (lidar_pos[0], lidar_pos[1], lidar_angle)
+
+    poses = []
+    best_pose = ()
+    for i, corr in enumerate(lidar2table_set):
+        lidar_pos = pf.lidar_pos_wrt_table(
+            corr, amalgame_1.points, BLUE_BEACONS.points)
+        lidar_angle = pf.lidar_angle_wrt_table(
+            lidar_pos, corr, amalgame_1.points, BLUE_BEACONS.points)
+        if len(lidar2table_set) == 1: # trivial case
+            best_pose = (lidar_pos[0], lidar_pos[1], lidar_angle)
+            corr_out |= corr #fusion the two dicts, to make sure that outside the function the dict is not empty
+            break
+        poses.append((lidar_pos[0], lidar_pos[1], lidar_angle))
+
+    if poses != []: # if multiple poses found, select one of them      
+        print("lidar2table_set", lidar2table_set)
+        #eliminate poses outside the tables
+        poses = [pose for pose in poses if 
+                 pose[0] > config.table_x_min and pose[0] < config.table_x_max 
+                 and pose[1] > config.table_y_min and pose[1] < config.table_y_max]
+        # take the pose closest to odometry pose
+        closest_pt_index = poses.index(min(poses, key=lambda x: cp.get_squared_dist_cartesian(robot_pose[:2], x)))
+        best_pose = poses[closest_pt_index]
+        corr_out |= list(lidar2table_set)[closest_pt_index] #fusion the two dicts, to make sure that outside the function the dict is not empty (set is not subscriptable so convert to list)
+        print(poses)
+
+    return best_pose
    
 if __name__ == "__main__":
 
@@ -158,6 +174,6 @@ if __name__ == "__main__":
     sub_lidar.set_callback(on_lidar_scan)
 
     while ecal_core.ok():
-        time.sleep(0.5)
+        time.sleep(0.01)
 
     ecal_core.finalize()

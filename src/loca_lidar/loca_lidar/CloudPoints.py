@@ -158,7 +158,6 @@ def _fill_amalgame(amalgame:AmalgamePolar_t) -> AmalgamePolar_t:
                                         second_pt_cart, config.pylone_radius)
         center_pol_1 = cart2pol(possible_center_cart[0][0], possible_center_cart[0][1])
         center_pol_2 = cart2pol(possible_center_cart[1][0], possible_center_cart[1][1])
-        print(center_pol_1, center_pol_2)
         # if no circle intersection : find half of line segment between first and last point
         if center_pol_1[0] == None or center_pol_2[0] == None:
             amalgame['center_polar']['distance'] = (pts[0]['distance'] + pts[-1]['distance'] )/2
@@ -170,24 +169,6 @@ def _fill_amalgame(amalgame:AmalgamePolar_t) -> AmalgamePolar_t:
         elif center_pol_2[0] != None:
             amalgame['center_polar']['distance'] = center_pol_2[0]
             amalgame['center_polar']['angle'] = center_pol_2[1]
-
-        # x,y, radius = make_enclosing_circle(cartesian_points)
-        # center_polar = cart2pol(x, y)
-        # amalgame['center_polar']['distance'] = center_polar[0]
-        # amalgame['center_polar']['angle'] = center_polar[1]
-        # center, radius = fit_circle(cartesian_points)
-        # center_polar = cart2pol(center[0], center[1])
-        # print(center, radius)
-        # print(pts)
-
-        # if really incorrect fit(difference of more than 0.06 meters)
-        # use the averaged to prevent fucked up center of amalgame (sometimes it calculates the lidar as the center for the obstacle)
-        # if abs(center_polar[0] - avg_pts_dist) <= 0.06:
-        #     amalgame['center_polar']['distance'] = center_polar[0]
-        #     amalgame['center_polar']['angle'] = center_polar[1]
-        # print(center_polar, radius)
-    # print(pts)
-    # print(amalgame['size'])
     
     if amalgame['size'] >= config.pylone_diam and amalgame['list_pts'][:last_i+1].size >= 3:
         closest_pt = pts[np.argmin(pts['distance'])]
@@ -196,8 +177,6 @@ def _fill_amalgame(amalgame:AmalgamePolar_t) -> AmalgamePolar_t:
         amalgame['center_polar']['distance'] = closest_pt['distance']
         amalgame['center_polar']['angle'] = closest_pt['angle']
     
-    print(pts)
-    print(amalgame['center_polar'], amalgame['size'])
     return amalgame
 
 def _fusion_amalgames(amalgame1:AmalgamePolar_t, amalgame2:AmalgamePolar_t, angle_norm = True) -> AmalgamePolar_t:
@@ -253,7 +232,12 @@ def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
             else: #we start another amalgame from the same index 
                 amalgames[amalg_i] = np.zeros((1, ))
             amalg_pt_count = 1
-            amalgames[amalg_i]['list_pts'][0] = pt
+            try:
+                amalgames[amalg_i]['list_pts'][0] = pt
+            except IndexError:
+                print("IndexError : too many amalgames detected (>30). Skipping the rest of the scan"	)
+                print("last point - unprocessed ", pt)
+                break
             continue
 
         # check if point could be part of the same amalgame as pt, and add it if so

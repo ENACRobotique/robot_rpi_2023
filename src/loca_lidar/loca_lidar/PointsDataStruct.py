@@ -3,6 +3,11 @@ import numpy as np
 import numpy.typing as npt
 import loca_lidar.config as config
 
+class hashabledict(dict):
+    # https://stackoverflow.com/questions/1151658/python-hashable-dicts
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+    
 
 CartesianPts = np.dtype([
         ('x', np.float64),

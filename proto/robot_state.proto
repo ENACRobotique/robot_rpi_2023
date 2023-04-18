@@ -25,6 +25,14 @@ message Position {
     float theta = 3;
 }
 
+message SetState {
+    int32 position = 1; // Position of the "plateau"
+    int32 number = 2; // Number of the action, value to display, ...
+}
+
+message Bool {
+    bool value = 1;
+}
 //
 //message Speed {
 //    float vx = 1;
@@ -32,6 +40,7 @@ message Position {
 //    float vtheta = 3;
 //}
 //
+
 //message Odom {
 //    Position position = 1;
 //    Speed speed = 2;

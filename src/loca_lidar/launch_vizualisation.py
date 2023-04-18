@@ -117,7 +117,7 @@ if __name__ == "__main__":
         LidarCloudDisplay(fig, 'amalgames', 'b', 0.5),
     )
     corr_disp = CorrespondanceDisplay(cloud_pts[2])
-    zoom_butt = Zoom(fig, 3.1)
+    zoom_butt = Zoom(fig, 3.5)
 
     # Init matplotlib plot
     plt.show(block=False)
