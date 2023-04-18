@@ -26,13 +26,21 @@ class messageARecevoir(Enum):
 
     MESSAGE_POUR_LOG="M"
 
-PORT_NAME = "/tty/ACM0"
+PORT_NAME = "/dev/ttyACM1"
 class Radio:
     def __init__(self):
         self.PROTOCOL_VERSION =1
-        self.listen = False
+        self.continueListening = False
         self.serialObject = serial.Serial (port = PORT_NAME, baudrate=115200, timeout =1)
         self.radioState = radioStates.WAITING_FIRST_BYTE
+        self.listeningThread = threading.Thread(target=self.listen)
+
+    def startListening (self):
+        self.continueListening =True
+        self.listeningThread.start()
+
+    def stopListening (self):
+        self.listen = False
 
     def __repr__(self):
         return "Radio haut niveau"
@@ -43,22 +51,24 @@ class Radio:
                 (x,y,theta,chksum)=struct.unpack("fffB",byteArray)
                 sum = self.PROTOCOL_VERSION + ord('p')
                 for byte in byteArray[:-1]:
-                    sum+=int.from_bytes(byte,byteorder='big')
+                    sum+=byte
                 if sum%256 == chksum:
                     print ("success : Pos ({}, {}, {})\n\n".format(x,y,theta))
                     #TODO do something with message reception
                 else:
                     print("FAILED CHECKSUM : MessageError")
+                    print(b'p'+byteArray)
             case messageARecevoir.REPORT_VITESSE:
                 (Vx,Vy,Vtheta,chksum)=struct.unpack("fffB",byteArray)
                 sum = self.PROTOCOL_VERSION + ord('v')
                 for byte in byteArray[:-1]:
-                    sum+=int.from_bytes(byte,byteorder='big')
+                    sum+=byte
                 if sum%256 == chksum:
                     print ("success : Speed ({}, {}, {})\n\n".format(Vx,Vy,Vtheta))
                     #TODO do something with message reception
                 else:
                     print("FAILED CHECKSUM : MessageError")
+                    print(b'v'+byteArray)
             case messageARecevoir.DEBUT_MATCH:
                 (chksum,)=struct.unpack("B",byteArray)
                 if chksum == ord('T')+self.PROTOCOL_VERSION:
@@ -66,23 +76,26 @@ class Radio:
                     #TODO do something with message reception
                 else:
                     print("FAILED CHECKSUM : MessageError")
+                    print(b'T'+byteArray)
             case messageARecevoir.CONFIRMATION_ACTION:
                 (num,chksum)=struct.unpack("BB",byteArray)
-                sum = self.PROTOCOL_VERSION + ord('d') +int.from_bytes(byteArray[0],byteorder="big")
+                sum = self.PROTOCOL_VERSION + ord('d') +byteArray[0]
                 if sum%256 == chksum:
                     print ("success : Action Confirmed : {}\n\n".format(num))
                     #TODO do something with message reception
                 else:
                     print("FAILED CHECKSUM : MessageError")
+                    print(b'd'+byteArray)
 
 
     def listen(self):
+        print("Starting Listening")
         numberOfExpectedBytes =0
         typeReçu =None
         stringMessage =""
         c=None
-        while self.listen:
-            sleep(0.000010)
+        while self.continueListening:
+            sleep(0.0002)#pour éviter de bloquer le processeur
             match self.radioState:
                 case radioStates.WAITING_FIRST_BYTE:
                     while (c!='\n') and (self.serialObject.in_waiting !=0):
@@ -97,23 +110,23 @@ class Radio:
                     if self.serialObject.in_waiting !=0:
                         c=chr(struct.unpack("B",self.serialObject.read(1))[0])
                         match c:
-                            case messageARecevoir.REPORT_POSITION:
+                            case messageARecevoir.REPORT_POSITION.value:
                                 numberOfExpectedBytes=13#3 floats(4o) + 1o checksum
                                 typeReçu = messageARecevoir.REPORT_POSITION
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
-                            case messageARecevoir.REPORT_VITESSE:
+                            case messageARecevoir.REPORT_VITESSE.value:
                                 numberOfExpectedBytes=13#3 floats(4o) + 1o checksum
                                 typeReçu = messageARecevoir.REPORT_VITESSE
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
-                            case messageARecevoir.DEBUT_MATCH:
+                            case messageARecevoir.DEBUT_MATCH.value:
                                 numberOfExpectedBytes=1#1o checksum
                                 typeReçu = messageARecevoir.DEBUT_MATCH
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
-                            case messageARecevoir.CONFIRMATION_ACTION:
+                            case messageARecevoir.CONFIRMATION_ACTION.value:
                                 numberOfExpectedBytes=2#1o numAction + 1o checksum
                                 typeReçu = messageARecevoir.CONFIRMATION_ACTION
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
-                            case messageARecevoir.MESSAGE_POUR_LOG:
+                            case messageARecevoir.MESSAGE_POUR_LOG.value:
                                 self.radioState=radioStates.WAITING_REST_OF_STRING_MESSAGE
                                 stringMessage=""
 
@@ -121,12 +134,22 @@ class Radio:
                                 pass
                             case _:
                                 self.radioState=radioStates.WAITING_FIRST_BYTE
-                case radioStates.WAITING_REST_OF_STRING_MESSAGE:
+                case radioStates.WAITING_REST_OF_NORMAL_MESSAGE:
                     if self.serialObject.in_waiting >= numberOfExpectedBytes:
                         self.verifyAndExec(self.serialObject.read(numberOfExpectedBytes),typeReçu)
+                        self.radioState=radioStates.WAITING_FIRST_BYTE
+                    
                 case radioStates.WAITING_REST_OF_STRING_MESSAGE:
                     while (c!='\n') and (self.serialObject.in_waiting !=0):
                         c=chr(struct.unpack("B",self.serialObject.read(1))[0])
                         stringMessage+=c
-                    tStampString = temps_deb(time())
-                    print(tStampString+"\t"+stringMessage)
+                    if (c=='\n'):
+                        tStampString = temps_deb(time())
+                        print(tStampString+"\t"+stringMessage)
+                        #TODO : store that print in a log file
+                        self.radioState=radioStates.WAITING_FIRST_BYTE
+if __name__=="__main__":
+    radio=Radio()
+    radio.startListening()
+    while True:
+        pass
