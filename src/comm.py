@@ -11,6 +11,8 @@ def temps_deb (timestamp):
     itm = gmtime(timestamp+2*3600)
     return '{:04d}/{:02d}/{:02d}\t{:02d}:{:02d}:{:02d}'.format (itm.tm_year, itm.tm_mon,
             itm.tm_mday, itm.tm_hour, itm.tm_min, itm.tm_sec) +'{:.3}'.format (timestamp%1)[1:]
+
+
 class radioStates(Enum):
     WAITING_FIRST_BYTE=0
     BETWEEN_START_BYTES=1
@@ -26,7 +28,7 @@ class messageARecevoir(Enum):
 
     MESSAGE_POUR_LOG="M"
 
-PORT_NAME = "/dev/ttyACM1"
+PORT_NAME = "/dev/ttyACM0"
 class Radio:
     def __init__(self):
         self.PROTOCOL_VERSION =1
@@ -34,6 +36,8 @@ class Radio:
         self.serialObject = serial.Serial (port = PORT_NAME, baudrate=115200, timeout =1)
         self.radioState = radioStates.WAITING_FIRST_BYTE
         self.listeningThread = threading.Thread(target=self.listen)
+    
+    
 
     def startListening (self):
         self.continueListening =True
@@ -45,6 +49,106 @@ class Radio:
     def __repr__(self):
         return "Radio haut niveau"
     
+    def setTargetPosition (self, x, y, theta):
+        """Sends a position command to the low level program.
+        x, y, and theta are floats.
+        x and y are in meters
+        theta is in radians"""
+        message = b'p'+struct.pack("fff",x,y,theta)
+        self.sendMessage(message)
+    
+    def resetPosition (self, x, y, theta):
+        """Resets the position of the low level program.
+        x, y, and theta are floats.
+        x and y are in meters
+        theta is in radians"""
+        message = b'r'+struct.pack("fff",x,y,theta)
+        self.sendMessage(message)
+    
+    def sendStopSignal (self):
+        """Sends a command to stop the robot."""
+        self.sendMessage(b'S')
+
+    def sendSlowDownSignal (self):
+        """Sends a command to slow the robot down."""
+        self.sendMessage(b's')
+        
+    def sendResumeSignal (self):
+        """Sends a command to make the robot ignore the last stop or slow command."""
+        self.sendmessage(b'R')
+
+    def sendCostumeSignal (self):
+        """Sends a command that will activate the end of match sequence for the robot."""
+        self.sendMessage(b'D')
+    
+    def sendClawSignal (self,valueClaws):
+        """Send a command to the claws of the robot
+        valueClaws is one char.
+        Accepted values are :
+            'o' : open
+            'g' : grab
+            'c' : closed
+        """
+        if valueClaws in "ogc":
+            message = b'g'+struct.pack("c",valueClaws)
+            self.sendMessage(message)
+        else :
+            print("Invalid value for claws : {}".format(valueClaws))
+
+    def sendTurbineSignal(self,valueTurbine):
+        """Send a command to turn the turbine on or off.
+        valueTurbine is a char
+        Accepted values are :
+            'a' : allumé
+            'e" : éteint
+        /!\ Deprecated AF, there's no turbine on robot. That code will be removed at the next update
+        """
+        if valueTurbine in "ae":
+            message = b't'+struct.pack("c",valueTurbine)
+            self.send(message)
+        else :
+            print("Invalid value for turbine : {}".format(valueTurbine))
+
+    def sendTobogganSignal (self, valueToboggan):
+        """Send a command to turn the slide on or off.
+        valueToboggan is a char
+        Accepted values are :
+            'r' : rentré
+            's" : sorti
+        """
+        if valueToboggan in "rs":
+            message = b't'+struct.pack("c",valueToboggan)
+            self.sendMessage(message)
+        else :
+            print("Invalid value for toboggan : {}".format(valueToboggan))
+
+    def sendPointDisplay (self,pointNumber):
+        """Sends a number to be displayed by the display
+        pointNumber should be an integer smaller than 255
+        """
+        message =b'P'+struct.pack("B",pointNumber%256)
+        self.sendMessage(message)
+
+    def sendStoreDiscsInsideSignal(self,positionToStore,numSequence):
+        """Sends a signal to ask the robot to pick disks and store them.
+        The robot will tell when it is done by sending an ack signal.
+            postionToStore to store is an int. Accepted values are : 1, 3 and 5
+            
+            numSequence is an arbitrary int to increment"""
+        if positionToStore in [1,3,5]:
+            message=b'a'+struct.pack("BB",positionToStore,numSequence)
+            self.sendMessage(message)
+    
+    def sendPicDiscFromStorage(self,positionInStore,numSequence):
+        """Sends a signal to ask the robot to pick a disk in storage and place it on the table.
+        The robot will tell when it is done by sending an ack signal.
+            postionInStore to store is an int. Accepted values are : 1, 3 and 5
+
+            numSequence is an arbitrary int to increment"""
+        if positionInStore in [1,3,5]:
+            message=b'd'+struct.pack("BB",positionInStore,numSequence)
+            self.sendMessage(message)
+
     def verifyAndExec(self,byteArray,typeReçu):
         match typeReçu:
             case messageARecevoir.REPORT_POSITION:
@@ -53,8 +157,9 @@ class Radio:
                 for byte in byteArray[:-1]:
                     sum+=byte
                 if sum%256 == chksum:
-                    print ("success : Pos ({}, {}, {})\n\n".format(x,y,theta))
+                    #print ("success : Pos ({}, {}, {})\n\n".format(x,y,theta))
                     #TODO do something with message reception
+                    pass
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'p'+byteArray)
@@ -64,8 +169,9 @@ class Radio:
                 for byte in byteArray[:-1]:
                     sum+=byte
                 if sum%256 == chksum:
-                    print ("success : Speed ({}, {}, {})\n\n".format(Vx,Vy,Vtheta))
+                    #print ("success : Speed ({}, {}, {})\n\n".format(Vx,Vy,Vtheta))
                     #TODO do something with message reception
+                    pass
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'v'+byteArray)
@@ -87,12 +193,18 @@ class Radio:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'd'+byteArray)
 
+    def sendMessage(self,dataByteString):
+        sum = self.PROTOCOL_VERSION
+        for i in dataByteString:
+            sum+=i
+        message=b"\n\n"+dataByteString+struct.pack("B",sum%256)
+        self.serialObject.write(message)
 
     def listen(self):
         print("Starting Listening")
         numberOfExpectedBytes =0
         typeReçu =None
-        stringMessage =""
+        bytesMessage =b""
         c=None
         while self.continueListening:
             sleep(0.0002)#pour éviter de bloquer le processeur
@@ -128,7 +240,7 @@ class Radio:
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
                             case messageARecevoir.MESSAGE_POUR_LOG.value:
                                 self.radioState=radioStates.WAITING_REST_OF_STRING_MESSAGE
-                                stringMessage=""
+                                bytesMessage =b''
 
                             case '\n':
                                 pass
@@ -140,16 +252,23 @@ class Radio:
                         self.radioState=radioStates.WAITING_FIRST_BYTE
                     
                 case radioStates.WAITING_REST_OF_STRING_MESSAGE:
-                    while (c!='\n') and (self.serialObject.in_waiting !=0):
-                        c=chr(struct.unpack("B",self.serialObject.read(1))[0])
-                        stringMessage+=c
-                    if (c=='\n'):
+                    while (c!=b'\n') and (self.serialObject.in_waiting !=0):
+                        c=self.serialObject.read(1)
+                        bytesMessage+=c
+                    if (c==b'\n'):
                         tStampString = temps_deb(time())
-                        print(tStampString+"\t"+stringMessage)
+                        try :
+                            print(tStampString+"\t"+bytesMessage.decode())
+                        except Exception:
+                            print(bytesMessage)
                         #TODO : store that print in a log file
                         self.radioState=radioStates.WAITING_FIRST_BYTE
 if __name__=="__main__":
     radio=Radio()
     radio.startListening()
+    i=1
     while True:
-        pass
+        sleep(0.2)
+        radio.sendPointDisplay(i)
+        print("send "+str(i%256))
+        i+=1
