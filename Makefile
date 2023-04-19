@@ -1,22 +1,12 @@
-g2sCompileFiles := strategy.py
-buildRemoveFiles := strategy.dot
-
 build: clean
 	@echo "[MAKE] Building"
 	@echo "[MAKE] Copying files"
 	@cp src _build/ -r
-	@echo "[MAKE] Building strategy"
-	@for file in $(g2sCompileFiles); do \
-		echo "[MAKE] \\ Compiling $$file"; \
-		`cd _build && g2sCompiler $$file -o $$file > $$file.make.log`; \
-	done
-	@echo "[MAKE] Removing build files"
-	@for file in $(buildRemoveFiles); do \
-		echo "[MAKE] \\ Removing $$file"; \
-		`cd _build && rm $$file`; \
-	done
+	@echo "[MAKE] Building strategy files"
+	@`cd _build && g2s *.dot >> g2s_builds.make.log`
+	@echo "[MAKE] Done"
 
-push_pi:
+push_pi: build
 	@echo "[MAKE] Pushing to pi"
 	@echo "[TODO]"
 
