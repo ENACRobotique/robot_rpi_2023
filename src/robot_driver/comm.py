@@ -4,6 +4,14 @@ import threading
 from time import time, gmtime, sleep
 from enum import Enum
 
+import socket
+import math
+import json
+
+IP = "127.0.0.1"
+PORT = 9870
+
+
 def temps_deb (timestamp):
     """Input : t (float) : value given by time()
     Output : a formated string that gives a more explicit time than t
@@ -159,6 +167,16 @@ class Radio:
                 if sum%256 == chksum:
                     #print ("success : Pos ({}, {}, {})\n\n".format(x,y,theta))
                     #TODO do something with message reception
+                    data = {
+                        "timestamp": time,
+                        "data_robot": 
+                        {
+                            "x": x,
+                            "y": y,
+                            "theta":theta
+                        }
+                        }
+                    data_to_plot.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
                     pass
                 else:
                     print("FAILED CHECKSUM : MessageError")
@@ -267,6 +285,8 @@ if __name__=="__main__":
     radio=Radio()
     radio.startListening()
     i=1
+    data_to_plot = socket.socket(socket.AF_INET, # Internet
+                     socket.SOCK_DGRAM) # UDP
     while True:
         sleep(0.2)
         radio.sendPointDisplay(i)
