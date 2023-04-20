@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package enac;
+
+//SPEED_REG = "SpeedCmd {} (.+) (.+) (.+)"
+//POS_REG = "PosCmd {} (.+) (.+)"
+//POS_ORIENT_REG = "PosCmdOrient {} (.+) (.+) (.+)"
+//ACTUATOR_CMD = "ActuatorCmd {} (.+) (.+)"
+//ACTUATORS_REQUEST = "ActuatorsRequest {}"
+//
+//ACTUATOR_DECL = "ActuatorDecl {} {} {} {} {} {} {}"
+//POS_REPORT = "PosReport {} {} {} {}"
+//ACTUATOR_REPORT = "ActuatorReport {} {} {}"
+//
+//KILL_CMD = "Shutdown {}"
+
+// Careful with travel message : don't send all fields at 0 or it might crash on subscriber (empty message)
+message Travel { 
+    float theta = 1; // Direction of travel (angle in degrees)
+    float speed = 2; // speed of travel (in meters)
+}
+message Position {
+    float x = 1;
+    float y = 2;
+    float theta = 3;
+}
+
+message SetState {
+    int32 position = 1; // Position of the "plateau"
+    int32 number = 2; // Number of the action, value to display, ...
+}
+
+message Bool {
+    bool value = 1;
+}
+//
+//message Speed {
+//    float vx = 1;
+//    float vy = 2;
+//    float vtheta = 3;
+//}
+//
+
+//message Odom {
+//    Position position = 1;
+//    Speed speed = 2;
+//    double timestamp = 3; 
+//}
+//
+//message HolonomicSpeed {
+//    float speed = 1; // in meters
+//    float angle = 2; // in degrees
+//}
