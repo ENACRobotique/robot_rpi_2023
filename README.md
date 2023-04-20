@@ -1,11 +1,23 @@
 # robot_rpi_2023
 
-## To use/Install
+## To Install
 Install eCAL & Python eCAL bindings from [here](https://eclipse-ecal.github.io/ecal/getting_started/setup.html).
 Install requirements.txt (if virtual env) or environnment.yml (if anaconda).
 Last tested protolib version : 3.11.3
 Last tested eCAL version : 5.10.1
 Python Version : 3.10.9
+
+## To use  : 
+* Lancer le driver de lidar : ld06_driver/ecal_ld06_driver.py
+    * Réglage du port serial dans ld06_driver.py
+
+* Traitement du lidar (localisation + évitement): loca_lidar/launch_loca_ecal.py
+
+## Pour info sur les topics
+* Nom des topics à utiliser : 
+    * Position du lidar "brute" : lidar_pos
+    * Consigne d'arret détection obstacle en mouvement : stop_cons
+    * Position moyennée lorsque le lidar est fixe : smooth_pos
 ## Relevant files
 ```
 src
@@ -18,9 +30,10 @@ src
 │   │   ecal_fake_lidar.py - fixed fake lidar data to test 'lidar_data' streaming in eCAL 
 │   │   
 └─── loca_lidar
-│   │   launch_ecal.py - Takes lidar_data -> Publish cone_detection (stop_cons), lidar position
+│   │   launch_loca_ecal.py - Takes lidar_data -> Publish cone_detection (stop_cons), lidar position
 │   │   launch_tests.py - unit test for loca_lidar part
 │   │   launch_vizualisation.py - Matplotlib Lidar, fixed_beacon positions, obstacle_cone visualization
-│   │   launch_check_obstacle.py - Service to use by navigation module to check if (x,y) free
+└─── position_fusion
+
 proto - protobuf definition folder & compiled for python
 ```
