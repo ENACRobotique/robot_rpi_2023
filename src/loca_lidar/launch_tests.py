@@ -209,8 +209,8 @@ def test_cone_detection():
 
     # TODO : refactor to avoid this test is dependent on config.py
     basic_filtered = cp.basic_filter_pts(pts_test)
-    assert 2 == cp.obstacle_in_cone(basic_filtered, 0.0)
-    assert 0 == cp.obstacle_in_cone(basic_filtered, 180.0)
+    assert 2 == cp.obstacle_in_path(basic_filtered, 0.0)
+    assert 0 == cp.obstacle_in_path(basic_filtered, 180.0)
 
 ######### Test finding pattern from amalgames
 #table_example_geogeb.gbb

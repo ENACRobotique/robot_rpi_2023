@@ -14,10 +14,13 @@ table_y_min = 0.1 # meters
 table_y_max = 2.9 # meters
 # CloudPoints settings
 
-# obstacle cone settings
-cone_angle = 120 # degrees
-cone_warning_dist = 0.5 # meters
-cone_stop_dist = 0.25 #meFbters
+# obstacle cylinder settings
+stop_cyl_width = 0.3 # meters
+stop_cyl_dist = 0.25 #meFbters
+
+warning_cyl_width = 0.45 # meters
+warning_cyl_dist = 0.5 # meters
+
 
 min_lidar_dist = 0.15 # Meters (radius of the robot perimeter)
 max_lidar_dist = 3.5 # Meters (diagonal of the table is sqrt(13), rounded it) 

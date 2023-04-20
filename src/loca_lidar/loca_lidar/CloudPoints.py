@@ -1,13 +1,20 @@
 # Set of tools to manage points from 2D lidar cloud points and creation of amalgames
 
-from math import cos, radians
+from math import cos, radians, dist
 import numpy as np
-from typing import Tuple
-from loca_lidar.PointsDataStruct import PolarPts, DistPts, AmalgamePolar, AmalgameCartesian, \
+from typing import Tuple, List, Union
+try:
+    from loca_lidar.PointsDataStruct import PolarPts, DistPts, AmalgamePolar, AmalgameCartesian, \
+        PolarPts_t, AmalgamePolar_t
+    import loca_lidar.config as config
+    from loca_lidar.SmallestEnclosingCircle import make_circle as make_enclosing_circle
+    from loca_lidar.MinimumBoundingBox import MinimumBoundingBox as min_bounding_box
+except ModuleNotFoundError:
+    from PointsDataStruct import PolarPts, DistPts, AmalgamePolar, AmalgameCartesian, \
     PolarPts_t, AmalgamePolar_t
-import loca_lidar.config as config
-from loca_lidar.SmallestEnclosingCircle import make_circle as make_enclosing_circle
-from loca_lidar.MinimumBoundingBox import MinimumBoundingBox as min_bounding_box
+    import config as config
+    from SmallestEnclosingCircle import make_circle as make_enclosing_circle
+    from MinimumBoundingBox import MinimumBoundingBox as min_bounding_box
 def get_squared_dist_cartesian(pt1=(0,0), pt2= (0,0)): #x,y
     return (pt1[0] - pt2[0])**2 + (pt1[1] - pt2[1])**2
 
@@ -68,49 +75,61 @@ def position_filter_pts(pts: PolarPts_t, lidar_x, lidar_y, lidar_theta) -> Polar
     # TODO 1. Add additionnal check with the last known lidar position on the table
     return pts
 
-def obstacle_in_cone(pts: PolarPts_t, angle: float) -> int:
+def obstacle_in_path(robot_pose: tuple, pts: List[list[Union[float, float]]], speed: tuple) -> int:
     """_summary_
 
     Args:
         pts (PolarPts_t): _description_
-        angle (float): _description_
+        speed (tuple): _description_
 
     Raises:
-        ValueError: angle normalization problem (not in [0, 360])
+        ValueError: _description_
 
     Returns:
         int: 0 : ok, 1 : warning, 2 : stop
     """
-    angle_to_check = []
-    half_cone = config.cone_angle / 2
-    # avoiding checking negative index in pts 
-    if angle >= 0 and angle <= half_cone:
-        angle_to_check = [[0, angle + half_cone], [360 - half_cone + angle, 360]]
-    elif angle > half_cone and angle < 360 - half_cone:
-        angle_to_check = [[angle- half_cone, angle], [angle, angle + half_cone]]
-    elif angle >= 360 - half_cone and angle <= 360:
-        angle_to_check = [[angle - half_cone, 360], [0, angle + half_cone - 360]]
-    else: 
-        raise ValueError("angle value given to obstacle_in_cone is not between 0 & 360")
+    max_alert = 0 # level depends on obstacle found within the rectangle
 
-    #checking corresponding angle within the range given above
-    obstacles = pts[np.where(
-        np.logical_and(
-            np.logical_or( # check valid angle
-                np.logical_and(pts['angle'] > angle_to_check[0][0], pts['angle'] < angle_to_check[0][1]),
-                np.logical_and(pts['angle'] > angle_to_check[1][0], pts['angle'] < angle_to_check[1][1])
-            ),
-            pts['distance'] < config.cone_warning_dist #check distance
-        )
-    )]
+    # 1. Calculate cylinder 
+    pt_next_robot = (robot_pose[0] + speed[0], robot_pose[1] + speed[1])
+    # find third point of right triangle
+    #https://math.stackexchange.com/questions/2125690/find-coordinates-of-3rd-right-triangle-point-having-2-sets-of-coordinates-and-a
+    L = np.sqrt(np.power(robot_pose[0]-pt_next_robot[0], 2) + np.power(robot_pose[1] - pt_next_robot[1], 2)) #sqrt((x2-x1)² + (y2-y1)²)
+    C = config.stop_cyl_width / 2
+    
+    x_right_edge = robot_pose[0] + (C * (pt_next_robot[1] - robot_pose[1])) / L
+    y_right_edge = robot_pose[1] + (C * (robot_pose[0] - pt_next_robot[0])) / L
+    x_left_edge = robot_pose[0] - (C * (pt_next_robot[1] - robot_pose[1])) / L
+    y_left_edge = robot_pose[1] - (C * (robot_pose[0] - pt_next_robot[0])) / L
 
-    # check the minimal distance from the detected obstacle in cone
-    if obstacles.size == 0:
-        return 0 # OK
-    elif obstacles['distance'][np.argmin(obstacles['distance'])] < config.cone_stop_dist: #find the min distance
-        return 2 # STOP
-    else:
-        return 1 # WARNING
+    print(x_left_edge, y_left_edge)
+    print(x_right_edge, y_right_edge)
+    
+    #https://stackoverflow.com/questions/41317291/setting-the-magnitude-of-a-2d-vector
+    ratio_magnitude = config.stop_cyl_dist / np.linalg.norm([speed[0], speed[1]]) # factor to multiply the vector x/y
+    x_top_left = x_left_edge + speed[0] * ratio_magnitude
+    y_top_left = y_left_edge + speed[1] * ratio_magnitude
+    x_top_right = x_right_edge + speed[0] * ratio_magnitude
+    y_top_right = y_right_edge + speed[1] * ratio_magnitude
+
+    #2. Check if inside rectangle
+    # https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not#
+    # D = (x2 - x1) * (yp - y1) - (xp - x1) * (y2 - y1)
+    # if > 0 for all edge : return the alert
+
+    """ 
+    for obstacle in pts:
+        obs_pos = np.array([obstacle[0], obstacle[1]])
+        if True: #TODO : if inside the cylinder, check the distance
+            dist_to_robot = np.abs(np.cross(p2-p1, p1-obs_pos)) / np.linalg.norm(p2-p1)
+            if dist_to_robot <= config.stop_cyl_dist:
+                return 2 # STOP
+            if dist_to_robot <= config.warning_cyl_dist:
+                max_alert = max(max_alert, 1) # WARNING
+
+    return max_alert # returns 0 if ok, 1 if warning, 2 if stop
+
+    """
 
 def _calculate_intersection_circles(pt1, radius1, pt2, radius2):
     """_summary_
@@ -280,6 +299,14 @@ def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> Tuple:
     return tuple(amalgames[:last_i+1]['center_polar'])
 
 if __name__ == '__main__':
+    obstacle_in_path((0.5, 0.5, 0.0), [[0.59, 0.72]], (0.1, 0.1, 0.0))
+    # left edge (0.41, 0.59)
+    # right edge (0.59, 0.41)
+    # top left edge (0.59, 0.77)
+    #top right edge (0.77, 0.59)
+
+    #trigger : (0.59, 0.72), (0.58, 0.48), (0.65, 0.65)
+    #not trigger : (0.68, 0.78), (0.41, 0.55), (0.62, 0.42)
     pass
     # get_distances(amalgame_sample_1)
     

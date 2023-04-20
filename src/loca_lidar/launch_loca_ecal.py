@@ -21,7 +21,7 @@ BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.kno
 
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
-sub_angle = ProtoSubscriber("robot_moving_angle", robot_pb.Travel)
+sub_angle = ProtoSubscriber("odom_speed", robot_pb.Position)
 sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
 
@@ -32,7 +32,7 @@ pub_beacons = StringPublisher("beacons") # Only up to 5 points are sent, the ind
 pub_lidar_pos = ProtoPublisher("lidar_pos", robot_pb.Position)
 pub_obstacles = ProtoPublisher("obstacles_wrt_table", lidar_pb.Obstacles)
 
-last_known_moving_angle = 0 #angle in degrees from where the robot is moving 
+last_known_speed = (0.0, 0.0, 0.0) #angle in degrees from where the robot is moving 
 last_known_lidar = (0, 0, 0) #x, y, theta (meters, degrees)
 robot_pose = (0.0, 0.0, 0.0) #x, y, theta (meters, degrees)
 OBSTACLE_CALC = ObstacleCalc(
@@ -71,9 +71,9 @@ def send_lidar_pos(x, y, theta):
     pub_lidar_pos.send(pos_msg, ecal_core.getmicroseconds()[1])
 
 
-def on_moving_angle(topic_name, travel_msg, time):
-    global last_known_moving_angle
-    last_known_moving_angle = travel_msg.theta
+def on_robot_speed(topic_name, travel_msg, time):
+    global last_known_speed
+    last_known_speed = (travel_msg.x, travel_msg.y, travel_msg.theta)
 
 def on_robot_pos(topic_name, pos_msg, time):
     global robot_pose
@@ -81,7 +81,7 @@ def on_robot_pos(topic_name, pos_msg, time):
 
 
 def on_lidar_scan(topic_name, proto_msg, time):
-    global last_known_moving_angle, robot_pose, last_known_lidar
+    global last_known_speed, robot_pose, last_known_lidar
 
     if robot_pose == (0.0, 0.0, 0.0):
         logging.warning("Robot pose not received yet - invalid obstacle avoidance")
@@ -99,9 +99,10 @@ def on_lidar_scan(topic_name, proto_msg, time):
     pos_filtered_scan = pos_filtered_scan[mask]
 
     #obstacle avoidance
-    obstacle_consigne = cp.obstacle_in_cone(pos_filtered_scan, last_known_moving_angle)
-    send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
     filtered_obs = [obs[i] for i in range(len(obs)) if mask[i]]
+
+    obstacle_consigne = cp.obstacle_in_path(robot_pose, filtered_obs, last_known_speed)
+    send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
     send_obstacles_wrt_table(filtered_obs)
 
     # Obstacle Calculation
@@ -170,7 +171,7 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
    
 if __name__ == "__main__":
 
-    sub_angle.set_callback(on_moving_angle)
+    sub_angle.set_callback(on_robot_speed)
     sub_lidar.set_callback(on_lidar_scan)
 
     while ecal_core.ok():

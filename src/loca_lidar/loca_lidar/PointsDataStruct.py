@@ -1,7 +1,10 @@
 from typing import NamedTuple
 import numpy as np
 import numpy.typing as npt
-import loca_lidar.config as config
+try:
+    import loca_lidar.config as config
+except ModuleNotFoundError:
+    import config
 
 class hashabledict(dict):
     # https://stackoverflow.com/questions/1151658/python-hashable-dicts
