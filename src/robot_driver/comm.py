@@ -52,7 +52,7 @@ class Radio:
         self.listeningThread.start()
 
     def stopListening (self):
-        self.listen = False
+        self.continueListening = False
 
     def __repr__(self):
         return "Radio haut niveau"
@@ -83,7 +83,7 @@ class Radio:
         
     def sendResumeSignal (self):
         """Sends a command to make the robot ignore the last stop or slow command."""
-        self.sendmessage(b'R')
+        self.sendMessage(b'R')
 
     def sendCostumeSignal (self):
         """Sends a command that will activate the end of match sequence for the robot."""
@@ -109,11 +109,11 @@ class Radio:
         Accepted values are :
             'a' : allumé
             'e" : éteint
-        /!\ Deprecated AF, there's no turbine on robot. That code will be removed at the next update
+        /!\\ Deprecated AF, there's no turbine on robot. That code will be removed at the next update
         """
         if valueTurbine in "ae":
             message = b't'+struct.pack("c",valueTurbine)
-            self.send(message)
+            self.sendMessage(message)
         else :
             print("Invalid value for turbine : {}".format(valueTurbine))
 
