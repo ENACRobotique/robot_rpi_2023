@@ -28,7 +28,7 @@ class messageARecevoir(Enum):
 
     MESSAGE_POUR_LOG="M"
 
-PORT_NAME = "/dev/ttyACM0"
+PORT_NAME = "COM2" #"/dev/ttyACM0"
 class Radio:
     def __init__(self):
         self.PROTOCOL_VERSION =1
