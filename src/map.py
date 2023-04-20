@@ -84,12 +84,19 @@ def print_chemin(g,chemin):
         
 
 file = 'src\graph.txt'
-g = read_graph(file)
-a,d = dijkstra.dijkstra_classic(g,"plate_B_1", "interet_SE")
+g = read_graph(file) #map de la table
+
+a,d = dijkstra.dijkstra_classic(g,"plate_B_1", "interet_SE") #a liste des points parcourus, a[0]étant l'arrivée, et a[len(a)] le départ. d distance parcourue
 
 plt.figure()
 print_map(g)
+
 print_chemin(g,a)
+
 plt.show()
+
 print(a)
 print(d)
+
+print(g.coords[a[1]][0]) #coordonnes x du point 
+#pour obtenir les coords d'un point le la liste a : pt = g.coords["nom_du_point"]
