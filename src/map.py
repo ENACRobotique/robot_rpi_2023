@@ -1,4 +1,7 @@
 import matplotlib.pyplot as plt
+from math import sqrt
+import dijkstra
+import random as rd 
 
 class Graph(object):
     
@@ -33,6 +36,13 @@ class Graph(object):
         """Renvoie la liste des voisins du noeud u dans le graphe"""
         return self.adj[u]
 
+    def weight(self,u,v):
+        x1 = self.coords[u][0]
+        x2 = self.coords[v][0]
+        y1 = self.coords[u][1]
+        y2 = self.coords[v][1]
+        return sqrt((x1 - x2)**2 + (y1 - y2)**2)
+
 
 def read_graph(file):
     g = Graph()
@@ -53,18 +63,33 @@ def read_graph(file):
 
 def print_map(graph):
     g = graph 
-    plt.figure()
     for point in g.adj :
+        plt.annotate(point, [g.coords[point][0] + rd.randint(-2,2)*0, g.coords[point][1]+ rd.randint(-2,2)/25 ])
         for voisin in g.adj[point]:
-            print(voisin)
             x1 = g.coords[point][0]
             y1 = g.coords[point][1]
             x2 = g.coords[voisin][0]
             y2 = g.coords[voisin][1]
             plt.plot([x1,x2],[y1,y2])
-    plt.show()
+            
 
+
+def print_chemin(g,chemin):
+    for i in range(len(chemin)-1):
+        x1 = g.coords[chemin[i]][0]
+        y1 = g.coords[chemin[i]][1]
+        x2 = g.coords[chemin[i+1]][0]
+        y2 = g.coords[chemin[i+1]][1]
+        plt.plot([x1,x2],[y1,y2],color='r',linewidth=5)
+        
 
 file = 'src\graph.txt'
 g = read_graph(file)
+a,d = dijkstra.dijkstra_classic(g,"plate_B_1", "interet_SE")
+
+plt.figure()
 print_map(g)
+print_chemin(g,a)
+plt.show()
+print(a)
+print(d)
