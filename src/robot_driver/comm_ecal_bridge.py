@@ -40,11 +40,13 @@ class EcalRadio(comm.Radio):
         self.set_position_sub.set_callback(self.on_set_position)
 
         self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
-        # self.proximity_sub.set_callback()
+        #self.proximity_sub.set_callback()
 
-        # self._sub = ProtoSubscriber("set_pince", robot_pb.SetState).set_callback(self.on_pince)
-
-        # self._sub = ProtoSubscriber("pick_disk", robot_pb.SetState).set_callback(self.on_pick_disk)
+        #self.pince_sub = ProtoSubscriber("set_pince", robot_pb.Claw)
+        #self.pince_sub.set_callback(self.sendClawSignal)
+#
+        #self.trieuse_put_in_sub = ProtoSubscriber("pick_disk", robot_pb.)
+        #self.trieuse_sub.set_callback(self.sendStoreDiscsInsideSignal)
 
         # self._sub = ProtoSubscriber("drop_disk", robot_pb.SetState).set_callback(self.on_drop_disk)
 

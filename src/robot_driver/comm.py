@@ -7,7 +7,7 @@ from enum import Enum
 import socket
 import json
 
-IP = "10.5.141.57"
+IP = "127.0.0.1"
 PORT = 9870
 PORT_NAME = "/dev/ttyACM0" #"COM2" #
 

@@ -48,6 +48,10 @@ message Action {
     int32 action = 1;
 }
 
+message Claw {
+    int32 claw_state =1;
+}
+
 
 
 //message Odom {
