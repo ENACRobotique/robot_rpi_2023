@@ -44,6 +44,7 @@ class Radio:
         self.radioState = radioStates.WAITING_FIRST_BYTE
         self.listeningThread = threading.Thread(target=self.listen)
         self.plot_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.data_robot = {"x":0,"y":0,"theta":0}
     
     
 
@@ -175,6 +176,9 @@ class Radio:
                             "theta":theta
                         }
                     }
+                    self.data_robot["x"]=x
+                    self.data_robot["y"]=y
+                    self.data_robot["theta"]=theta
                     self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
                 else:
                     print("FAILED CHECKSUM : MessageError")
