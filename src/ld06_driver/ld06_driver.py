@@ -24,6 +24,12 @@ class Cloud:
     def span(self):
         return self.max_angle - self.min_angle
 
+    def get_angles(self):
+        return [p[1] for p in self.points]
+    
+    def get_distances(self):
+        return [p[0] for p in self.points]
+
 
 # This enum contains the part of the lidar message that is expected by the driver
 class Part(Enum):
@@ -36,7 +42,7 @@ class Part(Enum):
 
 
 class Driver:
-    def __init__(self):
+    def __init__(self, cb):
         # Driver settings and state data
         self.serial_port = '/dev/ttyUSB0' # TODO: Get serial port from settings
         self.serial = Serial(self.serial_port, 230400)
@@ -47,6 +53,7 @@ class Driver:
         # Point cloud
         self.total_angle = 0
         self.cloud = Cloud()
+        self.cb = cb
 
     def scan(self):
         while True:
@@ -97,7 +104,8 @@ class Driver:
 
                 if self.total_angle >= 360:
                     # The points are back to the beginning
-                    print('count:', self.cloud.count, ', span:', self.cloud.span())
+                    #print('count:', self.cloud.count, ', span:', self.cloud.span())
+                    self.cb(self.cloud.get_angles(), self.cloud.get_distances())
 
                     # We can start a new point cloud
                     self.total_angle = 0
@@ -107,6 +115,9 @@ class Driver:
                 self.expected_length = 1
 
 
+def test_cb(angles, distances):
+    print(angles, distances)
+
 if __name__ == '__main__':
-    driver = Driver()
+    driver = Driver(test_cb)
     driver.scan()
