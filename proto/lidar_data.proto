@@ -9,7 +9,7 @@ message Lidar {
     repeated float distances = 4; // Meters 
 }
 
-enum Action { 
+enum ProximityStatus { 
     OK = 0;
     WARNING = 1;
     STOP = 2;
@@ -17,7 +17,7 @@ enum Action {
 
 message Proximity { 
     float closest_distance = 1;
-    Action action = 2;
+    ProximityStatus status = 2;
 }
 
 message Obstacles {

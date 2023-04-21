@@ -33,13 +33,22 @@ message SetState {
 message Bool {
     bool value = 1;
 }
-//
-//message Speed {
-//    float vx = 1;
-//    float vy = 2;
-//    float vtheta = 3;
-//}
-//
+
+message Speed {
+   float vx = 1;
+   float vy = 2;
+   float vtheta = 3;
+}
+
+message Match {
+    string status = 1;
+}
+
+message Action {
+    int32 action = 1;
+}
+
+
 
 //message Odom {
 //    Position position = 1;

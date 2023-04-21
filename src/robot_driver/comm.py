@@ -44,9 +44,6 @@ class Radio:
         self.radioState = radioStates.WAITING_FIRST_BYTE
         self.listeningThread = threading.Thread(target=self.listen)
         self.plot_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.data_robot = {"x":0,"y":0,"theta":0}
-    
-    
 
     def startListening (self):
         self.continueListening =True
@@ -167,18 +164,13 @@ class Radio:
                     sum+=byte
                 if sum%256 == chksum:
                     #print ("success : Pos ({}, {}, {})\n\n".format(x,y,theta))
-                    #TODO do something with message reception
+
+                    self.handle_pos_report(x,y,theta)
+                    
                     data = {
                         "timestamp": time(),
-                        "pos":{
-                            "x": x,
-                            "y": y,
-                            "theta":theta
-                        }
+                        "pos":{"x": x,"y": y,"theta":theta}
                     }
-                    self.data_robot["x"]=x
-                    self.data_robot["y"]=y
-                    self.data_robot["theta"]=theta
                     self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
                 else:
                     print("FAILED CHECKSUM : MessageError")
@@ -190,14 +182,12 @@ class Radio:
                     sum+=byte
                 if sum%256 == chksum:
                     #print ("success : Speed ({}, {}, {})\n\n".format(Vx,Vy,Vtheta))
-                    #TODO do something with message reception
+
+                    self.handle_speed_report(Vx,Vy,Vtheta)
+                    
                     data = {
                         "timestamp": time(),
-                        "speed":{
-                            "vx": Vx,
-                            "vy": Vy,
-                            "vtheta":Vtheta
-                        }
+                        "speed":{"vx": Vx,"vy": Vy,"vtheta":Vtheta}
                     }
                     self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
                 else:
@@ -207,7 +197,15 @@ class Radio:
                 (chksum,)=struct.unpack("B",byteArray)
                 if chksum == ord('T')+self.PROTOCOL_VERSION:
                     print ("success : MATCH STARTED")
-                    #TODO do something with message reception
+                    
+                    self.handle_match_report()
+
+                    data = {
+                        "timestamp": time(),
+                        "match":"MATCH STARTED"
+                    }
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
+
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'T'+byteArray)
@@ -216,7 +214,14 @@ class Radio:
                 sum = self.PROTOCOL_VERSION + ord('d') +byteArray[0]
                 if sum%256 == chksum:
                     print ("success : Action Confirmed : {}\n\n".format(num))
-                    #TODO do something with message reception
+                    self.handle_action_report(num)
+                    
+                    data = {
+                        "timestamp": time(),
+                        "action": num
+                    }
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
+
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'd'+byteArray)
@@ -287,11 +292,34 @@ class Radio:
                         tStampString = temps_deb(time())
                         try :
                             ...
-                            print(tStampString+"\t"+bytesMessage.decode())
+                            msg = bytesMessage.decode()
+                            self.handle_message(msg)
                         except Exception:
-                            print(bytesMessage)
-                        #TODO : store that print in a log file
+                            print("error decoding string message")
+
                         self.radioState=radioStates.WAITING_FIRST_BYTE
+
+    def handle_pos_report(self,x,y,theta):
+        print("Handle_pos_report Unimplemented")
+
+
+    def handle_speed_report(self,vx,vy,vtheta):
+        print("Handle_speed_report Unimplemented")
+    
+    def handle_match_report(self):
+        print("Handle_match_report Unimplemented")
+
+    def handle_action_report(self,num):
+        print("Handle_action_report Unimplemented")
+
+    def handle_message(self,msg):
+        print("Handle_message Unimplemented")
+    
+    def handle_checksum_error(self):
+        print("Handle_checksum Unimplemented")
+    
+
+
 if __name__=="__main__":
     radio=Radio()
     radio.startListening()
