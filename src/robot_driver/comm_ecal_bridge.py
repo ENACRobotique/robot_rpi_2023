@@ -6,6 +6,7 @@ import sys, time
 import generated.robot_state_pb2 as robot_pb
 import generated.lidar_data_pb2 as lidar_pb
 import comm
+from random import randint
 
 class EcalRadio(comm.Radio):
     def __init__(self):
@@ -78,9 +79,14 @@ class EcalRadio(comm.Radio):
         self.setTargetPosition(position.x, position.y, position.theta)
         print(position)
 
+
 if __name__ == "__main__":
     radio = EcalRadio()
+    test_pub = ProtoPublisher('set_position',robot_pb.Position)
     while True:
+        # i = randint(0,3)
+        # test_pub.send(robot_pb.Position(x=0,y=0,theta=i))
+
         time.sleep(0.1)
 
     ecal_core.finalize()

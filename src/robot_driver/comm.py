@@ -7,9 +7,9 @@ from enum import Enum
 import socket
 import json
 
-IP = "127.0.0.1"
+IP = "10.5.141.57"
 PORT = 9870
-PORT_NAME = "/dev/ttyACM0" #"COM2" #
+PORT_NAME = "/dev/ttyACM1" #"COM2" #
 
 def temps_deb (timestamp):
     """Input : t (float) : value given by time()
