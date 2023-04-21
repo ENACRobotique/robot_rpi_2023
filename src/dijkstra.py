@@ -90,11 +90,11 @@ def dijkstra_classic(G,start,end):  #G un graphe
         for v in G.neighbours(u):
             maj_dist(u,v,predecesseur,d,G)
             Q.decrease_prio(v,d[v])
-    A = []
+    chemin = []
     s = end
     while s!=start : 
-        A +=[s]
+        chemin +=[s]
         s = predecesseur[s]
-    A += [start]
+    chemin += [start]
 
-    return A,d[end]
+    return chemin,d[end]
