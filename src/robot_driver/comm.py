@@ -7,7 +7,7 @@ from enum import Enum
 import socket
 import json
 
-IP = "127.0.0.1"
+IP = "10.5.141.57"
 PORT = 9870
 PORT_NAME = "/dev/ttyACM0" #"COM2" #
 
@@ -302,7 +302,6 @@ class Radio:
     def handle_pos_report(self,x,y,theta):
         print("Handle_pos_report Unimplemented")
 
-
     def handle_speed_report(self,vx,vy,vtheta):
         print("Handle_speed_report Unimplemented")
     
@@ -317,6 +316,9 @@ class Radio:
     
     def handle_checksum_error(self):
         print("Handle_checksum Unimplemented")
+
+    def pince_cmd(self):
+        print("Command_Pince Unimplemented")
     
 
 
