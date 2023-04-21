@@ -5,12 +5,11 @@ from time import time, gmtime, sleep
 from enum import Enum
 
 import socket
-import math
 import json
 
 IP = "127.0.0.1"
 PORT = 9870
-
+PORT_NAME = "/dev/ttyACM0" #"COM2" #
 
 def temps_deb (timestamp):
     """Input : t (float) : value given by time()
@@ -36,7 +35,7 @@ class messageARecevoir(Enum):
 
     MESSAGE_POUR_LOG="M"
 
-PORT_NAME = "COM2" #"/dev/ttyACM0"
+
 class Radio:
     def __init__(self):
         self.PROTOCOL_VERSION =1
@@ -44,6 +43,8 @@ class Radio:
         self.serialObject = serial.Serial (port = PORT_NAME, baudrate=115200, timeout =1)
         self.radioState = radioStates.WAITING_FIRST_BYTE
         self.listeningThread = threading.Thread(target=self.listen)
+        self.plot_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.data_robot = {"x":0,"y":0,"theta":0}
     
     
 
@@ -168,16 +169,17 @@ class Radio:
                     #print ("success : Pos ({}, {}, {})\n\n".format(x,y,theta))
                     #TODO do something with message reception
                     data = {
-                        "timestamp": time,
-                        "data_robot": 
-                        {
+                        "timestamp": time(),
+                        "pos":{
                             "x": x,
                             "y": y,
                             "theta":theta
                         }
-                        }
-                    data_to_plot.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
-                    pass
+                    }
+                    self.data_robot["x"]=x
+                    self.data_robot["y"]=y
+                    self.data_robot["theta"]=theta
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'p'+byteArray)
@@ -189,7 +191,15 @@ class Radio:
                 if sum%256 == chksum:
                     #print ("success : Speed ({}, {}, {})\n\n".format(Vx,Vy,Vtheta))
                     #TODO do something with message reception
-                    pass
+                    data = {
+                        "timestamp": time(),
+                        "speed":{
+                            "vx": Vx,
+                            "vy": Vy,
+                            "vtheta":Vtheta
+                        }
+                    }
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'v'+byteArray)
@@ -276,6 +286,7 @@ class Radio:
                     if (c==b'\n'):
                         tStampString = temps_deb(time())
                         try :
+                            ...
                             print(tStampString+"\t"+bytesMessage.decode())
                         except Exception:
                             print(bytesMessage)
@@ -285,10 +296,9 @@ if __name__=="__main__":
     radio=Radio()
     radio.startListening()
     i=1
-    data_to_plot = socket.socket(socket.AF_INET, # Internet
-                     socket.SOCK_DGRAM) # UDP
+    
     while True:
         sleep(0.2)
         radio.sendPointDisplay(i)
-        print("send "+str(i%256))
+        #print("send "+str(i%256))
         i+=1
