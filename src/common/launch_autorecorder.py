@@ -3,11 +3,15 @@ import time, os
 from ecal.core.subscriber import ProtoSubscriber
 import generated.robot_state_pb2 as robot_pb
 
-
+IS_RECORDING = False
 #CAUTION UNTESTED FILE !!
 
 def on_match_start(topic_name, msg, time):
+    global IS_RECORDING
+    if IS_RECORDING:
+        return # already recording
     # record for 110s after receiving match started
+    IS_RECORDING = True
     os.system('ecal_rec -r 110 --activate')
 
 if __name__ == "__main__":
