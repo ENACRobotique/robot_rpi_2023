@@ -33,7 +33,6 @@ if __name__ == "__main__":
     ecal_core.mon_publogging(1, "ecal_log")
     sub = ProtoSubscriber("ecal_log", Logging)
 
-
     time.sleep(1.0)
 
     while ecal_core.ok():

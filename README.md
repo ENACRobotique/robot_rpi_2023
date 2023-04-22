@@ -13,11 +13,20 @@ Python Version : 3.10.9
 
 * Traitement du lidar (localisation + évitement): loca_lidar/launch_loca_ecal.py
 
+* Pour sauvegarder des logs & les afficher tous sur la même console : common/ecal_debug_printer.py
+
+* Pour enregistrer automatiquement 110s de données après match_start : common/launch_autorecorder.py
+
 ## Pour info sur les topics
 * Nom des topics à utiliser : 
     * Position du lidar "brute" : lidar_pos
     * Consigne d'arret détection obstacle en mouvement : stop_cons
     * Position moyennée lorsque le lidar est fixe : smooth_pos
+
+# common
+# ld06_driver
+
+
 ## Relevant files
 ```
 src
