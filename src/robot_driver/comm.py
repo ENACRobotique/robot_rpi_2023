@@ -8,7 +8,7 @@ import socket
 import json
 
 IP = "10.5.141.57"
-PORT = 9870
+PORT_PLOT_JUGGLER = 9870
 PORT_NAME = "/dev/ttyACM1" #"COM2" #
 
 def temps_deb (timestamp):
@@ -171,7 +171,7 @@ class Radio:
                         "timestamp": time(),
                         "pos":{"x": x,"y": y,"theta":theta}
                     }
-                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT_PLOT_JUGGLER) ) # send to plot juggler
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'p'+byteArray)
@@ -189,7 +189,7 @@ class Radio:
                         "timestamp": time(),
                         "speed":{"vx": Vx,"vy": Vy,"vtheta":Vtheta}
                     }
-                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT_PLOT_JUGGLER) ) # send to plot juggler
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'v'+byteArray)
@@ -204,7 +204,7 @@ class Radio:
                         "timestamp": time(),
                         "match":"MATCH STARTED"
                     }
-                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT_PLOT_JUGGLER) ) # send to plot juggler
 
                 else:
                     print("FAILED CHECKSUM : MessageError")
@@ -220,7 +220,7 @@ class Radio:
                         "timestamp": time(),
                         "action": num
                     }
-                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT) ) # send to plot juggler
+                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT_PLOT_JUGGLER) ) # send to plot juggler
 
                 else:
                     print("FAILED CHECKSUM : MessageError")

@@ -5,7 +5,6 @@ import sys, time
 
 import generated.robot_state_pb2 as robot_pb
 import generated.lidar_data_pb2 as lidar_pb
-import comm
 
 ecal_core.initialize(sys.argv, "cmd_live_test")
 time.sleep(0.5)

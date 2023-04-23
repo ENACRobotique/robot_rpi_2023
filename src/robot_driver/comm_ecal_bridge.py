@@ -13,9 +13,15 @@ class EcalRadio(comm.Radio):
         super().__init__()
 
         ecal_core.initialize(sys.argv, "serial->ecal bridge")
-        
         self.init_ecal_sub()
+        time.sleep(1.0) # time needed to initialize ecal
+        print("ecal initialized too !")
+        self.startListening()
 
+    def init_ecal_sub(self):
+        """Initialize eCAL"""
+        ecal_core.initialize(sys.argv, "serial->ecal bridge")
+        
         # Low level to High level message transmition
         self.odom_position_pub = ProtoPublisher('odom_pos', robot_pb.Position)
         self.odom_speed_pub = ProtoPublisher('odom_speed',robot_pb.Speed)
@@ -25,29 +31,18 @@ class EcalRadio(comm.Radio):
 
 
         # High level to Low level message transmition 
-
-
-
-        time.sleep(1.0) # time needed to initialize ecal
-        print("ecal initialized too !")
-        self.startListening()
-
-    def init_ecal_sub(self):
-        """Initialize eCAL"""
-        ecal_core.initialize(sys.argv, "serial->ecal bridge")
-        
         # Create the subscribers & set the callbacks
         self.set_position_sub = ProtoSubscriber("set_position", robot_pb.Position)
         self.set_position_sub.set_callback(self.on_set_position)
-
+        
         self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
         #self.proximity_sub.set_callback()
 
         #self.pince_sub = ProtoSubscriber("set_pince", robot_pb.Claw)
         #self.pince_sub.set_callback(self.sendClawSignal)
 #
-        #self.trieuse_put_in_sub = ProtoSubscriber("pick_disk", robot_pb.)
-        #self.trieuse_sub.set_callback(self.sendStoreDiscsInsideSignal)
+        self.trieuse_put_out_sub = ProtoSubscriber("pick_disk", robot_pb.SetState)
+        self.trieuse_put_out_sub.set_callback(self.sendStoreDiscsInsideSignal)
 
         # self._sub = ProtoSubscriber("drop_disk", robot_pb.SetState).set_callback(self.on_drop_disk)
 
@@ -84,9 +79,6 @@ if __name__ == "__main__":
     radio = EcalRadio()
     test_pub = ProtoPublisher('set_position',robot_pb.Position)
     while True:
-        # i = randint(0,3)
-        # test_pub.send(robot_pb.Position(x=0,y=0,theta=i))
-
         time.sleep(0.1)
 
     ecal_core.finalize()
