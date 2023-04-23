@@ -6,19 +6,19 @@ import sys, time
 import generated.robot_state_pb2 as robot_pb
 import generated.lidar_data_pb2 as lidar_pb
 import comm
-from random import randint
+
 
 class EcalRadio(comm.Radio):
     def __init__(self):
         super().__init__()
 
         ecal_core.initialize(sys.argv, "serial->ecal bridge")
-        self.init_ecal_sub()
+        self.init_ecal_sig()
         time.sleep(1.0) # time needed to initialize ecal
         print("ecal initialized too !")
         self.startListening()
 
-    def init_ecal_sub(self):
+    def init_ecal_sig(self):
         """Initialize eCAL"""
         ecal_core.initialize(sys.argv, "serial->ecal bridge")
         
@@ -38,21 +38,40 @@ class EcalRadio(comm.Radio):
         self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
         #self.proximity_sub.set_callback()
 
-        #self.pince_sub = ProtoSubscriber("set_pince", robot_pb.Claw)
-        #self.pince_sub.set_callback(self.sendClawSignal)
-#
-        self.trieuse_put_out_sub = ProtoSubscriber("pick_disk", robot_pb.SetState)
-        self.trieuse_put_out_sub.set_callback(self.sendStoreDiscsInsideSignal)
+        self.reset_pos_sub = ProtoSubscriber("reset",robot_pb.Position)
+        self.reset_pos_sub.set_callback(self.on_reset_pos)
+        
+        self.slow_sub = ProtoSubscriber("slow",robot_pb.no_args_func_)
+        self.slow_sub.set_callback(self.sendSlowDownSignal)
+        
+        self.stop_sub = ProtoSubscriber("stop",robot_pb.no_args_func_)
+        self.stop_sub.set_callback(self.sendStopSignal)
+        
+        self.resume_sub = ProtoSubscriber("resume",robot_pb.no_args_func_)
+        self.resume_sub.set_callback(self.sendResumeSignal)
 
-        # self._sub = ProtoSubscriber("drop_disk", robot_pb.SetState).set_callback(self.on_drop_disk)
+        self.pince_sub = ProtoSubscriber("set_pince", robot_pb.SetState)
+        self.pince_sub.set_callback(self.on_claw_command)
 
-        # self._sub = ProtoSubscriber("set_turbine", robot_pb.SetState).set_callback(self.on_turbine)
+        self.trieuse_store_sub = ProtoSubscriber("store_disk", robot_pb.SetState)
+        self.trieuse_store_sub.set_callback(self.on_store_disk)
 
-        # self._sub = ProtoSubscriber("set_toboggan", robot_pb.SetState).set_callback(self.on_toboggan)
+        self.trieuse_drop_sub = ProtoSubscriber("drop_disk", robot_pb.SetState)
+        self.trieuse_drop_sub.set_callback(self.on_drop_disk)
+        
+        self.toboggan_sub = ProtoSubscriber("set_toboggan", robot_pb.SetState)
+        self.toboggan_sub.set_callback(self.on_toboggan)
+        
+        self.costume_sub = ProtoSubscriber("costume",robot_pb.no_args_func_)
+        self.costume_sub.set_callback(self.sendCostumeSignal)
+ 
+        self.score_sub = ProtoSubscriber("set_score", robot_pb.Match)
+        self.score_sub.set_callback(self.on_score)
 
-        # self._sub = ProtoSubscriber("set_score", robot_pb.SetState).set_callback(self.on_score)
-
-        # self._sub = ProtoSubscriber("end_match", robot_pb.Bool).set_callback(self.on_end_match)
+        # self.end_match_sub = ProtoSubscriber("end_match", robot_pb.Match)
+        # self.end_match_sub.set_callback(self.on_end_match)
+        
+        
 
     ####  Reception from robot
     def handle_pos_report(self, x, y, theta):
@@ -72,7 +91,37 @@ class EcalRadio(comm.Radio):
 
     def on_set_position(self, topic_name, position, time):
         self.setTargetPosition(position.x, position.y, position.theta)
-        print(position)
+        print("position",position)
+        
+    def on_claw_command(self,topic_name,setstate, time):
+        self.sendClawSignal(setstate.claw_state)
+        print("claw",setstate)
+        
+    def on_store_disk(self,topic_name,setstate, time):
+        self.sendStoreDiscsInsideSignal(setstate.plate_position, setstate.plate_number)
+        print("store",setstate.plate_position,setstate.plate_number)
+
+    def on_drop_disk(self,topic_name,setstate, time):
+        self.sendPicDiscFromStorage(setstate.plate_position, setstate.plate_number)
+        print("drop",setstate.plate_position,setstate.plate_number)
+        
+    def on_toboggan(self,topic_name,setstate, time):
+        self.sendTobogganSignal(setstate.cerise_drop)
+        print("cerise",setstate.cerise_drop)
+        
+    def on_score(self,topic_name,match, time):
+        self.sendPointDisplay(match.score)
+        print("score",match.score)
+    
+    def on_reset_pos(self,topic_name,position, time):
+        self.resetPosition(position.x,position.y,position.theta)
+        print("reset pos",position)
+    
+        
+    # def on_end_match(self,topic_name,match, time):
+    #     self.(match.)
+    #     print("",)
+        
 
 
 if __name__ == "__main__":
