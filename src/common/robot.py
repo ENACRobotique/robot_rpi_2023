@@ -75,33 +75,35 @@ class robot:
         d=sqrt((self.x-self.lastTargetX)**2 + (self.y-self.lastTargetY)**2)
         return (d <= self.XY_ACCURACY) and (abs(self.theta - self.lastTargetX) <= self.THETA_ACCURACY)
     
-    def onSetTargetPostition (self,x,y,theta):
+    def onSetTargetPostition (self,, topic_name, msg, timestamp):
         """Callback d'un subscriber ecal. Actualise le dernier ordre de position"""
-        self.lastTargetX =x
-        self.lastTargetY =y
-        self.lastTargetTheta =theta
+        self.lastTargetX = msg.x
+        self.lastTargetY = msg.y
+        self.lastTargetTheta = msg.theta
 
-    def onReceivePosition (self,x,y,theta):
+    def onReceivePosition (self, topic_name, msg, timestamp):
         """Callback d'un subscriber ecal. Actualise la position du robot"""
-        self.x=x
-        self.y=y
-        self.theta=theta
+        self.x=msg.x
+        self.y=msg.y
+        self.theta=msg.theta
 
-    def onReceiveSpeed(self,Vx,Vy,Vtheta):
+    def onReceiveSpeed(self, topic_name, msg, timestamp):
         """Callback d'un subscriber ecal. Actualise la vitesse du robot"""
-        self.Vx = Vx
-        self.Vy = Vy
-        self.Vtheta = Vtheta
+        self.Vx = msg.Vx
+        self.Vy = msg.Vy
+        self.Vtheta = msg.Vtheta
     
-    def onReceiveMatchStarted (self):
+    def onReceiveMatchStarted (self, topic_name, msg, timestamp):
         self.tempsDébutMatch = time()
+        ecal_core.log_message("Match started at " + str(self.tempsDébutMatch))
     
-    def onReceiveActionFinshed (self,numAction):
+    def onReceiveActionFinshed (self,topic_name, msg, timestamp):
+        numAction = msg.action
         self.lastFinishedActionNumber = numAction
 
 
-    def onProximityStatus (self,status):
-        self.proximityStatus =status
+    def onProximityStatus (self,topic_name, msg, timestamp):
+        self.proximityStatus = msg.status
     
     
     
