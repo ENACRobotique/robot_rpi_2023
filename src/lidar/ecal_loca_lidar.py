@@ -14,8 +14,7 @@ import loca_lidar.PatternFinder as pf
 from loca_lidar.PointsDataStruct import PolarPts
 import loca_lidar.config as config
 
-if os.name == 'nt': # Windows
-    sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError with generated file hacking not working
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
 import generated.lidar_data_pb2 as lidar_pb
 import generated.robot_state_pb2 as robot_pb
 

@@ -3,8 +3,7 @@ import ecal.core.core as ecal_core
 from ecal.core.publisher import ProtoPublisher
 
 import sys, os, time
-if os.name == 'nt': # Windows
-    sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError with generated file hacking not working
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
 import generated.lidar_data_pb2 as lidar_data
 
 if __name__ == '__main__':

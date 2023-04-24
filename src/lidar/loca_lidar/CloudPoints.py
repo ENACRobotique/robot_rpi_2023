@@ -89,47 +89,74 @@ def obstacle_in_path(robot_pose: tuple, pts: List[list[Union[float, float]]], sp
         int: 0 : ok, 1 : warning, 2 : stop
     """
     max_alert = 0 # level depends on obstacle found within the rectangle
-
-    # 1. Calculate cylinder 
     pt_next_robot = (robot_pose[0] + speed[0], robot_pose[1] + speed[1])
-    # find third point of right triangle
-    #https://math.stackexchange.com/questions/2125690/find-coordinates-of-3rd-right-triangle-point-having-2-sets-of-coordinates-and-a
-    L = np.sqrt(np.power(robot_pose[0]-pt_next_robot[0], 2) + np.power(robot_pose[1] - pt_next_robot[1], 2)) #sqrt((x2-x1)² + (y2-y1)²)
-    C = config.stop_cyl_width / 2
-    
-    x_right_edge = robot_pose[0] + (C * (pt_next_robot[1] - robot_pose[1])) / L
-    y_right_edge = robot_pose[1] + (C * (robot_pose[0] - pt_next_robot[0])) / L
-    x_left_edge = robot_pose[0] - (C * (pt_next_robot[1] - robot_pose[1])) / L
-    y_left_edge = robot_pose[1] - (C * (robot_pose[0] - pt_next_robot[0])) / L
 
+    # 1. Calculate rectangle for stop
+    #### STOP Rectangle ###
+    x_left_edge, y_left_edge, \
+    x_right_edge, y_right_edge, \
+    x_top_left, y_top_left, \
+    x_top_right, y_top_right = _get_rectangle_edge(
+        robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
+        speed[0], speed[1], config.stop_cyl_width, config.stop_cyl_dist)
+    
     print(x_left_edge, y_left_edge)
     print(x_right_edge, y_right_edge)
+    print(x_top_left, y_top_left)
+    print(x_top_right, y_top_right)
     
-    #https://stackoverflow.com/questions/41317291/setting-the-magnitude-of-a-2d-vector
-    ratio_magnitude = config.stop_cyl_dist / np.linalg.norm([speed[0], speed[1]]) # factor to multiply the vector x/y
-    x_top_left = x_left_edge + speed[0] * ratio_magnitude
-    y_top_left = y_left_edge + speed[1] * ratio_magnitude
-    x_top_right = x_right_edge + speed[0] * ratio_magnitude
-    y_top_right = y_right_edge + speed[1] * ratio_magnitude
+    #### WARNING Rectangle ###
+    #x_bottomleft_warning, ......... y_topleft_warning, .......
+    x_bl_w, y_bl_w, \
+    x_br_w, y_br_w, \
+    x_tl_w, y_tl_w, \
+    x_tr_w, y_tr_w = _get_rectangle_edge(
+        robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
+        speed[0], speed[1], config.warning_cyl_width, config.warning_cyl_dist)
 
-    #2. Check if inside rectangle
-    # https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not#
-    # D = (x2 - x1) * (yp - y1) - (xp - x1) * (y2 - y1)
-    # if > 0 for all edge : return the alert
-
-    """ 
-    for obstacle in pts:
-        obs_pos = np.array([obstacle[0], obstacle[1]])
-        if True: #TODO : if inside the cylinder, check the distance
-            dist_to_robot = np.abs(np.cross(p2-p1, p1-obs_pos)) / np.linalg.norm(p2-p1)
-            if dist_to_robot <= config.stop_cyl_dist:
-                return 2 # STOP
-            if dist_to_robot <= config.warning_cyl_dist:
-                max_alert = max(max_alert, 1) # WARNING
+    #test 1&2, 2&4, 4&3, 3&1
+    for pt in pts:
+        #2. Check if inside rectangle
+        # https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not#
+        if (_is_on_left_edge(x_left_edge, y_left_edge,x_right_edge, y_right_edge, pt[0], pt[1]) and
+            _is_on_left_edge(x_right_edge, y_right_edge, x_top_right, y_top_right, pt[0], pt[1]) and
+            _is_on_left_edge(x_top_right, y_top_right, x_top_left, y_top_left, pt[0], pt[1]) and
+            _is_on_left_edge(x_top_left, y_top_left, x_left_edge, y_left_edge, pt[0], pt[1])):
+            return 2 # STOP
+        
+        if (_is_on_left_edge(x_bl_w, y_bl_w,x_br_w, y_br_w, pt[0], pt[1]) and
+            _is_on_left_edge(x_br_w, y_br_w, x_tr_w, y_tr_w, pt[0], pt[1]) and
+            _is_on_left_edge(x_tr_w, y_tr_w, x_tl_w, y_tl_w, pt[0], pt[1]) and
+            _is_on_left_edge(x_tl_w, y_tl_w, x_bl_w, y_bl_w, pt[0], pt[1])):
+            max_alert = 1
 
     return max_alert # returns 0 if ok, 1 if warning, 2 if stop
 
-    """
+def _get_rectangle_edge(robot_x, robot_y, next_x, next_y, speed_x, speed_y, width, length):
+    # calcualte rectangle edge for collision box drawing, width = from robot POV, length = furthest distance from robot POV
+        # find third point of right triangle
+    #https://math.stackexchange.com/questions/2125690/find-coordinates-of-3rd-right-triangle-point-having-2-sets-of-coordinates-and-a
+    L = np.sqrt(np.power(robot_x-next_x, 2) + np.power(robot_y - next_y, 2)) #sqrt((x2-x1)² + (y2-y1)²)
+    C = width / 2
+    
+    x_right_edge = robot_x + (C * (next_y - robot_y)) / L
+    y_right_edge = robot_y + (C * (robot_x - next_x)) / L
+    x_left_edge = robot_x - (C * (next_y - robot_y)) / L
+    y_left_edge = robot_y - (C * (robot_x - next_x)) / L
+    
+    #https://stackoverflow.com/questions/41317291/setting-the-magnitude-of-a-2d-vector
+    ratio_magnitude = length / np.linalg.norm([speed_x, speed_y]) # factor to multiply the vector x/y
+    x_top_left = x_left_edge + speed_x * ratio_magnitude
+    y_top_left = y_left_edge + speed_y * ratio_magnitude
+    x_top_right = x_right_edge + speed_x * ratio_magnitude
+    y_top_right = y_right_edge + speed_y * ratio_magnitude
+
+    return (x_right_edge, y_right_edge, x_left_edge, y_left_edge,
+        x_top_left, y_top_left, x_top_right, y_top_right)
+
+
+def _is_on_left_edge(x1,y1, x2, y2, xp, yp):
+    return True if (x2 - x1) * (yp - y1) - (xp - x1) * (y2 - y1) >= 0 else False
 
 def _calculate_intersection_circles(pt1, radius1, pt2, radius2):
     """_summary_
@@ -299,14 +326,14 @@ def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> Tuple:
     return tuple(amalgames[:last_i+1]['center_polar'])
 
 if __name__ == '__main__':
-    obstacle_in_path((0.5, 0.5, 0.0), [[0.59, 0.72]], (0.1, 0.1, 0.0))
+    obstacle_in_path((0.5, 0.5, 0.0), [(0.32, 0.57)], (-0.1, 0.1, 0.0))
     # left edge (0.41, 0.59)
     # right edge (0.59, 0.41)
     # top left edge (0.59, 0.77)
     #top right edge (0.77, 0.59)
 
-    #trigger : (0.59, 0.72), (0.58, 0.48), (0.65, 0.65)
-    #not trigger : (0.68, 0.78), (0.41, 0.55), (0.62, 0.42)
+    #trigger : (0.59, 0.72), (0.58, 0.48), (0.65, 0.65), (0.62, 0.42)
+    #not trigger : (0.68, 0.78), (0.41, 0.55), (0.64, 0.39)
     pass
     # get_distances(amalgame_sample_1)
     
