@@ -1,19 +1,22 @@
-
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
 from ecal.core.publisher import ProtoPublisher, StringPublisher
-import sys 
+
+import sys, os
 import time 
-import loca_lidar.loca_lidar.robot_state_pb2 as robot_pb
-import loca_lidar.launch_loca_ecal as localidar
+from math import sqrt
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
+import generated.robot_state_pb2 as robot_pb
 import map 
-from math import sqrt 
+
+
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
 
 sub_obstacles = ProtoSubscriber("obstacle", robot_pb.Position)
 
-def update_graph(x,y):
+def update_graph(topic_name, msg, timestamp):
     """
     si le cercle de centre  x et y des coordonnes du robot adverse croise une des droite du graph, on rajoute +100 au weight de la droite
     """
@@ -38,8 +41,10 @@ def update_graph(x,y):
                 segments.append((x1, a*z + b ))
                 z += 0.01
             for point in segments:
-                if sqrt((x - point[0])**2 + (y - point[1])**2) <= r:
-                    pass #on change le poids de l'arrête
+                for i, obs_x in enumerate(msg.x):
+                    obs_y = msg.y[i]
+                    if sqrt((obs_x - point[0])**2 + (obs_y - point[1])**2) <= r:
+                        pass #on change le poids de l'arrête
                     
 
 
