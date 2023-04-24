@@ -83,6 +83,10 @@ def print_chemin(g,chemin):
         plt.plot([x1,x2],[y1,y2],color='r',linewidth=5)
         
 
+def update_graph(graph):
+    coord_obstacle = 
+
+
 file = 'src\graph.txt'
 graph = read_graph(file) #map de la table
 
