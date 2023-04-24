@@ -41,7 +41,8 @@ class Graph(object):
         x2 = self.coords[v][0]
         y1 = self.coords[u][1]
         y2 = self.coords[v][1]
-        return sqrt((x1 - x2)**2 + (y1 - y2)**2)
+        w =  sqrt((x1 - x2)**2 + (y1 - y2)**2)
+        return w
 
 
 def read_graph(file):
@@ -82,9 +83,6 @@ def print_chemin(g,chemin):
         y2 = g.coords[chemin[i+1]][1]
         plt.plot([x1,x2],[y1,y2],color='r',linewidth=5)
         
-
-def update_graph(graph):
-    coord_obstacle = 
 
 
 file = 'src\graph.txt'
