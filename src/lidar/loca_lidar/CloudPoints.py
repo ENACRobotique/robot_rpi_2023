@@ -1,6 +1,6 @@
 # Set of tools to manage points from 2D lidar cloud points and creation of amalgames
 
-from math import cos, radians, dist
+from math import cos, radians, dist, atan2, pi
 import numpy as np
 from typing import Tuple, List, Union
 try:
@@ -93,41 +93,46 @@ def obstacle_in_path(robot_pose: tuple, pts: List[list[Union[float, float]]], sp
 
     # 1. Calculate rectangle for stop
     #### STOP Rectangle ###
-    x_left_edge, y_left_edge, \
-    x_right_edge, y_right_edge, \
-    x_top_left, y_top_left, \
-    x_top_right, y_top_right = _get_rectangle_edge(
+    stop_x_edge1, stop_y_edge1, \
+    stop_x_edge2, stop_y_edge2, \
+    stop_x_edge3, stop_y_edge3, \
+    stop_x_edge4, stop_y_edge4 = _get_rectangle_edge(
         robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
         speed[0], speed[1], config.stop_cyl_width, config.stop_cyl_dist)
     
-    print(x_left_edge, y_left_edge)
-    print(x_right_edge, y_right_edge)
-    print(x_top_left, y_top_left)
-    print(x_top_right, y_top_right)
+    print(stop_x_edge1, stop_y_edge1)
+    print(stop_x_edge2, stop_y_edge2)
+    print(stop_x_edge3, stop_y_edge3)
+    print(stop_x_edge4, stop_y_edge4)
     
     #### WARNING Rectangle ###
-    #x_bottomleft_warning, ......... y_topleft_warning, .......
-    x_bl_w, y_bl_w, \
-    x_br_w, y_br_w, \
-    x_tl_w, y_tl_w, \
-    x_tr_w, y_tr_w = _get_rectangle_edge(
+    warn_x_edge1, warn_y_edge1, \
+    warn_x_edge2, warn_y_edge2, \
+    warn_x_edge3, warn_y_edge3, \
+    warn_x_edge4, warn_y_edge4 = _get_rectangle_edge(
         robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
         speed[0], speed[1], config.warning_cyl_width, config.warning_cyl_dist)
 
+    x_a, y_a, x_b, y_b, x_c, y_c, x_d, y_d = _determine_edge(
+        stop_x_edge1, stop_y_edge1, stop_x_edge2, stop_y_edge2, stop_x_edge3, stop_y_edge3, stop_x_edge4, stop_y_edge4)
+
+    x_e, y_e, x_f, y_f, x_g, y_g, x_h, y_h = _determine_edge(
+        warn_x_edge1, warn_y_edge1, warn_x_edge2, warn_y_edge2, warn_x_edge3, warn_y_edge3, warn_x_edge4, warn_y_edge4)
     #test 1&2, 2&4, 4&3, 3&1
     for pt in pts:
+
         #2. Check if inside rectangle
         # https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not#
-        if (_is_on_left_edge(x_left_edge, y_left_edge,x_right_edge, y_right_edge, pt[0], pt[1]) and
-            _is_on_left_edge(x_right_edge, y_right_edge, x_top_right, y_top_right, pt[0], pt[1]) and
-            _is_on_left_edge(x_top_right, y_top_right, x_top_left, y_top_left, pt[0], pt[1]) and
-            _is_on_left_edge(x_top_left, y_top_left, x_left_edge, y_left_edge, pt[0], pt[1])):
+        if (_is_on_left_edge(x_a, y_a,x_b, y_b, pt[0], pt[1]) and
+            _is_on_left_edge(x_b, y_b, x_c, y_c, pt[0], pt[1]) and
+            _is_on_left_edge(x_c, y_c, x_d, y_d, pt[0], pt[1]) and
+            _is_on_left_edge(x_d, y_d, x_a, y_a, pt[0], pt[1])):
             return 2 # STOP
         
-        if (_is_on_left_edge(x_bl_w, y_bl_w,x_br_w, y_br_w, pt[0], pt[1]) and
-            _is_on_left_edge(x_br_w, y_br_w, x_tr_w, y_tr_w, pt[0], pt[1]) and
-            _is_on_left_edge(x_tr_w, y_tr_w, x_tl_w, y_tl_w, pt[0], pt[1]) and
-            _is_on_left_edge(x_tl_w, y_tl_w, x_bl_w, y_bl_w, pt[0], pt[1])):
+        if (_is_on_left_edge(x_e, y_e,x_f, y_f, pt[0], pt[1]) and
+            _is_on_left_edge(x_f, y_f, x_g, y_g, pt[0], pt[1]) and
+            _is_on_left_edge(x_g, y_g, x_h, y_h, pt[0], pt[1]) and
+            _is_on_left_edge(x_h, y_h, x_e, y_e, pt[0], pt[1])):
             max_alert = 1
 
     return max_alert # returns 0 if ok, 1 if warning, 2 if stop
@@ -139,20 +144,36 @@ def _get_rectangle_edge(robot_x, robot_y, next_x, next_y, speed_x, speed_y, widt
     L = np.sqrt(np.power(robot_x-next_x, 2) + np.power(robot_y - next_y, 2)) #sqrt((x2-x1)² + (y2-y1)²)
     C = width / 2
     
-    x_right_edge = robot_x + (C * (next_y - robot_y)) / L
-    y_right_edge = robot_y + (C * (robot_x - next_x)) / L
-    x_left_edge = robot_x - (C * (next_y - robot_y)) / L
-    y_left_edge = robot_y - (C * (robot_x - next_x)) / L
-    
+    x_edge1 = robot_x + (C * (next_y - robot_y)) / L
+    y_edge1 = robot_y + (C * (robot_x - next_x)) / L
+    x_edge2 = robot_x - (C * (next_y - robot_y)) / L
+    y_edge2 = robot_y - (C * (robot_x - next_x)) / L
+
     #https://stackoverflow.com/questions/41317291/setting-the-magnitude-of-a-2d-vector
     ratio_magnitude = length / np.linalg.norm([speed_x, speed_y]) # factor to multiply the vector x/y
-    x_top_left = x_left_edge + speed_x * ratio_magnitude
-    y_top_left = y_left_edge + speed_y * ratio_magnitude
-    x_top_right = x_right_edge + speed_x * ratio_magnitude
-    y_top_right = y_right_edge + speed_y * ratio_magnitude
+    x_edge3 = x_edge2 + speed_x * ratio_magnitude #extension of edge 2
+    y_edge3 = y_edge2 + speed_y * ratio_magnitude
+    x_edge4 = x_edge1 + speed_x * ratio_magnitude #extension of edge 1
+    y_edge4 = y_edge1 + speed_y * ratio_magnitude
 
-    return (x_right_edge, y_right_edge, x_left_edge, y_left_edge,
-        x_top_left, y_top_left, x_top_right, y_top_right)
+    return (x_edge1, y_edge1, x_edge2, y_edge2,
+        x_edge3, y_edge3, x_edge4, y_edge4)
+
+def _determine_edge(x_edge1, y_edge1, x_edge2, y_edge2, x_edge3, y_edge3, x_edge4, y_edge4):
+    # sort edges in anticlockwise order
+    all_x = [x_edge1, x_edge2, x_edge3, x_edge4]
+    all_y = [y_edge1, y_edge2, y_edge3, y_edge4]
+    all_angle = [0, 0, 0, 0]
+
+    #sort all y and all x in anticlockwise order :
+    # https://stackoverflow.com/a/1709546 (I can't explain how it works sorry, pure copy pasta)
+    mx = sum(x for x in all_x) / len(all_x)
+    my = sum(y for y in all_y) / len(all_y)
+    for i in range(len(all_x)):
+        all_angle[i] = (atan2(all_x[i] - mx, all_y[i] - my) + 2 * pi) % (2*pi)
+
+    all_angle, all_x, all_y = zip(*sorted(zip(all_angle, all_x, all_y), reverse=True))
+    return all_x[0], all_y[0], all_x[1], all_y[1], all_x[2], all_y[2], all_x[3], all_y[3]
 
 
 def _is_on_left_edge(x1,y1, x2, y2, xp, yp):
@@ -326,7 +347,8 @@ def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> Tuple:
     return tuple(amalgames[:last_i+1]['center_polar'])
 
 if __name__ == '__main__':
-    obstacle_in_path((0.5, 0.5, 0.0), [(0.32, 0.57)], (-0.1, 0.1, 0.0))
+    al = obstacle_in_path((0.5, 0.5, 0.0), [(0.01, 0.01)], (-0.1, -0.1, 0.0))
+    print(al)
     # left edge (0.41, 0.59)
     # right edge (0.59, 0.41)
     # top left edge (0.59, 0.77)

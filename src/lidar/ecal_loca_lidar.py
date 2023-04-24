@@ -27,7 +27,7 @@ sub_angle = ProtoSubscriber("odom_speed", robot_pb.Position)
 sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
 
-pub_stop_cons = StringPublisher("stop_cons") # pub_stop_cons = ProtoPublisher("stop_cons", lidar_pb.Action)
+pub_stop_cons = ProtoPublisher("proximity_status", lidar_pb.Proximity) # pub_stop_cons = ProtoPublisher("stop_cons", lidar_pb.Action)
 pub_filtered_pts = ProtoPublisher("lidar_filtered", lidar_pb.Lidar)
 pub_amalgames = ProtoPublisher("amalgames", lidar_pb.Lidar)
 pub_beacons = StringPublisher("beacons") # Only up to 5 points are sent, the index correspond to the fixed_point
@@ -54,9 +54,16 @@ def send_obstacles_wrt_table(obstacles: list[list[Union[float, float]]]):
     pub_obstacles.send(msg, ecal_core.getmicroseconds()[1])
     
 def send_stop_cons(closest_distance: float, action: int):
-    # msg = lidar_pb.Proximity()
-    # msg.action = lidar_pb.Action. ????
-    pub_stop_cons.send(str(action))
+    msg = lidar_pb.Proximity()
+    if action == 0:
+        msg.status = lidar_pb.ProximityStatus.OK
+    elif action == 1:
+        msg.status = lidar_pb.ProximityStatus.WARNING
+    elif action == 2:
+        msg.status = lidar_pb.ProximityStatus.DANGER
+    else:
+        raise ValueError("ecal_loca_lidar - send_stop_cons - Invalid action value")
+    pub_stop_cons.send(msg, ecal_core.getmicroseconds()[1])
 
 def send_lidar_scan(pub, distances, angles):
     lidar_msg = lidar_pb.Lidar()
