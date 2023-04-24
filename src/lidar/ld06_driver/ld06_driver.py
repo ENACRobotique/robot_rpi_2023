@@ -42,9 +42,9 @@ class Part(Enum):
 
 
 class Driver:
-    def __init__(self, cb):
+    def __init__(self, cb, serial_port='/dev/ttyUSB0'):
         # Driver settings and state data
-        self.serial_port = '/dev/ttyUSB0' # TODO: Get serial port from settings
+        self.serial_port = serial_port
         self.serial = Serial(self.serial_port, 230400)
         self.expected_type = Part.START
         self.expected_length = 1

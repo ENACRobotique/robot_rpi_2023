@@ -1,10 +1,12 @@
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
 from ecal.core.publisher import ProtoPublisher
-import time
+import time, os, sys
 
-import robot_state_pb2 as robot_pb
-from position_smooth import Smoother
+if os.name == 'nt': # Windows
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError with generated file hacking not working
+import generated.robot_state_pb2 as robot_pb
+from position_fusion.position_smooth import Smoother
 
 DEBUG = True
 

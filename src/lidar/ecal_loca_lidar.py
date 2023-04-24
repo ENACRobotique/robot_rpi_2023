@@ -1,5 +1,5 @@
 import logging
-import sys
+import sys, os
 import time
 from typing import Tuple, Union
 import numpy as np
@@ -11,10 +11,13 @@ from ecal.core.publisher import ProtoPublisher, StringPublisher
 from loca_lidar.ObstacleCalc import ObstacleCalc
 import loca_lidar.CloudPoints as cp
 import loca_lidar.PatternFinder as pf
-import loca_lidar.lidar_data_pb2 as lidar_pb
-import loca_lidar.robot_state_pb2 as robot_pb
 from loca_lidar.PointsDataStruct import PolarPts
 import loca_lidar.config as config
+
+if os.name == 'nt': # Windows
+    sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError with generated file hacking not working
+import generated.lidar_data_pb2 as lidar_pb
+import generated.robot_state_pb2 as robot_pb
 
 
 BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm))
