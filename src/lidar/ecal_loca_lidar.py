@@ -60,7 +60,7 @@ def send_stop_cons(closest_distance: float, action: int):
     elif action == 1:
         msg.status = lidar_pb.ProximityStatus.WARNING
     elif action == 2:
-        msg.status = lidar_pb.ProximityStatus.DANGER
+        msg.status = lidar_pb.ProximityStatus.STOP
     else:
         raise ValueError("ecal_loca_lidar - send_stop_cons - Invalid action value")
     pub_stop_cons.send(msg, ecal_core.getmicroseconds()[1])
