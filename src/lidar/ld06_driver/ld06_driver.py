@@ -42,7 +42,7 @@ class Part(Enum):
 
 
 class Driver:
-    def __init__(self, cb, serial_port='/dev/ttyUSB0'):
+    def __init__(self, cb, serial_port='/dev/lidar'):
         # Driver settings and state data
         self.serial_port = serial_port
         self.serial = Serial(self.serial_port, 230400)
