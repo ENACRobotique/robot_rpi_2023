@@ -19,7 +19,7 @@ package enac;
 //
 // Careful with travel message : don't send all fields at 0 or it might crash on subscriber (empty message)
 message no_args_func_ {
-    int32 nothing = 1;
+    float nothing = 1;
 }
 
 message Position {

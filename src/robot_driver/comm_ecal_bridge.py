@@ -20,7 +20,6 @@ class EcalRadio(comm.Radio):
 
     def init_ecal_sig(self):
         """Initialize eCAL"""
-        ecal_core.initialize(sys.argv, "serial->ecal bridge")
         
         # Low level to High level message transmition
         self.odom_position_pub = ProtoPublisher('odom_pos', robot_pb.Position)
@@ -35,20 +34,18 @@ class EcalRadio(comm.Radio):
         self.set_position_sub = ProtoSubscriber("set_position", robot_pb.Position)
         self.set_position_sub.set_callback(self.on_set_position)
         
-        self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
-        #self.proximity_sub.set_callback()
 
         self.reset_pos_sub = ProtoSubscriber("reset",robot_pb.Position)
         self.reset_pos_sub.set_callback(self.on_reset_pos)
         
         self.slow_sub = ProtoSubscriber("slow",robot_pb.no_args_func_)
-        self.slow_sub.set_callback(self.sendSlowDownSignal)
+        self.slow_sub.set_callback(self.on_slow)
         
         self.stop_sub = ProtoSubscriber("stop",robot_pb.no_args_func_)
-        self.stop_sub.set_callback(self.sendStopSignal)
+        self.stop_sub.set_callback(self.on_stop)
         
         self.resume_sub = ProtoSubscriber("resume",robot_pb.no_args_func_)
-        self.resume_sub.set_callback(self.sendResumeSignal)
+        self.resume_sub.set_callback(self.on_resume)
 
         self.pince_sub = ProtoSubscriber("set_pince", robot_pb.SetState)
         self.pince_sub.set_callback(self.on_claw_command)
@@ -71,6 +68,10 @@ class EcalRadio(comm.Radio):
         # self.end_match_sub = ProtoSubscriber("end_match", robot_pb.Match)
         # self.end_match_sub.set_callback(self.on_end_match)
         
+        self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
+        #self.proximity_sub.set_callback()
+
+
         
 
     ####  Reception from robot
@@ -116,6 +117,16 @@ class EcalRadio(comm.Radio):
     def on_reset_pos(self,topic_name,position, time):
         self.resetPosition(position.x,position.y,position.theta)
         print("reset pos",position)
+        
+    def on_slow(self,topic_name,nothing,time):
+        self.sendSlowDownSignal()
+    
+    def on_resume(self,topic_name,nothing,time):
+        self.sendResumeSignal()
+    
+    def on_stop(self,topic_name,nothing,time):
+        self.sendStopSignal()
+
     
         
     # def on_end_match(self,topic_name,match, time):
@@ -127,7 +138,7 @@ class EcalRadio(comm.Radio):
 if __name__ == "__main__":
     radio = EcalRadio()
     test_pub = ProtoPublisher('set_position',robot_pb.Position)
-    while True:
+    while ecal_core.ok():
         time.sleep(0.1)
 
     ecal_core.finalize()
