@@ -63,7 +63,7 @@ def find_min(Q : PrioQueue):
     return b[1]
 
 def maj_dist(s1, s2, predecesseur : dict, d :dict , G):
-    a = G.weight(s1,s2)
+    a = G.weights[(s1,s2)]
     if d[s2] > d[s1] + a :
         d[s2] = d[s1] + a
         predecesseur[s2] = s1
