@@ -7,14 +7,14 @@ import time
 from math import sqrt
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
-import generated.robot_state_pb2 as robot_pb
+import generated.lidar_data_pb2 as lidar_pb
 import map 
 
 
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
 
-sub_obstacles = ProtoSubscriber("obstacles_wrt_table", robot_pb.Position)
+sub_obstacles = ProtoSubscriber("obstacles_wrt_table", lidar_pb.Obstacles)
 
 def on_obstacles_received(topic_name, msg, timestamp):
     update_graph(msg.x, msg.y)
