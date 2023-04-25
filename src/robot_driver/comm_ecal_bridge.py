@@ -35,8 +35,6 @@ class EcalRadio(comm.Radio):
         self.set_position_sub = ProtoSubscriber("set_position", robot_pb.Position)
         self.set_position_sub.set_callback(self.on_set_position)
         
-        self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
-        #self.proximity_sub.set_callback()
 
         self.reset_pos_sub = ProtoSubscriber("reset",robot_pb.Position)
         self.reset_pos_sub.set_callback(self.on_reset_pos)
@@ -71,6 +69,10 @@ class EcalRadio(comm.Radio):
         # self.end_match_sub = ProtoSubscriber("end_match", robot_pb.Match)
         # self.end_match_sub.set_callback(self.on_end_match)
         
+        self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
+        #self.proximity_sub.set_callback()
+
+
         
 
     ####  Reception from robot
@@ -125,6 +127,7 @@ class EcalRadio(comm.Radio):
     
     def on_stop(self,topic_name,nothing,time):
         self.sendStopSignal()
+
     
         
     # def on_end_match(self,topic_name,match, time):
@@ -136,7 +139,7 @@ class EcalRadio(comm.Radio):
 if __name__ == "__main__":
     radio = EcalRadio()
     test_pub = ProtoPublisher('set_position',robot_pb.Position)
-    while True:
+    while ecal_core.ok():
         time.sleep(0.1)
 
     ecal_core.finalize()
