@@ -9,6 +9,7 @@ class Graph(object):
         """Cree un graphe vide"""
         self.adj = {}
         self.coords = {}
+        self.weights = {}
 
     def __repr__(self):
         """Representation en chaine de caracteres d'un graphe"""
@@ -36,13 +37,17 @@ class Graph(object):
         """Renvoie la liste des voisins du noeud u dans le graphe"""
         return self.adj[u]
 
-    def weight(self,u,v):
-        x1 = self.coords[u][0]
-        x2 = self.coords[v][0]
-        y1 = self.coords[u][1]
-        y2 = self.coords[v][1]
-        w =  sqrt((x1 - x2)**2 + (y1 - y2)**2)
-        return w
+    def weight(self):
+        for point in self.adj :
+            for voisin in self.adj[point]:
+                x1 = self.coords[point][0]
+                x2 = self.coords[voisin][0]
+                y1 = self.coords[point][1]
+                y2 = self.coords[voisin][1]
+                w =  sqrt((x1 - x2)**2 + (y1 - y2)**2)
+                self.weights.setdefault((point,voisin), []).append(w)
+                self.weights.setdefault((voisin,point), []).append(w)
+        
 
 
 def read_graph(file):
