@@ -20,7 +20,6 @@ class EcalRadio(comm.Radio):
 
     def init_ecal_sig(self):
         """Initialize eCAL"""
-        ecal_core.initialize(sys.argv, "serial->ecal bridge")
         
         # Low level to High level message transmition
         self.odom_position_pub = ProtoPublisher('odom_pos', robot_pb.Position)
