@@ -23,7 +23,7 @@ def update_graph(all_x,all_y):
     """
     si le cercle de centre  x et y des coordonnes du robot adverse croise une des droite du graph, on rajoute +100 au weight de la droite
     """
-    file = 'src\graph.txt'
+    file = 'graph.txt'
     graph = map.read_graph(file) #map de la table
     graph.weight()
 

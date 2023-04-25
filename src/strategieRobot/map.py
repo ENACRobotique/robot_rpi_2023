@@ -90,7 +90,7 @@ def print_chemin(g,chemin):
         
 
 
-file = 'src\graph.txt'
+file = 'graph.txt'
 graph = read_graph(file) #map de la table
 
 chemin,distance_totale = dijkstra.dijkstra_classic(graph,"plate_B_1", "interet_SE") #a liste des points parcourus, a[0]étant l'arrivée, et a[len(a)] le départ. d distance parcourue

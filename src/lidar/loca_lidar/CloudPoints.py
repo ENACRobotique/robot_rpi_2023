@@ -100,11 +100,6 @@ def obstacle_in_path(robot_pose: tuple, pts: List[list[Union[float, float]]], sp
         robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
         speed[0], speed[1], config.stop_cyl_width, config.stop_cyl_dist)
     
-    print(stop_x_edge1, stop_y_edge1)
-    print(stop_x_edge2, stop_y_edge2)
-    print(stop_x_edge3, stop_y_edge3)
-    print(stop_x_edge4, stop_y_edge4)
-    
     #### WARNING Rectangle ###
     warn_x_edge1, warn_y_edge1, \
     warn_x_edge2, warn_y_edge2, \

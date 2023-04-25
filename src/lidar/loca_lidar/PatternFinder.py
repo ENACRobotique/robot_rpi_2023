@@ -265,9 +265,10 @@ def lidar_angle_wrt_table(lidar_wrt_table, lidar_to_table, lidar_amalgames, fixe
     # for each beacon :
     # calculate right triangle ABC with C lidar/beacon, A horizontal beacon, B vertical lidar 
     # we determine the angle using pythagorus, arctan(line a/line b)  ### formulas were determined "experimentaly" using geogebra
-    computed_angle = []
+    rad_computed_angle = []
     for i, coord in enumerate(table_coords):
         angle_lidar_beacon = lidar_polar[i][1]
+        print(angle_lidar_beacon, coord)
         lidar_angle_wrt_table = None
         # if beacon on top left to the lidar position (<x & >y)
         if coord[0] < lidar_wrt_table[0] and coord[1] > lidar_wrt_table[1]: 
@@ -307,19 +308,20 @@ def lidar_angle_wrt_table(lidar_wrt_table, lidar_to_table, lidar_amalgames, fixe
                 can't determine angle using lidar amalgame {lidar_idxs[i]} and table fixed {known_idxs[i]}  ")
 
         if lidar_angle_wrt_table != None: 
-            #correcting for negative angle
-            lidar_angle_wrt_table = 360 + lidar_angle_wrt_table if lidar_angle_wrt_table < 0 else lidar_angle_wrt_table
-            #correcting for > 360°
-            lidar_angle_wrt_table = lidar_angle_wrt_table - 360 if lidar_angle_wrt_table > 360 else lidar_angle_wrt_table
-            #adding to an array to return the averaged angle determined
-            computed_angle.append(lidar_angle_wrt_table)
+             # normalize angle to rad
+            rad_lidar_angle_wrt_table = np.deg2rad(lidar_angle_wrt_table)
+            rad_lidar_angle_wrt_table = np.arctan2(np.sin(rad_lidar_angle_wrt_table),np.cos(rad_lidar_angle_wrt_table))
+            rad_computed_angle.append(rad_lidar_angle_wrt_table)
 
     #TODO : remove after enough testing below testing : 
-    averaged_angle = np.array(computed_angle).mean()
-    if np.any((computed_angle < averaged_angle - 1.5)|(computed_angle > averaged_angle + 1.5)):
-        logging.warning(f"angle triangulation determined mean deviation of more than 1.5° \n \
-            angles are {computed_angle} for beacons {table_coords} ")
-    return np.array(computed_angle).mean()
+    averaged_angle_rad = np.array(rad_computed_angle).mean()
+    # makes it parallel to x axis instead of y axis
+    averaged_angle = np.pi/2 - averaged_angle_rad
+    averaged_angle = np.rad2deg(averaged_angle)
+    if np.any((rad_computed_angle < averaged_angle_rad - 1.5)|(rad_computed_angle > averaged_angle_rad + 1.5)):
+        logging.warning(f"angle triangulation determined mean deviation of more than 0.03 rad/ 1.7° \n \
+            angles are {rad_computed_angle} for beacons {table_coords} ")
+    return averaged_angle
 
 
 if __name__ == "__main__":

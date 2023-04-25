@@ -241,7 +241,7 @@ amalgame_sample_2 = (
 
 amalgame_1 = pf.GroupAmalgame(amalgame_sample_1, False)
 
-blue_beacons = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm), True)
+blue_beacons = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.blue_points_in_mm), True)
 
 # maximum error tolerance set for unit tests is 2mm for 2D lidar pose estimation 
 pos_abs_tol = 0.002 #meters 

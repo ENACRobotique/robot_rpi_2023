@@ -18,14 +18,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids Modul
 import generated.lidar_data_pb2 as lidar_pb
 import generated.robot_state_pb2 as robot_pb
 
-
-BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm))
-
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
-sub_angle = ProtoSubscriber("odom_speed", robot_pb.Position)
+sub_speed = ProtoSubscriber("odom_speed", robot_pb.Position)
 sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
+#sub_side = ProtoSubscriber("side", robot_pb.Side) #TODO UNCOMMENT
 
 pub_stop_cons = ProtoPublisher("proximity_status", lidar_pb.Proximity) # pub_stop_cons = ProtoPublisher("stop_cons", lidar_pb.Action)
 pub_filtered_pts = ProtoPublisher("lidar_filtered", lidar_pb.Lidar)
@@ -40,8 +38,14 @@ robot_pose = (0.0, 0.0, 0.0) #x, y, theta (meters, degrees)
 OBSTACLE_CALC = ObstacleCalc(
     config.lidar_x_offset, config.lidar_y_offset, config.lidar_theta_offset)
 
-BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.known_points_in_mm), True)
-FINDER = pf.LinkFinder(BLUE_BEACONS, 0.06, 1.5)
+SIDE_SET = False
+BLUE_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.blue_points_in_mm), True)
+GREEN_BEACONS = pf.GroupAmalgame(tuple((x / 1000, y / 1000) for x,y in config.green_points_in_mm), True)
+beacons_to_use = BLUE_BEACONS
+
+BLUE_FINDER = pf.LinkFinder(BLUE_BEACONS, 0.06, 1.5)
+GREEN_FINDER = pf.LinkFinder(GREEN_BEACONS, 0.06, 1.5)
+finder_to_use = BLUE_FINDER
 
 def send_obstacles_wrt_table(obstacles: list[list[Union[float, float]]]):
     msg = lidar_pb.Obstacles()
@@ -79,6 +83,17 @@ def send_lidar_pos(x, y, theta):
     pos_msg.theta = float(theta)
     pub_lidar_pos.send(pos_msg, ecal_core.getmicroseconds()[1])
 
+def on_side_set(topic_name, side_msg, time):
+    global SIDE_SET, beacons_to_use, finder_to_use
+    if side_msg == lidar_pb.Side.BLUE:
+        beacons_to_use = BLUE_BEACONS
+        finder_to_use = BLUE_FINDER
+    elif side_msg == lidar_pb.Side.GREEN:
+        beacons_to_use = GREEN_BEACONS
+        finder_to_use = GREEN_FINDER
+    else:
+        raise ValueError("ecal_loca_lidar - on_side_set - Invalid side value")
+    SIDE_SET = True
 
 def on_robot_speed(topic_name, travel_msg, time):
     global last_known_speed
@@ -145,7 +160,7 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
     """
     #Find correspondances between lidar and table
     amalgame_1 = pf.GroupAmalgame(amalgame_scan, False)
-    lidar2table_set = FINDER.find_pattern(amalgame_1)
+    lidar2table_set = finder_to_use.find_pattern(amalgame_1)
 
     if lidar2table_set == None:
         logging.warning("No correspondance found between lidar and table")
@@ -155,9 +170,9 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
     best_pose = ()
     for i, corr in enumerate(lidar2table_set):
         lidar_pos = pf.lidar_pos_wrt_table(
-            corr, amalgame_1.points, BLUE_BEACONS.points)
+            corr, amalgame_1.points, beacons_to_use.points)
         lidar_angle = pf.lidar_angle_wrt_table(
-            lidar_pos, corr, amalgame_1.points, BLUE_BEACONS.points)
+            lidar_pos, corr, amalgame_1.points, beacons_to_use.points)
         if len(lidar2table_set) == 1: # trivial case
             best_pose = (lidar_pos[0], lidar_pos[1], lidar_angle)
             corr_out |= corr #fusion the two dicts, to make sure that outside the function the dict is not empty
@@ -180,8 +195,10 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
    
 if __name__ == "__main__":
 
-    sub_angle.set_callback(on_robot_speed)
+    sub_speed.set_callback(on_robot_speed)
     sub_lidar.set_callback(on_lidar_scan)
+    sub_odom_pos.set_callback(on_robot_pos)
+    #sub_side.set_callback(on_side) #TODO uncomment
 
     while ecal_core.ok():
         time.sleep(0.01)

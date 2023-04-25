@@ -50,6 +50,14 @@ message Action {
     int32 action = 1;
 }
 
+enum Color {
+    BLUE = 0;
+    GREEN = 1;
+}
+
+message Side {
+    Color color = 1;
+}
 
 
 

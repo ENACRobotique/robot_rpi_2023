@@ -57,6 +57,9 @@ class robot:
 
         self.proximitySub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
         self.proximitySub.set_callback(self.onProximityStatus)
+
+        self.pubSide = ProtoPublisher("side",robot_pb.Side)
+
         
         
 
@@ -86,6 +89,9 @@ class robot:
         self.x=msg.x
         self.y=msg.y
         self.theta=msg.theta
+        # TODO : publish side deduced from position & if match hasn't started
+        # self.pubSide.send(robot_pb.Side(side=robot_pb.Side.BLUE))
+        # self.pubSide.send(robot_pb.Side(side=robot_pb.Side.GREEN))
 
     def onReceiveSpeed(self, topic_name, msg, timestamp):
         """Callback d'un subscriber ecal. Actualise la vitesse du robot"""

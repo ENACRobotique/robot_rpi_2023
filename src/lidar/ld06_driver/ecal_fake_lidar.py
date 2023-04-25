@@ -2,8 +2,10 @@
 import ecal.core.core as ecal_core
 from ecal.core.publisher import ProtoPublisher
 
-import lidar_data_pb2 as lidar_data
-import time, sys
+import time, sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../..')) # Avoids ModuleNotFoundError when finding generated folder
+import generated.lidar_data_pb2 as lidar_data
+
 
 lidar_tuple = ( (0.01, 0),
     (0.01, 1),

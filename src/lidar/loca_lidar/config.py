@@ -39,6 +39,23 @@ amalg_max_nb_pts = 50
 odometry_tolerance = 0.1 # meters tolerance of odometry from robot motor, used to filter the possible position according to lidar
 
 # Fixed Points / Beacons coordinates
+
+blue_points_in_mm = ( #(x,y) | Made from Eurobot2023_Rules_FR_FInale, Blue Side
+    (50, -94), #A (bottom left)     | (22+22+45+5) Bordure mur + Bordure Mur + Moitié + Moitié trou
+    (1500, 2094), #B (middle top)
+    (2950, -94), #C (bottom right)
+    (-22, 1000), #D (Center of Support de Balise | Top middle)
+    # (225, 3100) #E (Center of Experience | top middle left)
+    ) 
+
+green_points_in_mm = ( #(x,y) | Made from Eurobot2023_Rules_FR_FInale, Green Side
+    (50, 2094), #A (top left)  
+    (1500, -94), #B (middle bottom)
+    (2950, 2094), #C (top right)
+    (-22, 1000), #D (Center of Support de Balise | Top middle)
+)
+
+""" # deprecated (wrong xy origin)
 known_points_in_mm = ( #(x,y) | Made from Eurobot2023_Rules_FR_FInale, Blue Side
     (-94, 50), #A (bottom left)     | (22+22+45+5) Bordure mur + Bordure Mur + Moitié + Moitié trou
     (2094, 1500), #B (middle right)
@@ -46,3 +63,4 @@ known_points_in_mm = ( #(x,y) | Made from Eurobot2023_Rules_FR_FInale, Blue Side
     (1000, 3022), #D (Center of Support de Balise | Top middle)
     # (225, 3100) #E (Center of Experience | top middle left)
     ) 
+"""
