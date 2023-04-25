@@ -9,18 +9,24 @@ import generated.lidar_data_pb2 as lidar_pb
 ecal_core.initialize(sys.argv, "cmd_live_test")
 time.sleep(0.5)
 
-test_pub = ProtoPublisher('set_position',robot_pb.Position)
-test_sig_pub = ProtoPublisher('signal',robot_pb.no_args_func_)
-test_sig_sub = ProtoSubscriber('signal',robot_pb.no_args_func_)
-
+pos_pub = ProtoPublisher('set_position',robot_pb.Position)
+slow_pub = ProtoPublisher("slow",robot_pb.no_args_func_)
+stop_pub = ProtoPublisher("stop",robot_pb.no_args_func_)
+resume_pub = ProtoPublisher("resume",robot_pb.no_args_func_)
 def bouge(x,y, theta):
-    test_pub.send(robot_pb.Position(x=x,y=y,theta=theta))
+    pos_pub.send(robot_pb.Position(x=x,y=y,theta=theta))
 
-def signal():
-    print("halo")
-    test_sig_pub.send(robot_pb.no_args_func_())
+def slow():    
+    print("slowing")
+    slow_pub.send(robot_pb.no_args_func_(nothing = 1))
 
-test_sig_sub.set_callback(signal)
+def stop():
+    print("stoped")
+    stop_pub.send(robot_pb.no_args_func_(nothing = 1))
 
+def resume():
+    print("resumed")
+    resume_pub.send(robot_pb.no_args_func_(nothing = 1))
+    
 def end():
     ecal_core.finalize()
