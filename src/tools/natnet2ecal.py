@@ -91,7 +91,7 @@ if __name__ == "__main__":
     bridge = OptitrackBridge()
     try:
         bridge.run()
-        while ecal.ok():
+        while ecal_core.ok():
             sleep(1)
     except (KeyboardInterrupt, SystemExit):
         print("Shutting down ivy and natnet interfaces...")
