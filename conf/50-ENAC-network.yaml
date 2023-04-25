@@ -15,6 +15,9 @@ network:
                 "Robot_ENAC":
                     password: "t'as cru quoi toi?"
                     mode: ap
+            routes:
+              - to: 239.0.0.0/4
+                scope: link
                     #dhcp4: true
                 #robot:
                 #    password: "ta mère en slip de bain"
