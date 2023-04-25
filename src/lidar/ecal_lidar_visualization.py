@@ -86,12 +86,23 @@ class CorrespondanceDisplay():
         # prepare the data for annotation in text, r and theta
         lidar2table = eval(msg) #str to dict
         self.text = list(lidar2table.values()) # put the index of the table beacon ([0-4])
-        self.r = [self.amalgames.lidar_dist[i] for i in lidar2table.keys()] # find the coordinate of the amalgame associated
-        self.theta = [self.amalgames.lidar_theta[i] for i in lidar2table.keys()]
+        try:
+            self.r = [self.amalgames.lidar_dist[i] for i in lidar2table.keys()] # find the coordinate of the amalgame associated
+            self.theta = [self.amalgames.lidar_theta[i] for i in lidar2table.keys()]
+        except IndexError: # Seems to happen when no correspondance lidar & table found
+            print("removing correspondance lidar/table")
+            self.text = []
+            self.r = []
+            self.theta = []
+
     
     def display(self, ax):
         for i in range(len(self.text)):
-            ax.text(np.deg2rad(self.theta[i]), self.r[i] ,self.text[i], color="r")
+            try:
+                ax.text(np.deg2rad(self.theta[i]), self.r[i] ,self.text[i], color="r")
+            except IndexError:
+                print("display index error handler ?? TODO proper fix")
+                pass
     
 # on_lidar_scan
 
