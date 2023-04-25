@@ -268,7 +268,6 @@ def lidar_angle_wrt_table(lidar_wrt_table, lidar_to_table, lidar_amalgames, fixe
     rad_computed_angle = []
     for i, coord in enumerate(table_coords):
         angle_lidar_beacon = lidar_polar[i][1]
-        print(angle_lidar_beacon, coord)
         lidar_angle_wrt_table = None
         # if beacon on top left to the lidar position (<x & >y)
         if coord[0] < lidar_wrt_table[0] and coord[1] > lidar_wrt_table[1]: 
