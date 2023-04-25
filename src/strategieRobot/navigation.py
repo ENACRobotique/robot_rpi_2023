@@ -14,9 +14,12 @@ import map
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
 
-sub_obstacles = ProtoSubscriber("obstacle", robot_pb.Position)
+sub_obstacles = ProtoSubscriber("obstacles_wrt_table", robot_pb.Position)
 
-def update_graph(topic_name, msg, timestamp):
+def on_obstacles_received(topic_name, msg, timestamp):
+    update_graph(msg.x, msg.y)
+
+def update_graph(all_x,all_y):
     """
     si le cercle de centre  x et y des coordonnes du robot adverse croise une des droite du graph, on rajoute +100 au weight de la droite
     """
@@ -44,9 +47,10 @@ def update_graph(topic_name, msg, timestamp):
                     segments.append((x1, a*z + b ))
                     z += 0.01
                 for pt in segments:
-                    if sqrt((x - pt[0])**2 + (y - pt[1])**2) <= r:
-                        graph.weights[(point,voisin)] = 10 #on change le poids de l'arrête (suffisamment grand pour que ce soit impossible à choisir par dijkstra)
-                        graph.weights[(voisin,point)] = 10
+                    for i in range(all_x):
+                        if sqrt((all_x[i] - pt[0])**2 + (all_y[i] - pt[1])**2) <= r:
+                            graph.weights[(point,voisin)] = 10 #on change le poids de l'arrête (suffisamment grand pour que ce soit impossible à choisir par dijkstra)
+                            graph.weights[(voisin,point)] = 10
 
 
 
@@ -54,7 +58,7 @@ def update_graph(topic_name, msg, timestamp):
 
 if __name__ == "__main__":
 
-    sub_obstacles.set_callback(update_graph)
+    sub_obstacles.set_callback(on_obstacles_received)
 
     while ecal_core.ok():
         time.sleep(0.01)

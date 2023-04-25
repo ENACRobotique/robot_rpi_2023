@@ -34,6 +34,13 @@ using pytest, unit tests for all functionalities (amalgame discovery, pattern fi
 ### launch_vizualisation
 using eCAL + matplotlib, plot data (more using debug mode)
 
+Jaune : données brutes 
+le 0° : c'est la fléche sur le lidar
+En vert : les données considérés pour l'évitement (ça dépend de la position du robot, qui a pas été set donc c'est à (0,0,0...)
+En bleu : les amalgames, les poteaux testés pour la correspondance lidar/poteau
+En rouge : le poteau que l'algo a déduit
+
+
 ### config.py
 allow to set parameters (debug mode, ...)
 
