@@ -1,0 +1,20 @@
+# Place this file in /etc/netplan/ and run "netplan apply"
+network:
+    version: 2
+    renderer: NetworkManager
+    ethernets:
+      eth0:
+        dhcp4: true
+        optional: true
+    wifis:
+        wlan0:
+            dhcp4: true
+            optional: true
+            addresses: [10.5.141.1/24]
+            access-points:
+                "Robot_ENAC":
+                    password: "t'as cru quoi toi?"
+                    mode: ap
+                    #dhcp4: true
+                #robot:
+                #    password: "ta mère en slip de bain"

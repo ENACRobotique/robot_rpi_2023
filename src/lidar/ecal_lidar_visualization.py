@@ -5,10 +5,9 @@ from ecal.core.subscriber import ProtoSubscriber, StringSubscriber
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
-import sys
-import loca_lidar.lidar_data_pb2 as lidar_data
-import time
-import typing
+import sys, os 
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
+import generated.lidar_data_pb2 as lidar_data
 
 
 class LidarCloudDisplay(): 
@@ -72,7 +71,7 @@ class Zoom():
 
 plt.style.use('ggplot')
 fig = plt.figure()
-ax = fig.add_subplot(projection='polar')
+ax = fig.add_subplot(projection='polar') # type: ignore
 
 class CorrespondanceDisplay():
     def __init__(self, amalgames: LidarCloudDisplay):

@@ -9,7 +9,7 @@ import json
 
 IP = "10.5.141.57"
 PORT_PLOT_JUGGLER = 9870
-PORT_NAME = "/dev/ttyACM1" #"COM2" #
+PORT_NAME = "/dev/bas_niveau" #"COM2" #
 
 def temps_deb (timestamp):
     """Input : t (float) : value given by time()

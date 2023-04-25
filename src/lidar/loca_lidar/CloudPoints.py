@@ -1,6 +1,6 @@
 # Set of tools to manage points from 2D lidar cloud points and creation of amalgames
 
-from math import cos, radians, dist
+from math import cos, radians, dist, atan2, pi
 import numpy as np
 from typing import Tuple, List, Union
 try:
@@ -89,47 +89,95 @@ def obstacle_in_path(robot_pose: tuple, pts: List[list[Union[float, float]]], sp
         int: 0 : ok, 1 : warning, 2 : stop
     """
     max_alert = 0 # level depends on obstacle found within the rectangle
-
-    # 1. Calculate cylinder 
     pt_next_robot = (robot_pose[0] + speed[0], robot_pose[1] + speed[1])
-    # find third point of right triangle
-    #https://math.stackexchange.com/questions/2125690/find-coordinates-of-3rd-right-triangle-point-having-2-sets-of-coordinates-and-a
-    L = np.sqrt(np.power(robot_pose[0]-pt_next_robot[0], 2) + np.power(robot_pose[1] - pt_next_robot[1], 2)) #sqrt((x2-x1)² + (y2-y1)²)
-    C = config.stop_cyl_width / 2
+
+    # 1. Calculate rectangle for stop
+    #### STOP Rectangle ###
+    stop_x_edge1, stop_y_edge1, \
+    stop_x_edge2, stop_y_edge2, \
+    stop_x_edge3, stop_y_edge3, \
+    stop_x_edge4, stop_y_edge4 = _get_rectangle_edge(
+        robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
+        speed[0], speed[1], config.stop_cyl_width, config.stop_cyl_dist)
     
-    x_right_edge = robot_pose[0] + (C * (pt_next_robot[1] - robot_pose[1])) / L
-    y_right_edge = robot_pose[1] + (C * (robot_pose[0] - pt_next_robot[0])) / L
-    x_left_edge = robot_pose[0] - (C * (pt_next_robot[1] - robot_pose[1])) / L
-    y_left_edge = robot_pose[1] - (C * (robot_pose[0] - pt_next_robot[0])) / L
-
-    print(x_left_edge, y_left_edge)
-    print(x_right_edge, y_right_edge)
+    print(stop_x_edge1, stop_y_edge1)
+    print(stop_x_edge2, stop_y_edge2)
+    print(stop_x_edge3, stop_y_edge3)
+    print(stop_x_edge4, stop_y_edge4)
     
-    #https://stackoverflow.com/questions/41317291/setting-the-magnitude-of-a-2d-vector
-    ratio_magnitude = config.stop_cyl_dist / np.linalg.norm([speed[0], speed[1]]) # factor to multiply the vector x/y
-    x_top_left = x_left_edge + speed[0] * ratio_magnitude
-    y_top_left = y_left_edge + speed[1] * ratio_magnitude
-    x_top_right = x_right_edge + speed[0] * ratio_magnitude
-    y_top_right = y_right_edge + speed[1] * ratio_magnitude
+    #### WARNING Rectangle ###
+    warn_x_edge1, warn_y_edge1, \
+    warn_x_edge2, warn_y_edge2, \
+    warn_x_edge3, warn_y_edge3, \
+    warn_x_edge4, warn_y_edge4 = _get_rectangle_edge(
+        robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
+        speed[0], speed[1], config.warning_cyl_width, config.warning_cyl_dist)
 
-    #2. Check if inside rectangle
-    # https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not#
-    # D = (x2 - x1) * (yp - y1) - (xp - x1) * (y2 - y1)
-    # if > 0 for all edge : return the alert
+    x_a, y_a, x_b, y_b, x_c, y_c, x_d, y_d = _determine_edge(
+        stop_x_edge1, stop_y_edge1, stop_x_edge2, stop_y_edge2, stop_x_edge3, stop_y_edge3, stop_x_edge4, stop_y_edge4)
 
-    """ 
-    for obstacle in pts:
-        obs_pos = np.array([obstacle[0], obstacle[1]])
-        if True: #TODO : if inside the cylinder, check the distance
-            dist_to_robot = np.abs(np.cross(p2-p1, p1-obs_pos)) / np.linalg.norm(p2-p1)
-            if dist_to_robot <= config.stop_cyl_dist:
-                return 2 # STOP
-            if dist_to_robot <= config.warning_cyl_dist:
-                max_alert = max(max_alert, 1) # WARNING
+    x_e, y_e, x_f, y_f, x_g, y_g, x_h, y_h = _determine_edge(
+        warn_x_edge1, warn_y_edge1, warn_x_edge2, warn_y_edge2, warn_x_edge3, warn_y_edge3, warn_x_edge4, warn_y_edge4)
+    #test 1&2, 2&4, 4&3, 3&1
+    for pt in pts:
+
+        #2. Check if inside rectangle
+        # https://stackoverflow.com/questions/2752725/finding-whether-a-point-lies-inside-a-rectangle-or-not#
+        if (_is_on_left_edge(x_a, y_a,x_b, y_b, pt[0], pt[1]) and
+            _is_on_left_edge(x_b, y_b, x_c, y_c, pt[0], pt[1]) and
+            _is_on_left_edge(x_c, y_c, x_d, y_d, pt[0], pt[1]) and
+            _is_on_left_edge(x_d, y_d, x_a, y_a, pt[0], pt[1])):
+            return 2 # STOP
+        
+        if (_is_on_left_edge(x_e, y_e,x_f, y_f, pt[0], pt[1]) and
+            _is_on_left_edge(x_f, y_f, x_g, y_g, pt[0], pt[1]) and
+            _is_on_left_edge(x_g, y_g, x_h, y_h, pt[0], pt[1]) and
+            _is_on_left_edge(x_h, y_h, x_e, y_e, pt[0], pt[1])):
+            max_alert = 1
 
     return max_alert # returns 0 if ok, 1 if warning, 2 if stop
 
-    """
+def _get_rectangle_edge(robot_x, robot_y, next_x, next_y, speed_x, speed_y, width, length):
+    # calcualte rectangle edge for collision box drawing, width = from robot POV, length = furthest distance from robot POV
+        # find third point of right triangle
+    #https://math.stackexchange.com/questions/2125690/find-coordinates-of-3rd-right-triangle-point-having-2-sets-of-coordinates-and-a
+    L = np.sqrt(np.power(robot_x-next_x, 2) + np.power(robot_y - next_y, 2)) #sqrt((x2-x1)² + (y2-y1)²)
+    C = width / 2
+    
+    x_edge1 = robot_x + (C * (next_y - robot_y)) / L
+    y_edge1 = robot_y + (C * (robot_x - next_x)) / L
+    x_edge2 = robot_x - (C * (next_y - robot_y)) / L
+    y_edge2 = robot_y - (C * (robot_x - next_x)) / L
+
+    #https://stackoverflow.com/questions/41317291/setting-the-magnitude-of-a-2d-vector
+    ratio_magnitude = length / np.linalg.norm([speed_x, speed_y]) # factor to multiply the vector x/y
+    x_edge3 = x_edge2 + speed_x * ratio_magnitude #extension of edge 2
+    y_edge3 = y_edge2 + speed_y * ratio_magnitude
+    x_edge4 = x_edge1 + speed_x * ratio_magnitude #extension of edge 1
+    y_edge4 = y_edge1 + speed_y * ratio_magnitude
+
+    return (x_edge1, y_edge1, x_edge2, y_edge2,
+        x_edge3, y_edge3, x_edge4, y_edge4)
+
+def _determine_edge(x_edge1, y_edge1, x_edge2, y_edge2, x_edge3, y_edge3, x_edge4, y_edge4):
+    # sort edges in anticlockwise order
+    all_x = [x_edge1, x_edge2, x_edge3, x_edge4]
+    all_y = [y_edge1, y_edge2, y_edge3, y_edge4]
+    all_angle = [0, 0, 0, 0]
+
+    #sort all y and all x in anticlockwise order :
+    # https://stackoverflow.com/a/1709546 (I can't explain how it works sorry, pure copy pasta)
+    mx = sum(x for x in all_x) / len(all_x)
+    my = sum(y for y in all_y) / len(all_y)
+    for i in range(len(all_x)):
+        all_angle[i] = (atan2(all_x[i] - mx, all_y[i] - my) + 2 * pi) % (2*pi)
+
+    all_angle, all_x, all_y = zip(*sorted(zip(all_angle, all_x, all_y), reverse=True))
+    return all_x[0], all_y[0], all_x[1], all_y[1], all_x[2], all_y[2], all_x[3], all_y[3]
+
+
+def _is_on_left_edge(x1,y1, x2, y2, xp, yp):
+    return True if (x2 - x1) * (yp - y1) - (xp - x1) * (y2 - y1) >= 0 else False
 
 def _calculate_intersection_circles(pt1, radius1, pt2, radius2):
     """_summary_
@@ -299,14 +347,15 @@ def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> Tuple:
     return tuple(amalgames[:last_i+1]['center_polar'])
 
 if __name__ == '__main__':
-    obstacle_in_path((0.5, 0.5, 0.0), [[0.59, 0.72]], (0.1, 0.1, 0.0))
+    al = obstacle_in_path((0.5, 0.5, 0.0), [(0.01, 0.01)], (-0.1, -0.1, 0.0))
+    print(al)
     # left edge (0.41, 0.59)
     # right edge (0.59, 0.41)
     # top left edge (0.59, 0.77)
     #top right edge (0.77, 0.59)
 
-    #trigger : (0.59, 0.72), (0.58, 0.48), (0.65, 0.65)
-    #not trigger : (0.68, 0.78), (0.41, 0.55), (0.62, 0.42)
+    #trigger : (0.59, 0.72), (0.58, 0.48), (0.65, 0.65), (0.62, 0.42)
+    #not trigger : (0.68, 0.78), (0.41, 0.55), (0.64, 0.39)
     pass
     # get_distances(amalgame_sample_1)
     

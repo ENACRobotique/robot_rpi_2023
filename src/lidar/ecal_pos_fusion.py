@@ -1,10 +1,11 @@
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
 from ecal.core.publisher import ProtoPublisher
-import time
+import time, os, sys
 
-import robot_state_pb2 as robot_pb
-from position_smooth import Smoother
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
+import generated.robot_state_pb2 as robot_pb
+from position_fusion.position_smooth import Smoother
 
 DEBUG = True
 
@@ -16,7 +17,7 @@ max_theta_deviation = 20 #degrees
 ecal_core.initialize([], "position_fusion")
 
 sub_lidar = ProtoSubscriber("lidar_pos", robot_pb.Position)
-pub_pos = ProtoPublisher("robot_pos", robot_pb.Position)
+pub_pos = ProtoPublisher("smooth_pos", robot_pb.Position)
 
 def logger(msg):
     if DEBUG:
@@ -42,7 +43,6 @@ def on_lidar_pos(topic_name, lidar_msg , time):
 
 if __name__ == "__main__":
     
-
     sub_lidar.set_callback(on_lidar_pos)
 
     while ecal_core.ok():

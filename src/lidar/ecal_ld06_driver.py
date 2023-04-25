@@ -1,9 +1,10 @@
-import ld06_driver as lidar
+import ld06_driver.ld06_driver as lidar
 import ecal.core.core as ecal_core
 from ecal.core.publisher import ProtoPublisher
 
 import sys, os, time
-import lidar_data_pb2 as lidar_data
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
+import generated.lidar_data_pb2 as lidar_data
 
 if __name__ == '__main__':
     #init ecal publisher 
@@ -18,5 +19,5 @@ if __name__ == '__main__':
         lidar_msg.distances.extend(distances)
         pub.send(lidar_msg, ecal_core.getmicroseconds()[1])
 
-    driver = lidar.Driver(publish_reading)
+    driver = lidar.Driver(publish_reading, '/dev/lidar')
     driver.scan()

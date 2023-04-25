@@ -1,22 +1,22 @@
-
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
+from ecal.core.publisher import ProtoPublisher, StringPublisher
 
+import sys, os
+import time 
+from math import sqrt
 
-import loca_lidar.loca_lidar.robot_state_pb2 as robot_pb
-import loca_lidar.launch_loca_ecal as localidar
+sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
+import generated.robot_state_pb2 as robot_pb
 import map 
 
-from math import sqrt 
-import sys 
-import time 
 
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
 
 sub_obstacles = ProtoSubscriber("obstacle", robot_pb.Position)
 
-def update_graph(x,y):
+def update_graph(topic_name, msg, timestamp):
     """
     si le cercle de centre  x et y des coordonnes du robot adverse croise une des droite du graph, on rajoute +100 au weight de la droite
     """
@@ -34,7 +34,7 @@ def update_graph(x,y):
             x2 = graph.coords[voisin][0]
             y2 = graph.coords[voisin][1]
 
-            if ( max(x1,x2) + r >= x >= min(x1,x2) ) - r  or (max(y1,y2) + r >= x >= min(y1,y2) - r) : # effectue un pré-trie pour limiter les calculs inutiles
+            if ( max(x1,x2) + r >= msg.x >= min(x1,x2)  - r)  or (max(y1,y2) + r >= msg.y >= min(y1,y2) - r) : # effectue un pré-trie pour limiter les calculs inutiles
 
                 a = (y2 - y1)/ (x2 - x1)
                 b = y1 - a*x1
