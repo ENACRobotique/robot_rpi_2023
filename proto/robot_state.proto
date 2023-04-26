@@ -2,18 +2,6 @@ syntax = "proto3";
 
 package enac;
 
-//SPEED_REG = "SpeedCmd {} (.+) (.+) (.+)"
-//POS_REG = "PosCmd {} (.+) (.+)"
-//POS_ORIENT_REG = "PosCmdOrient {} (.+) (.+) (.+)"
-//ACTUATOR_CMD = "ActuatorCmd {} (.+) (.+)"
-//ACTUATORS_REQUEST = "ActuatorsRequest {}"
-//
-//ACTUATOR_DECL = "ActuatorDecl {} {} {} {} {} {} {}"
-//POS_REPORT = "PosReport {} {} {} {}"
-//ACTUATOR_REPORT = "ActuatorReport {} {} {}"
-//
-//KILL_CMD = "Shutdown {}"
-//
 //to generate python protobuff code type in a terminal:
 //protoc --proto_path=proto --python_out=generated robot_state.proto
 //
@@ -29,10 +17,16 @@ message Position {
 }
 
 message SetState {
+    enum ClawState {
+        NONE = 0;
+        CLAW_OPEN = 111;
+        CLAW_CLOSED = 99;
+        CLAW_GRAB = 103;
+    };
     int32 plate_position = 1; // Position of the "plateau"
     int32 plate_number = 2; // Number of the action, value to display, ...
     bool cerise_drop=3;
-    int32 claw_state = 4;
+    ClawState claw_state = 4;
 }
 
 message Speed {

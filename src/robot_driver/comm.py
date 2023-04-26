@@ -87,7 +87,7 @@ class Radio:
         """Sends a command that will activate the end of match sequence for the robot."""
         self.sendMessage(b'D')
     
-    def sendClawSignal (self,valueClaws):
+    def sendClawSignal (self,claw_pos):
         """Send a command to the claws of the robot
         valueClaws is one char.
         Accepted values are :
@@ -95,11 +95,8 @@ class Radio:
             'g' : grab
             'c' : closed
         """
-        if valueClaws in "ogc":
-            message = b'g'+struct.pack("c",valueClaws)
-            self.sendMessage(message)
-        else :
-            print("Invalid value for claws : {}".format(valueClaws))
+        message = b'g'+struct.pack("c",claw_pos)
+        self.sendMessage(message)
 
     def sendTurbineSignal(self,valueTurbine):
         """Send a command to turn the turbine on or off.
