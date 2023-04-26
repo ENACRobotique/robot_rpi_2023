@@ -95,7 +95,7 @@ class Radio:
             'g' : grab
             'c' : closed
         """
-        message = b'g'+struct.pack("c",claw_pos)
+        message = b'g'+struct.pack("B",claw_pos)
         self.sendMessage(message)
 
     def sendTurbineSignal(self,valueTurbine):
