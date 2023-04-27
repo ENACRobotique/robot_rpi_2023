@@ -2,7 +2,8 @@
 Description= start all systems for the robot
 After=network.target network-online.target
 Wants=bridge.service
-Wants=.service
+Wants=lidar_loca.service
+Wants=lidar_fusion.service
 
 
 [Service]
@@ -13,7 +14,7 @@ Group=pi
 
 SupplementaryGroups=adm dialout cdrom sudo audio video plugdev games users input netdev gpio i2c spi
  
-ExecStart=
+ExecStart=/home/pi/robot_rpi_2023/services/heartbeat.py
  
 Restart=on-failure
 RestartSec=2 

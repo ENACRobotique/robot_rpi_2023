@@ -33,7 +33,7 @@ SupplementaryGroups=adm dialout cdrom sudo audio video plugdev games users input
  
 ExecStart= toto_cmd.extension
  
-Restart=on-failure
+Restart=on-failurecd
 RestartSec=2 
 # Configures the time to wait before service is stopped forcefully.
 TimeoutStopSec=300
