@@ -23,7 +23,7 @@ ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 sub_speed = ProtoSubscriber("odom_speed", robot_pb.Position)
 sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
-#sub_side = ProtoSubscriber("side", robot_pb.Side) #TODO UNCOMMENT
+sub_side = ProtoSubscriber("side", robot_pb.Side)
 
 pub_stop_cons = ProtoPublisher("proximity_status", lidar_pb.Proximity) # pub_stop_cons = ProtoPublisher("stop_cons", lidar_pb.Action)
 pub_filtered_pts = ProtoPublisher("lidar_filtered", lidar_pb.Lidar)
@@ -114,7 +114,6 @@ def on_lidar_scan(topic_name, proto_msg, time):
     # Filter lidar_scan
     lidar_scan =  np.rec.fromarrays([proto_msg.distances, proto_msg.angles], dtype=PolarPts)
     basic_filtered_scan = cp.basic_filter_pts(lidar_scan)
-    # TODO : position filter is unimplemented | it returns everything
     pos_filtered_scan = cp.position_filter_pts(basic_filtered_scan, 
                         robot_pose[0], robot_pose[1], robot_pose[2])
     obs = OBSTACLE_CALC.calc_obstacles_wrt_table(robot_pose, pos_filtered_scan) #type: ignore
@@ -198,7 +197,7 @@ if __name__ == "__main__":
     sub_speed.set_callback(on_robot_speed)
     sub_lidar.set_callback(on_lidar_scan)
     sub_odom_pos.set_callback(on_robot_pos)
-    #sub_side.set_callback(on_side) #TODO uncomment
+    sub_side.set_callback(on_side_set)
 
     while ecal_core.ok():
         time.sleep(0.01)

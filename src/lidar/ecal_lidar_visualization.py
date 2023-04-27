@@ -89,7 +89,7 @@ class CorrespondanceDisplay():
         try:
             self.r = [self.amalgames.lidar_dist[i] for i in lidar2table.keys()] # find the coordinate of the amalgame associated
             self.theta = [self.amalgames.lidar_theta[i] for i in lidar2table.keys()]
-        except IndexError: # Seems to happen when no correspondance lidar & table found
+        except IndexError: # Seems to happen when no correspondance lidar & table found and when having lot of data flow (~20hz lidar)
             print("removing correspondance lidar/table")
             self.text = []
             self.r = []
@@ -100,7 +100,7 @@ class CorrespondanceDisplay():
         for i in range(len(self.text)):
             try:
                 ax.text(np.deg2rad(self.theta[i]), self.r[i] ,self.text[i], color="r")
-            except IndexError:
+            except IndexError: #seem to happen only when quick lidar data (~20hz ?)
                 print("display index error handler ?? TODO proper fix")
                 pass
     
