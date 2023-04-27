@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from functools import cache, lru_cache, cached_property
+from functools import lru_cache, cached_property#, cache
 from itertools import combinations, chain, islice
 from copy import deepcopy
 from math import isclose, radians, pi, atan, degrees
@@ -15,6 +15,10 @@ DistPts = NamedTuple('DistPts', [
     ('index_pt1', int), 
     ('index_pt2', int), 
     ('sqrd_dist', float)])
+
+
+class NotEnoughAmalgames(Exception):
+    ...
 
 
 # Regroupment of amalgame of 'same type' : fixed beacons, amalgames detected by lidar, ...
@@ -99,7 +103,8 @@ class LinkFinder:
         dist_pts_lidar = amalg.distances
         lidar_to_table_corr = []
         if len(dist_pts_lidar) <= 1:
-            raise ValueError("dist_pts_lidar size <= 1 | can't find pattern with 2 points or less")
+            #raise ValueError("dist_pts_lidar size <= 1 | can't find pattern with 2 points or less")
+            raise NotEnoughAmalgames()
         for detected_DistPts in dist_pts_lidar:
             #TODO : convert to binary search ?
             for candidate_table_point in self._get_candidates_table_point(detected_DistPts[2]): #check only the first point as "pivot"
@@ -170,7 +175,7 @@ class LinkFinder:
             return pt_lidar_to_table
         return None
 
-    @cache 
+    #@cache 
     def _get_candidates_table_point(self, squared_dist)->tuple:
         #returns tuple of possible points in known_points from table reference for a certain squared_dist
         #Example : If distance is close to 2.5 m, it returns possible points (0, 1, 2)/(A,B,C)

@@ -145,7 +145,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
         send_lidar_pos(*lidar_pose)
 
     t2 = ecal_core.getmicroseconds()[1] - t
-    print("processing duration total in ms : ",t2)
+    # print("processing duration total in ms : ",t2)
 
 def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out = {}) -> Tuple[float, float, float]:
     """_summary_
@@ -159,10 +159,13 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
     """
     #Find correspondances between lidar and table
     amalgame_1 = pf.GroupAmalgame(amalgame_scan, False)
-    lidar2table_set = finder_to_use.find_pattern(amalgame_1)
+    try:
+        lidar2table_set = finder_to_use.find_pattern(amalgame_1)
+    except pf.NotEnoughAmalgames:
+        return 0, 0, 0
 
     if lidar2table_set == None:
-        logging.warning("No correspondance found between lidar and table")
+        logging.info("No correspondance found between lidar and table")
         return (0, 0, 0)
 
     poses = []
@@ -174,12 +177,13 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
             lidar_pos, corr, amalgame_1.points, beacons_to_use.points)
         if len(lidar2table_set) == 1: # trivial case
             best_pose = (lidar_pos[0], lidar_pos[1], lidar_angle)
-            corr_out |= corr #fusion the two dicts, to make sure that outside the function the dict is not empty
+            #corr_out |= corr #fusion the two dicts, to make sure that outside the function the dict is not empty
+            corr_out.update(corr)
             break
         poses.append((lidar_pos[0], lidar_pos[1], lidar_angle))
 
     if poses != []: # if multiple poses found, select one of them      
-        print("lidar2table_set", lidar2table_set)
+        # print("lidar2table_set", lidar2table_set)
         #eliminate poses outside the tables
         poses = [pose for pose in poses if 
                  pose[0] > config.table_x_min and pose[0] < config.table_x_max 
@@ -187,7 +191,8 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
         # take the pose closest to odometry pose
         closest_pt_index = poses.index(min(poses, key=lambda x: cp.get_squared_dist_cartesian(robot_pose[:2], x)))
         best_pose = poses[closest_pt_index]
-        corr_out |= list(lidar2table_set)[closest_pt_index] #fusion the two dicts, to make sure that outside the function the dict is not empty (set is not subscriptable so convert to list)
+        #corr_out |= list(lidar2table_set)[closest_pt_index] #fusion the two dicts, to make sure that outside the function the dict is not empty (set is not subscriptable so convert to list)
+        corr_out.update(list(lidar2table_set)[closest_pt_index])
         print(poses)
 
     return best_pose
