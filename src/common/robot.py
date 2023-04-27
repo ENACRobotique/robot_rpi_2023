@@ -6,7 +6,8 @@ from math import sqrt
 import sys
 import generated.robot_state_pb2 as robot_pb
 import generated.lidar_data_pb2 as lidar_pb
-class robot:
+
+class Robot:
     """Classe dont le but est de se subscribe à ecal pour avoir une représentation de l'état du robot
     
     Créez un objet de cette classe si vous avez besoin de connaître l'état du robot."""
@@ -30,14 +31,14 @@ class robot:
         self.lastCommandNumber = None
         self.lastFinishedActionNumber = None
         self.stockagePlateau = [0,0,0]
-        self.pointsEstimés =0
+        self.pointsEstimes =0
         self.positionGriffes = "S"
         self.cerisesEnStock = 10
 
-        self.XY_ACCURACY = 0.01  #m
+        self.XY_ACCURACY = 0.02  #m
         self.THETA_ACCURACY = 0.05 # plus à changer
 
-        self.tempsDébutMatch = None
+        self.tempsDebutMatch = None
 
 
         self.matchReportSub = ProtoSubscriber('match_start',robot_pb.Match)
@@ -60,6 +61,11 @@ class robot:
 
         self.pubSide = ProtoPublisher("side",robot_pb.Side)
 
+        self.set_target_pos_pub = ProtoPublisher("set_position", robot_pb.Position)
+        self.reset_pos_pub = ProtoPublisher("reset", robot_pb.Position)
+        self.claw_pub = ProtoPublisher("set_pince", robot_pb.SetState)
+        self.score_pub = ProtoPublisher("set_score", robot_pb.Match)
+
         
         
 
@@ -76,9 +82,26 @@ class robot:
 
     def hasReachedTarget(self):
         d=sqrt((self.x-self.lastTargetX)**2 + (self.y-self.lastTargetY)**2)
-        return (d <= self.XY_ACCURACY) and (abs(self.theta - self.lastTargetX) <= self.THETA_ACCURACY)
+        return (d <= self.XY_ACCURACY) and (abs(self.theta - self.lastTargetTheta) <= self.THETA_ACCURACY)
     
-    def onSetTargetPostition (self,, topic_name, msg, timestamp):
+
+    def setTargetPos(self, x, y, theta):
+        pos = robot_pb.Position(x=x, y=y, theta=theta)
+        self.set_target_pos_pub.send(pos)
+        self.lastTargetX = x
+        self.lastTargetY = y
+        self.lastTargetTheta = theta
+
+    def resetPos(self, x, y, theta):
+        self.reset_pos_pub.send(robot_pb.Position(x=x, y=y, theta=theta))
+
+    def setClaw(self, claw_state):
+        self.claw_pub.send(robot_pb.SetState(claw_state=claw_state))
+    
+    def updateScore(self):
+        self.score_pub.send(robot_pb.Match(score=self.pointsEstimes))
+
+    def onSetTargetPostition (self, topic_name, msg, timestamp):
         """Callback d'un subscriber ecal. Actualise le dernier ordre de position"""
         self.lastTargetX = msg.x
         self.lastTargetY = msg.y
@@ -95,13 +118,13 @@ class robot:
 
     def onReceiveSpeed(self, topic_name, msg, timestamp):
         """Callback d'un subscriber ecal. Actualise la vitesse du robot"""
-        self.Vx = msg.Vx
-        self.Vy = msg.Vy
-        self.Vtheta = msg.Vtheta
+        self.Vx = msg.vx
+        self.Vy = msg.vy
+        self.Vtheta = msg.vtheta
     
     def onReceiveMatchStarted (self, topic_name, msg, timestamp):
-        self.tempsDébutMatch = time()
-        ecal_core.log_message("Match started at " + str(self.tempsDébutMatch))
+        self.tempsDebutMatch = time()
+        ecal_core.log_message("Match started at " + str(self.tempsDebutMatch))
     
     def onReceiveActionFinshed (self,topic_name, msg, timestamp):
         numAction = msg.action
