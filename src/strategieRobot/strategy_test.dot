@@ -1,5 +1,14 @@
 #init Init
 digraph statemachine {
-    Init [comment="init_on_enter/init_on_leave"]
-    Init -> End [label="init_to_end_ontr/init_to_end_guard"]
+    Init [comment="init_enter/init_leave"]
+    End  [comment="end_enter"]
+    GoGreen [comment="gogreen_enter"]
+    PushCake [comment="pushcake_enter/pushcake_leave"]
+    GoBlue  [comment="goblue_enter"]
+
+    Init -> GoGreen [label="dummy_tr/match_started"]
+    GoGreen -> PushCake [label="dummy_tr/at_green"]
+    PushCake -> GoBlue [label="dummy_tr/cake_pushed"]
+    GoBlue -> End [label="dummy_tr/at_blue"]
+    {GoGreen PushCake} -> End [label="dummy_tr/match_end_guard"]
 }
