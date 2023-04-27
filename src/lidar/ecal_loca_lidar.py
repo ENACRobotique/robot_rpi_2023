@@ -3,7 +3,7 @@ import sys, os
 import time
 from typing import Tuple, Union
 import numpy as np
-
+from math import radians
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
 from ecal.core.publisher import ProtoPublisher, StringPublisher
@@ -80,7 +80,7 @@ def send_lidar_pos(x, y, theta):
     pos_msg = robot_pb.Position()
     pos_msg.x = float(x)
     pos_msg.y = float(y)
-    pos_msg.theta = float(theta)
+    pos_msg.theta = float(radians(theta))
     pub_lidar_pos.send(pos_msg, ecal_core.getmicroseconds()[1])
 
 def on_side_set(topic_name, side_msg, time):

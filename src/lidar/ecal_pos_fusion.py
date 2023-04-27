@@ -2,7 +2,7 @@ import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
 from ecal.core.publisher import ProtoPublisher
 import time, os, sys
-
+from math import radians
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
 import generated.robot_state_pb2 as robot_pb
 from position_fusion.position_smooth import Smoother
@@ -39,7 +39,7 @@ def on_lidar_pos(topic_name, lidar_msg , time):
     pos_smoother.add_data(lidar_msg.x, lidar_msg.y, lidar_msg.theta, time)
     smooth_pos = pos_smoother.calc_smooth()
     if smooth_pos:
-        pub_pos.send(robot_pb.Position(x=smooth_pos[0], y=smooth_pos[1], theta=smooth_pos[2]), time=time)
+        pub_pos.send(robot_pb.Position(x=smooth_pos[0], y=smooth_pos[1], theta=radians(smooth_pos[2])), time=time)
 
 if __name__ == "__main__":
     

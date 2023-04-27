@@ -87,7 +87,7 @@ class Parent:
         return self.robot.hasReachedTarget()
     
     def goblue_leave(self):
-        self.robot.pointsEstimes += 20
+        self.robot.pointsEstimes += 15
         self.robot.updateScore()
 
     def match_end_guard(self):
