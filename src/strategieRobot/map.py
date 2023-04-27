@@ -3,8 +3,7 @@ from math import sqrt
 import dijkstra
 import random as rd 
 
-class Graph(object):
-    
+class Graph(object):  
     def __init__(self):
         """Cree un graphe vide"""
         self.adj = {}
@@ -93,7 +92,7 @@ def print_chemin(g,chemin):
 file = 'graph.txt'
 graph = read_graph(file) #map de la table
 
-chemin,distance_totale = dijkstra.dijkstra_classic(graph,"plate_B_1", "interet_SE") #a liste des points parcourus, a[0]étant l'arrivée, et a[len(a)] le départ. d distance parcourue
+chemin,distance_totale = dijkstra.dijkstra_classic(graph,"plate_B_1", "interet_SE") #a liste des points parcourus,nd distance parcourue
 
 plt.figure()
 print_map(graph)
