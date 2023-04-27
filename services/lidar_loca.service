@@ -11,7 +11,7 @@ Group=pi
 
 SupplementaryGroups=adm dialout cdrom sudo audio video plugdev games users input netdev gpio i2c spi
  
-ExecStart=python3 /home/pi/robot_rpi_2023/src/lidar/ecal_pos_fusion.py
+ExecStart=python3 /home/pi/robot_rpi_2023/src/lidar/ecal_loca_lidar.py
 
 Restart=on-failure
 RestartSec=2 
