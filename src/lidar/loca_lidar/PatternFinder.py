@@ -5,7 +5,7 @@ from copy import deepcopy
 from math import isclose, radians, pi, atan, degrees
 import numpy as np
 import time
-from typing import Tuple, NamedTuple
+from typing import Tuple, NamedTuple, List, Dict
 import logging
 
 from loca_lidar.PointsDataStruct import hashabledict
@@ -24,7 +24,7 @@ class GroupAmalgame:
     cartesian: bool = True #True if points are in cartesian coordinates, False if in polar coordinates
     @cached_property
     #calculate and return the distances between all amalgames in format ((amalgame1, amalgame2, distance), ...)
-    def distances(self) -> tuple[DistPts]:
+    def distances(self) -> Tuple[DistPts]:
         temp_distances = []
         for point_combination in combinations(enumerate(self.points), 2): 
             #get all possible combination (unique permutation) of points : [((Index PT1, (x,y)), (Index Pt2, (x,y))), ...]
@@ -49,7 +49,7 @@ class GroupAmalgame:
             return cp.get_squared_dist_polar(pt, (0,0))
     
 # Function to convert from polar to cartesian coordinates
-def polar_lidar_to_cartesian(polar_coord: list[float]): # distance, degrees
+def polar_lidar_to_cartesian(polar_coord: List[float]): # distance, degrees
     #input : (r, theta) 
     # r = distance ; theta = angle in DEGREES
     r = polar_coord[0]
@@ -153,7 +153,7 @@ class LinkFinder:
 
 
 
-    def _lidar2table_from_pivot(self, candidate_table_point, dists_from_pivot, table_dists) -> dict():
+    def _lidar2table_from_pivot(self, candidate_table_point, dists_from_pivot, table_dists) -> Dict:
         # returns : {i_from_pivot:i_from_table, ...} 
         # where the squared_distances between the associated elements of the two arrays areclose(rtol=self.error_pargin)
         pt_lidar_to_table = {}
@@ -188,7 +188,7 @@ class LinkFinder:
             self._get_candidates_table_point(dist_pts.sqrd_dist)
 
     @staticmethod
-    def get_distances_from_pivot(pt_index: np.int64, pt_distances: list[DistPts]) -> list[DistPts]:
+    def get_distances_from_pivot(pt_index: np.int64, pt_distances: List[DistPts]) -> List[DistPts]:
         #return all sqred_distances from the pt given by pt_index 
         #returns format : ((pt_index, other point, squared_dist)) of type DistPts
         
@@ -215,7 +215,7 @@ class LinkFinder:
             return -1
         
 #https://stackoverflow.com/questions/20546182/how-to-perform-coordinates-affine-transformation-using-python-part-2?answertab=votes#tab-top
-def lidar_pos_wrt_table(lidar_to_table, lidar_amalgames, fixed_pts)-> tuple[float, float]:
+def lidar_pos_wrt_table(lidar_to_table, lidar_amalgames, fixed_pts)-> Tuple[float, float]:
     """returns average computed (x,y, angle) in meters, meters, radians using Least Square
 
     Args:

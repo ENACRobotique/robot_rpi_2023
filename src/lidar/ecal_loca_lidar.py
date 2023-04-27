@@ -1,7 +1,7 @@
 import logging
 import sys, os
 import time
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 import numpy as np
 from math import radians
 import ecal.core.core as ecal_core
@@ -47,7 +47,7 @@ BLUE_FINDER = pf.LinkFinder(BLUE_BEACONS, 0.06, 1.5)
 GREEN_FINDER = pf.LinkFinder(GREEN_BEACONS, 0.06, 1.5)
 finder_to_use = BLUE_FINDER
 
-def send_obstacles_wrt_table(obstacles: list[list[Union[float, float]]]):
+def send_obstacles_wrt_table(obstacles: List[List[Union[float, float]]]):
     msg = lidar_pb.Obstacles()
     x, y = [], []
     for obstacle in obstacles:

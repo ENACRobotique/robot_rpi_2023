@@ -20,8 +20,7 @@ class ObstacleCalc():
         if self.theta_offset is None: self.theta_offset = 0
 
 
-    def calc_obstacles_wrt_table(self, 
-        robot_wrt_table: tuple, lidar_pts: Tuple[Tuple[float, float], ...]) -> List[list[Union[float, float]]]: 
+    def calc_obstacles_wrt_table(self, robot_wrt_table: tuple, lidar_pts: Tuple[Tuple[float, float], ...]) -> List[List[Union[float, float]]]: 
         # Calculate and returns the cartesian coordinates of the obstacles 
         # given the lidar polar points and the lidar position on the table
         # !! Filter the obstacles outside the table
@@ -46,7 +45,7 @@ class ObstacleCalc():
         return obstacles
 
     @staticmethod
-    def mask_filter_obs(obstacles: list[bool]):
+    def mask_filter_obs(obstacles: List[bool]):
         # keep obstacles inside the "table" area (taking into account edge offset)
         # [True, False] = [Obstacle in table, Obstacle outside table]
         filtered_obstacles = []
@@ -59,7 +58,7 @@ class ObstacleCalc():
         return filtered_obstacles
     
     @staticmethod
-    def polar_lidar_to_cartesian(polar_coord: tuple[float, float]):
+    def polar_lidar_to_cartesian(polar_coord: Tuple[float, float]):
     #input : (r, theta) 
     # r = distance ; theta = angle in DEGREES
         r = polar_coord[0]

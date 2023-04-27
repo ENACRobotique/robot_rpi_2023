@@ -75,7 +75,7 @@ def position_filter_pts(pts: PolarPts_t, lidar_x, lidar_y, lidar_theta) -> Polar
     # TODO 1. Add additionnal check with the last known lidar position on the table
     return pts
 
-def obstacle_in_path(robot_pose: tuple, pts: List[list[Union[float, float]]], speed: tuple) -> int:
+def obstacle_in_path(robot_pose: Tuple, pts: List[List[Union[float, float]]], speed: Tuple) -> int:
     """_summary_
 
     Args:
