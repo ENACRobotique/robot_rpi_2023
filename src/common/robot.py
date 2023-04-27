@@ -66,6 +66,9 @@ class Robot:
         self.claw_pub = ProtoPublisher("set_pince", robot_pb.SetState)
         self.score_pub = ProtoPublisher("set_score", robot_pb.Match)
 
+        self.slow_pub = ProtoPublisher("slow",robot_pb.no_args_func_)
+        self.stop_pub = ProtoPublisher("stop",robot_pb.no_args_func_)
+        self.resume_pub = ProtoPublisher("resume",robot_pb.no_args_func_)
         
         
 
@@ -135,7 +138,14 @@ class Robot:
         self.proximityStatus = msg.status
     
     
-    
+    def slow(self):
+        self.slow_pub.send(robot_pb.no_args_func_(nothing = 1))
+
+    def stop(self):
+        self.stop_pub.send(robot_pb.no_args_func_(nothing = 1))
+
+    def resume(self):
+        self.resume_pub.send(robot_pb.no_args_func_(nothing = 1))
 
 
 

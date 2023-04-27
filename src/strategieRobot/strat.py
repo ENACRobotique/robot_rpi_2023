@@ -1,5 +1,6 @@
 import sys, os
 import time
+from math import sqrt,pi 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../_build'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
@@ -7,6 +8,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
 import generated.robot_state_pb2 as robot_pb
 from strategy_test import G2S
 from robot import Robot
+import navigation as nav
+
 
 
 MATCH_DURATION = 100
@@ -21,6 +24,7 @@ POS_PLATE_BLUE2 = 1.850, 0.225, 0
 class Parent:
     def __init__(self):
         self.robot =Robot()
+        self.navigation = nav.Navigation()
         self.wake = time.time()
         self.match_start_time = time.time()
         self.robot.pointsEstimes = 5  # panier présent
@@ -98,16 +102,35 @@ class Parent:
     def dummy_tr(self):
         ...
         #print("dummy")
+    
+    def reset_pos(self):
+        eps_degree = 5
+        coeff_conv_degrad = pi / 180
+        x_lidar = self.navigation.pos_x
+        y_lidar = self.navigation.pos_y
+        theta_lidar = self.navigation.theta
+        x_odo = self.robot.x
+        y_odo = self.robot.y
+        theta_odo = self.robot.theta
+        
+        if abs(theta_lidar - theta_odo) >= eps_degree * coeff_conv_degrad:
+            self.robot.theta = theta_lidar
 
+        if sqrt((x_lidar - x_odo)**2 + (y_lidar - y_odo)**2) >= 0.05:
+            self.robot.x = x_lidar
+            self.robot.y = y_lidar
+
+
+if __name__ == "__main__":
+    parent = Parent()
+    g2s = G2S(parent)
+    #g2s.debug = True
+    g2s.start()
+
+    while True:
+        nav.sub_obstacles.set_callback(parent.navigation.on_obstacles_received)
+        nav.sub_pos.set_callback(parent.navigation.update_pos)
+        g2s.check_transitions()
+        time.sleep(0.2)
     
 
-
-
-parent = Parent()
-g2s = G2S(parent)
-#g2s.debug = True
-g2s.start()
-
-while True:
-    g2s.check_transitions()
-    time.sleep(0.2)
