@@ -1,6 +1,7 @@
 [Unit]
-Description= lidar
-After=network.target network-online.target
+Description= ecal_loca_lidar
+After=network.target network-online.target lidar_driver.service
+Requires=lidar_driver.service
 
 [Service]
 Type=simple

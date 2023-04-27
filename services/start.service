@@ -1,6 +1,9 @@
 [Unit]
-Description=eCal comm Bridge
+Description= start all systems for the robot
 After=network.target network-online.target
+Wants=bridge.service
+Wants=.service
+
 
 [Service]
 Type=simple
@@ -10,7 +13,7 @@ Group=pi
 
 SupplementaryGroups=adm dialout cdrom sudo audio video plugdev games users input netdev gpio i2c spi
  
-ExecStart=python3 /home/pi/robot_rpi_2023/src/robot_driver/comm_ecal_bridge.py
+ExecStart=
  
 Restart=on-failure
 RestartSec=2 
@@ -18,5 +21,6 @@ RestartSec=2
 TimeoutStopSec=300
  
 [Install]
+WantedBy=multi-user.target
 
 
