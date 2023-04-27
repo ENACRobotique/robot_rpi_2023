@@ -169,7 +169,7 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
         return (0, 0, 0)
 
     poses = []
-    best_pose = ()
+    best_pose = (0, 0, 0)
     for i, corr in enumerate(lidar2table_set):
         lidar_pos = pf.lidar_pos_wrt_table(
             corr, amalgame_1.points, beacons_to_use.points)
@@ -188,13 +188,20 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
         poses = [pose for pose in poses if 
                  pose[0] > config.table_x_min and pose[0] < config.table_x_max 
                  and pose[1] > config.table_y_min and pose[1] < config.table_y_max]
+        
+        def in_table(pose):
+            return pose[0] > config.table_x_min and \
+                pose[0] < config.table_x_max and \
+                pose[1] > config.table_y_min and \
+                pose[1] < config.table_y_max
+            
+        poses_in_table = list(filter(in_table, poses))
         # take the pose closest to odometry pose
-        closest_pt_index = poses.index(min(poses, key=lambda x: cp.get_squared_dist_cartesian(robot_pose[:2], x)))
-        best_pose = poses[closest_pt_index]
-        #corr_out |= list(lidar2table_set)[closest_pt_index] #fusion the two dicts, to make sure that outside the function the dict is not empty (set is not subscriptable so convert to list)
-        corr_out.update(list(lidar2table_set)[closest_pt_index])
-        print(poses)
-
+        if len(poses_in_table) > 0:
+            best_pose = min(poses_in_table, key=lambda x: cp.get_squared_dist_cartesian(robot_pose[:2], x))
+            closest_pt_index = poses_in_table.index(best_pose)
+            corr_out.update(list(lidar2table_set)[closest_pt_index])
+            print(best_pose)
     return best_pose
    
 if __name__ == "__main__":

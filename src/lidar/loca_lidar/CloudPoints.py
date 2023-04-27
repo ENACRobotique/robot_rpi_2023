@@ -1,5 +1,5 @@
 # Set of tools to manage points from 2D lidar cloud points and creation of amalgames
-
+import logging
 from math import cos, radians, dist, atan2, pi
 import numpy as np
 from typing import Tuple, List, Union
@@ -297,8 +297,8 @@ def amalgames_from_cloud(pts: PolarPts_t) -> AmalgamePolar_t:
             try:
                 amalgames[amalg_i]['list_pts'][0] = pt
             except IndexError:
-                print("IndexError : too many amalgames detected (>30). Skipping the rest of the scan"	)
-                print("last point - unprocessed ", pt)
+                logging.info("IndexError : too many amalgames detected (>30). Skipping the rest of the scan"	)
+                logging.info("last point - unprocessed ", pt)
                 break
             continue
 
