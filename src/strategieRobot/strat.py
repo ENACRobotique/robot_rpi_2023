@@ -54,6 +54,7 @@ class Parent:
 
     def at_green(self):
         if self.robot.hasReachedTarget():
+            self.reset_pos()
             if self.go_green_substate == 0:
                 self.go_green_substate = 1
                 self.robot.setTargetPos(*POS2)
@@ -104,21 +105,21 @@ class Parent:
         #print("dummy")
     
     def reset_pos(self):
-        eps_degree = 5
-        coeff_conv_degrad = pi / 180
+        #eps_degree = 5
+        #coeff_conv_degrad = pi / 180
         x_lidar = self.navigation.pos_x
         y_lidar = self.navigation.pos_y
         theta_lidar = self.navigation.theta
-        x_odo = self.robot.x
-        y_odo = self.robot.y
-        theta_odo = self.robot.theta
+        # x_odo = self.robot.x
+        # y_odo = self.robot.y
+        # theta_odo = self.robot.theta
         
-        if abs(theta_lidar - theta_odo) >= eps_degree * coeff_conv_degrad:
-            self.robot.theta = theta_lidar
+        #if abs(theta_lidar - theta_odo) >= eps_degree * coeff_conv_degrad:
+        self.robot.theta = theta_lidar
 
-        if sqrt((x_lidar - x_odo)**2 + (y_lidar - y_odo)**2) >= 0.05:
-            self.robot.x = x_lidar
-            self.robot.y = y_lidar
+        #if sqrt((x_lidar - x_odo)**2 + (y_lidar - y_odo)**2) >= 0.05:
+        self.robot.x = x_lidar
+        self.robot.y = y_lidar
 
 
 if __name__ == "__main__":
