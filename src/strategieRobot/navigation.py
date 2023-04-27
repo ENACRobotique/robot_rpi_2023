@@ -17,13 +17,14 @@ sub_pos = ProtoSubscriber("obstacles_wrt_table", robot_pb.Position)
 
 
 class Navigation:
-    
+
     def __init__(self):
         self.file = 'graph.txt'
         self.graph = map.read_graph(self.file) #map de la table
         self.graph.weight()
         self.pos_x = 0
         self.pos_y = 0
+        self.theta = 0
 
 
     def on_obstacles_received(self, topic_name, msg, timestamp):
@@ -67,5 +68,7 @@ class Navigation:
         """
         self.pos_x = msg.x
         self.pos_y = msg.y
+        self.theta = msg.theta
+
 
 ecal_core.finalize()

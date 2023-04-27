@@ -1,6 +1,6 @@
 import sys, os
 import time
-from math import sqrt
+from math import sqrt,pi 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../_build'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
@@ -104,10 +104,17 @@ class Parent:
         #print("dummy")
     
     def reset_pos(self):
+        eps_degree = 5
+        coeff_conv_degrad = pi / 180
         x_lidar = self.navigation.pos_x
         y_lidar = self.navigation.pos_y
+        theta_lidar = self.navigation.theta
         x_odo = self.robot.x
         y_odo = self.robot.y
+        theta_odo = self.robot.theta
+        
+        if abs(theta_lidar - theta_odo) >= eps_degree * coeff_conv_degrad:
+            self.robot.theta = theta_lidar
 
         if sqrt((x_lidar - x_odo)**2 + (y_lidar - y_odo)**2) >= 0.05:
             self.robot.x = x_lidar
