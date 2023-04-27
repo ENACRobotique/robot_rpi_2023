@@ -97,4 +97,4 @@ def dijkstra_classic(G,start,end):  #G un graphe
         s = predecesseur[s]
     chemin += [start]
 
-    return chemin,d[end]
+    return chemin.reverse(),d[end]
