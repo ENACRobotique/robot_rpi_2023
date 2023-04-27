@@ -81,14 +81,16 @@ class Parent:
         
     def at_blue(self):
         return self.robot.hasReachedTarget()
+    
+    def goblue_leave(self):
+        self.robot.pointsEstimes += 20
+        self.robot.updateScore()
 
     def match_end_guard(self):
         if time.time() - self.match_start_time > MATCH_DURATION:
             return True
     
     def end_enter(self):
-        self.robot.pointsEstimes += 20
-        self.robot.updateScore()
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)
         print("This is the End!")
         exit(0)
@@ -96,6 +98,9 @@ class Parent:
     def dummy_tr(self):
         ...
         #print("dummy")
+
+    
+
 
 
 parent = Parent()

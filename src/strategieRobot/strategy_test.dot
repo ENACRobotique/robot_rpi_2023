@@ -4,7 +4,7 @@ digraph statemachine {
     End  [comment="end_enter"]
     GoGreen [comment="gogreen_enter"]
     PushCake [comment="pushcake_enter/pushcake_leave"]
-    GoBlue  [comment="goblue_enter"]
+    GoBlue  [comment="goblue_enter/goblue_leave"]
 
     Init -> GoGreen [label="dummy_tr/match_started"]
     GoGreen -> PushCake [label="dummy_tr/at_green"]
