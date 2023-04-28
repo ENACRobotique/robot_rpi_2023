@@ -7,8 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
 
 import generated.robot_state_pb2 as robot_pb
 from strategy_test import G2S
-from robot import Robot
-import navigation as nav
+from robot import Robot, TEMPS_MINIMAL_TRIGGER, TEMPS_MAXIMAL_RECALLAGE, RecallageEtat
+#import navigation as nav
 
 
 
@@ -24,17 +24,19 @@ POS_PLATE_BLUE2 = 1.850, 0.225, 0
 class Parent:
     def __init__(self):
         self.robot =Robot()
-        self.navigation = nav.Navigation()
+        #self.navigation = nav.Navigation()
         self.wake = time.time()
         self.match_start_time = time.time()
         self.robot.pointsEstimes = 5  # panier présent
         time.sleep(1)
         self.go_green_substate = 0
+ #       self.forced_recallage_state = 0
+        self.temps_debut_recal = 0
         
     def init_enter(self):
         print("init enter")
-        self.robot.resetPos(*INIT_POS)
-        self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)
+        #self.robot.resetPos(*INIT_POS)
+        self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         
     def init_leave(self):
         self.match_start_time = time.time()
@@ -54,7 +56,6 @@ class Parent:
 
     def at_green(self):
         if self.robot.hasReachedTarget():
-            self.reset_pos()
             if self.go_green_substate == 0:
                 self.go_green_substate = 1
                 self.robot.setTargetPos(*POS2)
@@ -63,13 +64,45 @@ class Parent:
                 self.go_green_substate = 2
                 self.robot.setTargetPos(*POS_PLATE_GREEN)
             elif self.go_green_substate == 2:
-                print("claw: ", robot_pb.SetState.ClawState.CLAW_OPEN)
-                self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_OPEN)
+                print("claw: ", robot_pb.SetState.ClawState.CLAW_OPEN) # type: ignore
+                self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_OPEN)# type: ignore
                 self.claw_open_time = time.time()
                 self.go_green_substate = 3
             else:
                 if time.time() - self.claw_open_time > 0.5:
                     return True
+    
+    def recal_ok(self):
+        if (time.time()- self.temps_debut_recal) >  TEMPS_MAXIMAL_RECALLAGE :
+            return self.robot.recallage(forced=True, trigger=False)== RecallageEtat.OK
+        elif(time.time()- self.temps_debut_recal) >  TEMPS_MINIMAL_TRIGGER:
+            return self.robot.recallage(forced=False, trigger=True) == RecallageEtat.OK
+        return self.robot.recallage() == RecallageEtat.OK
+
+    def debut_recal(self):
+        self.temps_debut_recal = time.time()
+        
+
+    # def recal_forced_ok(self):
+    #     print(self.forced_recallage_state)
+    #     if self.forced_recallage_state == 0:
+    #         self.time_forced_recallage = time.time()
+    #         self.forced_recallage_state = 1
+
+    #     elif self.forced_recallage_state == 1:
+    #         if time.time() - self.time_forced_recallage > 3:
+    #             self.forced_recallage_state = 2
+    #         return self.robot.recallage() == RecallageEtat.OK
+
+    #     elif self.forced_recallage_state == 2 :
+    #         x,y,theta = self.robot.best_lidar_trigger_move()
+    #         self.robot.setTargetPos(x,y,theta)
+    #         self.forced_recallage_state = 3
+        
+    #     elif self.forced_recallage_state == 3 :
+    #         if self.robot.hasReachedTarget():
+    #             self.forced_recallage_state = 0
+
     
     def pushcake_enter(self):
         self.robot.setTargetPos(*POS_PUSH_CAKE)
@@ -96,7 +129,7 @@ class Parent:
             return True
     
     def end_enter(self):
-        self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)
+        self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         print("This is the End!")
         exit(0)
 
@@ -104,22 +137,6 @@ class Parent:
         ...
         #print("dummy")
     
-    def reset_pos(self):
-        #eps_degree = 5
-        #coeff_conv_degrad = pi / 180
-        x_lidar = self.navigation.pos_x
-        y_lidar = self.navigation.pos_y
-        theta_lidar = self.navigation.theta
-        # x_odo = self.robot.x
-        # y_odo = self.robot.y
-        # theta_odo = self.robot.theta
-        
-        #if abs(theta_lidar - theta_odo) >= eps_degree * coeff_conv_degrad:
-        self.robot.theta = theta_lidar
-
-        #if sqrt((x_lidar - x_odo)**2 + (y_lidar - y_odo)**2) >= 0.05:
-        self.robot.x = x_lidar
-        self.robot.y = y_lidar
 
 
 if __name__ == "__main__":
@@ -129,8 +146,8 @@ if __name__ == "__main__":
     g2s.start()
 
     while True:
-        nav.sub_obstacles.set_callback(parent.navigation.on_obstacles_received)
-        nav.sub_pos.set_callback(parent.navigation.update_pos)
+        #nav.sub_obstacles.set_callback(parent.navigation.on_obstacles_received)
+        #nav.sub_pos.set_callback(parent.navigation.update_pos)
         g2s.check_transitions()
         time.sleep(0.2)
     
