@@ -43,9 +43,12 @@ class Smoother:
         # calculate smooth position using moving average
         if len(self.x_data) < self.min_data:
             return None
-        x = sum(self.x_data) / len(self.x_data)
-        y = sum(self.y_data) / len(self.y_data)
-        theta = sum(self.theta_data) / len(self.theta_data)
+        # x = sum(self.x_data) / len(self.x_data)
+        # y = sum(self.y_data) / len(self.y_data)
+        # theta = sum(self.theta_data) / len(self.theta_data)
+        x = sorted(self.x_data)[round((len(self.x_data)+1)/2)]
+        y = sorted(self.y_data)[round((len(self.x_data)+1)/2)]
+        theta = sorted(self.theta_data)[round((1+len(self.theta_data))/2)]
         return (x, y, theta)
 
     def flush_data(self):
