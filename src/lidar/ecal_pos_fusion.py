@@ -39,7 +39,7 @@ def on_lidar_pos(topic_name, lidar_msg , time):
     pos_smoother.add_data(lidar_msg.x, lidar_msg.y, lidar_msg.theta, time)
     smooth_pos = pos_smoother.calc_smooth()
     if smooth_pos:
-        pub_pos.send(robot_pb.Position(x=smooth_pos[0], y=smooth_pos[1], theta=radians(smooth_pos[2])), time=time)
+        pub_pos.send(robot_pb.Position(x=smooth_pos[0], y=smooth_pos[1], theta=smooth_pos[2]), time=time)
 
 if __name__ == "__main__":
     
