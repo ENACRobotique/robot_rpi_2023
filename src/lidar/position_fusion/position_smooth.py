@@ -10,10 +10,10 @@ class Smoother:
     max_timeframe: float =  2.0 # in seconds, time when it will forget the oldest data
     max_data: int = 10 # max number of data to store
     min_data: int = 3 # min number of data to store
-    x_data: List[float] = None
-    y_data: List[float] = None
-    theta_data: List[float] = None
-    timestamp_data: List[float] = None
+    x_data: List[float] = []
+    y_data: List[float] = []
+    theta_data: List[float] = []
+    timestamp_data: List[float] = []
 
     def __post_init__(self):
         self.flush_data()
@@ -40,12 +40,19 @@ class Smoother:
             self.timestamp_data.pop(0)
         
     def calc_smooth(self):
+        """ Mediane """
         # calculate smooth position using moving average
         if len(self.x_data) < self.min_data:
             return None
-        x = sum(self.x_data) / len(self.x_data)
-        y = sum(self.y_data) / len(self.y_data)
-        theta = sum(self.theta_data) / len(self.theta_data)
+        #x = sum(self.x_data) / len(self.x_data)
+        #y = sum(self.y_data) / len(self.y_data)
+        #theta = sum(self.theta_data) / len(self.theta_data)
+        #  
+        index = round((len(self.x_data)+1)/2)
+
+        x = sorted(self.x_data)[index]
+        y = sorted(self.y_data)[index]
+        theta = sorted(self.theta_data)[index]
         return (x, y, theta)
 
     def flush_data(self):
