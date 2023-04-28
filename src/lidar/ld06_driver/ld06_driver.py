@@ -25,10 +25,10 @@ class Cloud:
         return self.max_angle - self.min_angle
 
     def get_angles(self):
-        return [p[1] for p in self.points]
+        return [360-p[1] for p in self.points]
     
     def get_distances(self):
-        return [p[0] for p in self.points]
+        return [p[0]/1000 for p in self.points]
 
 
 # This enum contains the part of the lidar message that is expected by the driver
