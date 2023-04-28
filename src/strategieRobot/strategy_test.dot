@@ -5,10 +5,19 @@ digraph statemachine {
     GoGreen [comment="gogreen_enter"]
     PushCake [comment="pushcake_enter/pushcake_leave"]
     GoBlue  [comment="goblue_enter/goblue_leave"]
+    RecalInit [comment="debut_recal"]
+    RecalGreen [comment="debut_recal"]
+    RecalCake [comment="debut_recal"]
+    RecalBlue [comment="debut_recal"]
 
-    Init -> GoGreen [label="dummy_tr/match_started"]
-    GoGreen -> PushCake [label="dummy_tr/at_green"]
-    PushCake -> GoBlue [label="dummy_tr/cake_pushed"]
-    GoBlue -> End [label="dummy_tr/at_blue"]
+    Init -> RecalInit [label="dummy_tr/match_started"]
+    RecalInit -> GoGreen [label="dummy_tr/recal_ok"]
+    GoGreen -> RecalGreen [label="dummy_tr/at_green"]
+    RecalGreen -> PushCake [label="dummy_tr/recal_ok"]
+    PushCake -> RecalCake [label="dummy_tr/cake_pushed"]
+    RecalCake -> GoBlue [label="dummy_tr/recal_ok"]
+    GoBlue -> RecalBlue [label="dummy_tr/at_blue"]
+    RecalBlue -> End [label="dummy_tr/recal_ok"]
     {GoGreen PushCake} -> End [label="dummy_tr/match_end_guard"]
+
 }
