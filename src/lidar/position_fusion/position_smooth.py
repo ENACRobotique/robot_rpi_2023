@@ -7,13 +7,14 @@ from queue import Queue
 
 @dataclass
 class Smoother:
+    x_data: List[float]
+    y_data: List[float]
+    theta_data: List[float]
+    timestamp_data: List[float]
     max_timeframe: float =  2.0 # in seconds, time when it will forget the oldest data
     max_data: int = 10 # max number of data to store
     min_data: int = 3 # min number of data to store
-    x_data: List[float] = []
-    y_data: List[float] = []
-    theta_data: List[float] = []
-    timestamp_data: List[float] = []
+
 
     def __post_init__(self):
         self.flush_data()
