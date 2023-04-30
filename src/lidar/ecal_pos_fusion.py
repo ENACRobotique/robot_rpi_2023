@@ -36,11 +36,11 @@ def logger_warn(msg):
 def on_lidar_pos(topic_name, lidar_msg , time):
     global last_speed
     if last_speed == ():
-        logger_warn("ecal_pos_fusion : not receiving speed from robot !")
+        logger_warn("ecal_pos_fusion : not receiving speed (odom_speed) from robot !")
         return
-    if (abs(last_speed[0] - max_x_deviation) < max_x_deviation #speed is slow enough to smooth
-            and abs(last_speed[1] - max_y_deviation) < max_y_deviation 
-            and abs(last_speed[2] - max_theta_deviation) < max_theta_deviation):
+    if (max_x_deviation - abs(last_speed[0]) > 0 #speed is slow enough to smooth
+            and max_y_deviation - abs(last_speed[1]) > 0 
+            and max_theta_deviation - abs(last_speed[2]) > 0):
         pos_smoother.add_data(lidar_msg.x, lidar_msg.y, lidar_msg.theta, time)
     else:
         pos_smoother.flush_data()
