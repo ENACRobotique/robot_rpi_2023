@@ -96,7 +96,6 @@ class EcalRadio(comm.Radio):
         
     def on_claw_command(self,topic_name,setstate, time):
         self.sendClawSignal(setstate.claw_state)
-        self.handle_message("ClAW MOVED")
         print("claw",setstate)
         
     def on_store_disk(self,topic_name,setstate, time):
@@ -109,7 +108,6 @@ class EcalRadio(comm.Radio):
         
     def on_toboggan(self,topic_name,setstate, time):
         self.sendTobogganSignal(setstate.cerise_drop)
-        self.handle_message("TOBOGAN MOVED")
         print("cerise",setstate.cerise_drop)
         
     def on_score(self,topic_name,match, time):
