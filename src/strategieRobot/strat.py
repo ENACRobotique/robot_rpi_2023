@@ -25,62 +25,66 @@ class Parent:
     def __init__(self):
         self.robot =Robot()
         #self.navigation = nav.Navigation()
-        self.wake = time.time()
         self.match_start_time = time.time()
         self.robot.pointsEstimes = 5  # panier présent
         time.sleep(1)
-        self.go_green_substate = 0
  #       self.forced_recallage_state = 0
-        self.temps_debut_recal = 0
         
-    def init_enter(self):
+    def init_enter(self,local,previous_state):
         print("init enter")
+        local.wake = time.time()
         #self.robot.resetPos(*INIT_POS)
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         
-    def init_leave(self):
+    def init_leave(self,local,next_state):
         self.match_start_time = time.time()
         print("init leave")
         
-    def match_started(self):
+    def match_started(self,local):
         print(self.robot.x)
         # self.tempsDebutMatch is not None
-        if time.time() - self.wake > 2:
+        if time.time() - local.wake > 2:
             print("oh boy")
             return True
     
-    def gogreen_enter(self):
+    def gogreen_enter(self,local,previous_state):
         print("gogreen_enter")
         self.robot.setTargetPos(*POS1)
-        pass
+        local.green_substate = 0
 
-    def at_green(self):
-        if self.robot.hasReachedTarget():
-            if self.go_green_substate == 0:
-                self.go_green_substate = 1
-                self.robot.setTargetPos(*POS2)
-                self.robot.updateScore()
-            elif self.go_green_substate == 1:
-                self.go_green_substate = 2
-                self.robot.setTargetPos(*POS_PLATE_GREEN)
-            elif self.go_green_substate == 2:
-                print("claw: ", robot_pb.SetState.ClawState.CLAW_OPEN) # type: ignore
-                self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_OPEN)# type: ignore
-                self.claw_open_time = time.time()
-                self.go_green_substate = 3
-            else:
-                if time.time() - self.claw_open_time > 0.5:
-                    return True
+    def loop_gogreen(self,local):
+        match local.green_substate:
+            case 0:
+                if self.robot.hasReachedTarget():
+                    local.green_substate = 1
+                    self.robot.setTargetPos(*POS2)
+                    self.robot.updateScore()
+            case 1:
+                if self.robot.hasReachedTarget():
+                    local.green_substate = 2
+                    self.robot.setTargetPos(*POS_PLATE_GREEN)
+            case 2:
+                if self.robot.hasReachedTarget():
+                    print("claw: ", robot_pb.SetState.ClawState.CLAW_OPEN) # type: ignore
+                    self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_OPEN)# type: ignore
+                    local.claw_open_time = time.time()
+                    local.green_substate = 3
+            case 3:
+                   if time.time() - local.claw_open_time > 0.5:
+                     local.green_substate = 4  
+
+    def at_green(self,local):
+        return local.green_substate == 4 
     
-    def recal_ok(self):
-        if (time.time()- self.temps_debut_recal) >  TEMPS_MAXIMAL_RECALLAGE :
+    def recal_ok(self,local):
+        if (time.time()- local.temps_debut_recal) >  TEMPS_MAXIMAL_RECALLAGE :
             return self.robot.recallage(forced=True, trigger=False)== RecallageEtat.OK
-        elif(time.time()- self.temps_debut_recal) >  TEMPS_MINIMAL_TRIGGER:
+        elif(time.time()- local.temps_debut_recal) >  TEMPS_MINIMAL_TRIGGER:
             return self.robot.recallage(forced=False, trigger=True) == RecallageEtat.OK
         return self.robot.recallage() == RecallageEtat.OK
 
-    def debut_recal(self):
-        self.temps_debut_recal = time.time()
+    def debut_recal(self,local,previous_state):
+        local.temps_debut_recal = time.time()
         
 
     # def recal_forced_ok(self):
@@ -104,39 +108,34 @@ class Parent:
     #             self.forced_recallage_state = 0
 
     
-    def pushcake_enter(self):
+    def pushcake_enter(self,local,previous_state):
         self.robot.setTargetPos(*POS_PUSH_CAKE)
 
-    def cake_pushed(self):
+    def cake_pushed(self,local):
         return self.robot.hasReachedTarget()
 
-    def pushcake_leave(self):
+    def pushcake_leave(self,local,next_state):
         self.robot.pointsEstimes += 6
         self.robot.updateScore()
     
-    def goblue_enter(self):
+    def goblue_enter(self,local,RecalCake):
         self.robot.setTargetPos(*POS_PLATE_BLUE2)
-        
-    def at_blue(self):
+
+    def at_blue(self,local):
         return self.robot.hasReachedTarget()
     
-    def goblue_leave(self):
+    def goblue_leave(self,local,next_state):
         self.robot.pointsEstimes += 15
         self.robot.updateScore()
 
-    def match_end_guard(self):
+    def match_end_guard(self,local):
         if time.time() - self.match_start_time > MATCH_DURATION:
             return True
     
-    def end_enter(self):
+    def end_enter(self,local,previous_state):
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         print("This is the End!")
         exit(0)
-
-    def dummy_tr(self):
-        ...
-        #print("dummy")
-    
 
 
 if __name__ == "__main__":
@@ -148,7 +147,7 @@ if __name__ == "__main__":
     while True:
         #nav.sub_obstacles.set_callback(parent.navigation.on_obstacles_received)
         #nav.sub_pos.set_callback(parent.navigation.update_pos)
-        g2s.check_transitions()
+        g2s.step()
         time.sleep(0.2)
     
 
