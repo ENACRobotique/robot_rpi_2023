@@ -13,6 +13,9 @@ pos_pub = ProtoPublisher('set_position',robot_pb.Position)
 slow_pub = ProtoPublisher("slow",robot_pb.no_args_func_)
 stop_pub = ProtoPublisher("stop",robot_pb.no_args_func_)
 resume_pub = ProtoPublisher("resume",robot_pb.no_args_func_)
+tobogan_pub = ProtoPublisher("set_toboggan",robot_pb.SetState)
+claw_pub= ProtoPublisher("set_pince",robot_pb.SetState)
+
 def bouge(x,y, theta):
     pos_pub.send(robot_pb.Position(x=x,y=y,theta=theta))
 
@@ -27,6 +30,15 @@ def stop():
 def resume():
     print("resumed")
     resume_pub.send(robot_pb.no_args_func_(nothing = 1))
+
+def tobogan(cmd):
+    print("tobogged")
+    tobogan_pub.send(robot_pb.SetState(cerise_drop = cmd))
+    
+def claw(state):
+    print("clawed")
+    claw_pub.send(robot_pb.SetState(claw_state = state))
+
     
 def end():
     ecal_core.finalize()

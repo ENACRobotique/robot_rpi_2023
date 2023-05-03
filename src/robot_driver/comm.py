@@ -89,7 +89,7 @@ class Radio:
     
     def sendClawSignal (self,claw_pos):
         """Send a command to the claws of the robot
-        valueClaws is one char.
+        valueClaws is one char converted to an int.
         Accepted values are :
             'o' : open
             'g' : grab
@@ -114,16 +114,13 @@ class Radio:
 
     def sendTobogganSignal (self, valueToboggan):
         """Send a command to turn the slide on or off.
-        valueToboggan is a char
+        valueToboggan is a char converted to an int
         Accepted values are :
             'r' : rentré
-            's" : sorti
+            's' : sorti
         """
-        if valueToboggan in "rs":
-            message = b't'+struct.pack("c",valueToboggan)
-            self.sendMessage(message)
-        else :
-            print("Invalid value for toboggan : {}".format(valueToboggan))
+        message = b'T'+struct.pack("B",valueToboggan)
+        self.sendMessage(message)
 
     def sendPointDisplay (self,pointNumber):
         """Sends a number to be displayed by the display

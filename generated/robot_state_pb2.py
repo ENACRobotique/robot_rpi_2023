@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11robot_state.proto\x12\x04\x65nac\" \n\rno_args_func_\x12\x0f\n\x07nothing\x18\x01 \x01(\x02\"/\n\x08Position\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\r\n\x05theta\x18\x03 \x01(\x02\"\xc1\x01\n\x08SetState\x12\x16\n\x0eplate_position\x18\x01 \x01(\x05\x12\x14\n\x0cplate_number\x18\x02 \x01(\x05\x12\x13\n\x0b\x63\x65rise_drop\x18\x03 \x01(\x08\x12,\n\nclaw_state\x18\x04 \x01(\x0e\x32\x18.enac.SetState.ClawState\"D\n\tClawState\x12\x08\n\x04NONE\x10\x00\x12\r\n\tCLAW_OPEN\x10o\x12\x0f\n\x0b\x43LAW_CLOSED\x10\x63\x12\r\n\tCLAW_GRAB\x10g\"/\n\x05Speed\x12\n\n\x02vx\x18\x01 \x01(\x02\x12\n\n\x02vy\x18\x02 \x01(\x02\x12\x0e\n\x06vtheta\x18\x03 \x01(\x02\"&\n\x05Match\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\r\n\x05score\x18\x02 \x01(\x05\"\x18\n\x06\x41\x63tion\x12\x0e\n\x06\x61\x63tion\x18\x01 \x01(\x05\"\"\n\x04Side\x12\x1a\n\x05\x63olor\x18\x01 \x01(\x0e\x32\x0b.enac.Color*\x1c\n\x05\x43olor\x12\x08\n\x04\x42LUE\x10\x00\x12\t\n\x05GREEN\x10\x01\x62\x06proto3'
+  serialized_pb=b'\n\x11robot_state.proto\x12\x04\x65nac\" \n\rno_args_func_\x12\x0f\n\x07nothing\x18\x01 \x01(\x02\"/\n\x08Position\x12\t\n\x01x\x18\x01 \x01(\x02\x12\t\n\x01y\x18\x02 \x01(\x02\x12\r\n\x05theta\x18\x03 \x01(\x02\"\xa6\x02\n\x08SetState\x12\x16\n\x0eplate_position\x18\x01 \x01(\x05\x12\x14\n\x0cplate_number\x18\x02 \x01(\x05\x12\x31\n\x0b\x63\x65rise_drop\x18\x03 \x01(\x0e\x32\x1c.enac.SetState.TobogganState\x12,\n\nclaw_state\x18\x04 \x01(\x0e\x32\x18.enac.SetState.ClawState\"F\n\tClawState\x12\n\n\x06NONE_G\x10\x00\x12\r\n\tCLAW_OPEN\x10o\x12\x0f\n\x0b\x43LAW_CLOSED\x10\x63\x12\r\n\tCLAW_GRAB\x10g\"C\n\rTobogganState\x12\n\n\x06NONE_T\x10\x00\x12\x11\n\rTOBOGGAN_OPEN\x10s\x12\x13\n\x0fTOBOGGAN_CLOSED\x10r\"/\n\x05Speed\x12\n\n\x02vx\x18\x01 \x01(\x02\x12\n\n\x02vy\x18\x02 \x01(\x02\x12\x0e\n\x06vtheta\x18\x03 \x01(\x02\"&\n\x05Match\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\r\n\x05score\x18\x02 \x01(\x05\"\x18\n\x06\x41\x63tion\x12\x0e\n\x06\x61\x63tion\x18\x01 \x01(\x05\"\"\n\x04Side\x12\x1a\n\x05\x63olor\x18\x01 \x01(\x0e\x32\x0b.enac.Color*\x1c\n\x05\x43olor\x12\x08\n\x04\x42LUE\x10\x00\x12\t\n\x05GREEN\x10\x01\x62\x06proto3'
 )
 
 _COLOR = _descriptor.EnumDescriptor(
@@ -43,8 +43,8 @@ _COLOR = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=457,
-  serialized_end=485,
+  serialized_start=558,
+  serialized_end=586,
 )
 _sym_db.RegisterEnumDescriptor(_COLOR)
 
@@ -61,7 +61,7 @@ _SETSTATE_CLAWSTATE = _descriptor.EnumDescriptor(
   create_key=_descriptor._internal_create_key,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='NONE', index=0, number=0,
+      name='NONE_G', index=0, number=0,
       serialized_options=None,
       type=None,
       create_key=_descriptor._internal_create_key),
@@ -83,10 +83,40 @@ _SETSTATE_CLAWSTATE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=236,
-  serialized_end=304,
+  serialized_start=266,
+  serialized_end=336,
 )
 _sym_db.RegisterEnumDescriptor(_SETSTATE_CLAWSTATE)
+
+_SETSTATE_TOBOGGANSTATE = _descriptor.EnumDescriptor(
+  name='TobogganState',
+  full_name='enac.SetState.TobogganState',
+  filename=None,
+  file=DESCRIPTOR,
+  create_key=_descriptor._internal_create_key,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='NONE_T', index=0, number=0,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='TOBOGGAN_OPEN', index=1, number=115,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+    _descriptor.EnumValueDescriptor(
+      name='TOBOGGAN_CLOSED', index=2, number=114,
+      serialized_options=None,
+      type=None,
+      create_key=_descriptor._internal_create_key),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=338,
+  serialized_end=405,
+)
+_sym_db.RegisterEnumDescriptor(_SETSTATE_TOBOGGANSTATE)
 
 
 _NO_ARGS_FUNC_ = _descriptor.Descriptor(
@@ -191,8 +221,8 @@ _SETSTATE = _descriptor.Descriptor(
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
       name='cerise_drop', full_name='enac.SetState.cerise_drop', index=2,
-      number=3, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
+      number=3, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
@@ -209,6 +239,7 @@ _SETSTATE = _descriptor.Descriptor(
   nested_types=[],
   enum_types=[
     _SETSTATE_CLAWSTATE,
+    _SETSTATE_TOBOGGANSTATE,
   ],
   serialized_options=None,
   is_extendable=False,
@@ -217,7 +248,7 @@ _SETSTATE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=111,
-  serialized_end=304,
+  serialized_end=405,
 )
 
 
@@ -262,8 +293,8 @@ _SPEED = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=306,
-  serialized_end=353,
+  serialized_start=407,
+  serialized_end=454,
 )
 
 
@@ -301,8 +332,8 @@ _MATCH = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=355,
-  serialized_end=393,
+  serialized_start=456,
+  serialized_end=494,
 )
 
 
@@ -333,8 +364,8 @@ _ACTION = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=395,
-  serialized_end=419,
+  serialized_start=496,
+  serialized_end=520,
 )
 
 
@@ -365,12 +396,14 @@ _SIDE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=421,
-  serialized_end=455,
+  serialized_start=522,
+  serialized_end=556,
 )
 
+_SETSTATE.fields_by_name['cerise_drop'].enum_type = _SETSTATE_TOBOGGANSTATE
 _SETSTATE.fields_by_name['claw_state'].enum_type = _SETSTATE_CLAWSTATE
 _SETSTATE_CLAWSTATE.containing_type = _SETSTATE
+_SETSTATE_TOBOGGANSTATE.containing_type = _SETSTATE
 _SIDE.fields_by_name['color'].enum_type = _COLOR
 DESCRIPTOR.message_types_by_name['no_args_func_'] = _NO_ARGS_FUNC_
 DESCRIPTOR.message_types_by_name['Position'] = _POSITION
