@@ -119,7 +119,7 @@ class Radio:
             'r' : rentré
             's' : sorti
         """
-        message = b't'+struct.pack("B",valueToboggan)
+        message = b'T'+struct.pack("B",valueToboggan)
         self.sendMessage(message)
 
     def sendPointDisplay (self,pointNumber):
