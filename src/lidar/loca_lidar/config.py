@@ -15,11 +15,11 @@ table_y_max = 2.9 # meters
 # CloudPoints settings
 
 # obstacle cylinder settings
-stop_cyl_width = 0.3 # meters
-stop_cyl_dist = 0.25 #meFbters
+stop_cyl_width = 0.4 # meters
+stop_cyl_dist = 0.40 #meFbters
 
-warning_cyl_width = 0.45 # meters
-warning_cyl_dist = 0.5 # meters
+warning_cyl_width = 0.5 # meters
+warning_cyl_dist = 0.7 # meters
 
 
 min_lidar_dist = 0.15 # Meters (radius of the robot perimeter)
