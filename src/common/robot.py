@@ -253,7 +253,7 @@ class Robot:
         if msg.status == lidar_pb.ProximityStatus.WARNING:
             self.slow()
         if msg.status == lidar_pb.ProximityStatus.STOP:
-            self.stop
+            self.stop()
         
     
     def slow(self):
