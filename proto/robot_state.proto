@@ -22,6 +22,7 @@ message SetState {
         CLAW_OPEN = 111;
         CLAW_CLOSED = 99;
         CLAW_GRAB = 103;
+        CLAW_CHECK_PRESENCE = 67;   
     };
     enum TobogganState {
         NONE_T = 0;
@@ -57,6 +58,7 @@ enum Color {
 message Side {
     Color color = 1;
 }
+
 
 
 

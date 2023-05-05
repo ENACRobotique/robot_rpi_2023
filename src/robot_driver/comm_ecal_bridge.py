@@ -27,13 +27,13 @@ class EcalRadio(comm.Radio):
         self.match_report_pub = ProtoPublisher('match_start',robot_pb.Match)
         self.action_report_pub = ProtoPublisher('action',robot_pb.Action)
         self.message_pub = StringPublisher('debug_msg')
+        self.cake_presence_pub = ProtoPublisher("cake_presence",robot_pb.Action)
 
 
         # High level to Low level message transmition 
         # Create the subscribers & set the callbacks
         self.set_position_sub = ProtoSubscriber("set_position", robot_pb.Position)
         self.set_position_sub.set_callback(self.on_set_position)
-        
 
         self.reset_pos_sub = ProtoSubscriber("reset",robot_pb.Position)
         self.reset_pos_sub.set_callback(self.on_reset_pos)
@@ -89,14 +89,18 @@ class EcalRadio(comm.Radio):
 
     def handle_message(self,msg):
         self.message_pub.send(msg)
-
+    
+    def handle_cake_presence_report(self,is_cake):
+        self.cake_presence_pub.send(robot_pb.Action(action=is_cake))
+    
     def on_set_position(self, topic_name, position, time):
         self.setTargetPosition(position.x, position.y, position.theta)
         print("position",position)
         
     def on_claw_command(self,topic_name,setstate, time):
         self.sendClawSignal(setstate.claw_state)
-        print("claw",setstate)
+        print("claw",setstate.claw_state)
+
         
     def on_store_disk(self,topic_name,setstate, time):
         self.sendStoreDiscsInsideSignal(setstate.plate_position, setstate.plate_number)
