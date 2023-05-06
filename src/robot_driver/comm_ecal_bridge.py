@@ -28,7 +28,6 @@ class EcalRadio(comm.Radio):
         self.action_report_pub = ProtoPublisher('action',robot_pb.Action)
         self.message_pub = StringPublisher('debug_msg')
 
-
         # High level to Low level message transmition 
         # Create the subscribers & set the callbacks
         self.set_position_sub = ProtoSubscriber("set_position", robot_pb.Position)
@@ -71,7 +70,8 @@ class EcalRadio(comm.Radio):
         self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
         #self.proximity_sub.set_callback()
 
-
+        time.sleep(1.0)
+        self.odom_speed_pub.send(robot_pb.Speed(vx=0, vy=0, vtheta=0)) # send a first message to 'initialize' the topic (needed for lidar_fusion_smooth)
         
 
     ####  Reception from robot

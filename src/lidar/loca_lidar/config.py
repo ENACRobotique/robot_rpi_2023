@@ -1,3 +1,5 @@
+from math import pi
+
 # general settings
 Debug = False #mainly visualisation tools
 
@@ -5,7 +7,7 @@ Debug = False #mainly visualisation tools
 # !! Careful : offset are not implemented yet (value different from 0 may not work)
 lidar_x_offset = 0.0
 lidar_y_offset = 0.0
-lidar_theta_offset = 0.0
+lidar_theta_offset = -pi/2 + 0.12
 
 # 10 cm offset from table edge
 table_x_min = 0.1 # meters
@@ -16,7 +18,7 @@ table_y_max = 2.9 # meters
 
 # obstacle cylinder settings
 stop_cyl_width = 0.3 # meters
-stop_cyl_dist = 0.25 #meFbters
+stop_cyl_dist = 0.3 #meters
 
 warning_cyl_width = 0.45 # meters
 warning_cyl_dist = 0.5 # meters

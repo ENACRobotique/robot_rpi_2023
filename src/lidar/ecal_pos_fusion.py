@@ -29,6 +29,7 @@ def logger(msg):
 
 def logger_warn(msg):
     if DEBUG:
+        print(str(msg))
         ecal_core.log_setlevel(2)
         ecal_core.log_message(str(msg))
         ecal_core.log_setlevel(1)

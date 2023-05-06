@@ -75,9 +75,10 @@ def position_filter_pts(pts: PolarPts_t, lidar_x, lidar_y, lidar_theta) -> Polar
     # TODO 1. Add additionnal check with the last known lidar position on the table
     return pts
 
-def obstacle_in_path(robot_pose: Tuple, pts: List[List[Union[float, float]]], speed: Tuple) -> int:
+def obstacle_in_path(robot_pose: Tuple, pts: List[List[Union[float, float]]], target: Tuple) -> int:
     """_summary_
 
+    Check if obstacle in path to target position (assuming straight line from cur pose to target)
     Args:
         pts (PolarPts_t): _description_
         speed (tuple): _description_
@@ -89,7 +90,8 @@ def obstacle_in_path(robot_pose: Tuple, pts: List[List[Union[float, float]]], sp
         int: 0 : ok, 1 : warning, 2 : stop
     """
     max_alert = 0 # level depends on obstacle found within the rectangle
-    pt_next_robot = (robot_pose[0] + speed[0], robot_pose[1] + speed[1])
+    direction_vec = (target[0] - robot_pose[0], target[1] - robot_pose[1])
+    print(direction_vec)
 
     # 1. Calculate rectangle for stop
     #### STOP Rectangle ###
@@ -97,16 +99,16 @@ def obstacle_in_path(robot_pose: Tuple, pts: List[List[Union[float, float]]], sp
     stop_x_edge2, stop_y_edge2, \
     stop_x_edge3, stop_y_edge3, \
     stop_x_edge4, stop_y_edge4 = _get_rectangle_edge(
-        robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
-        speed[0], speed[1], config.stop_cyl_width, config.stop_cyl_dist)
+        robot_pose[0], robot_pose[1], target[0], target[1], 
+        direction_vec[0], direction_vec[1], config.stop_cyl_width, config.stop_cyl_dist)
     
     #### WARNING Rectangle ###
     warn_x_edge1, warn_y_edge1, \
     warn_x_edge2, warn_y_edge2, \
     warn_x_edge3, warn_y_edge3, \
     warn_x_edge4, warn_y_edge4 = _get_rectangle_edge(
-        robot_pose[0], robot_pose[1], pt_next_robot[0], pt_next_robot[1], 
-        speed[0], speed[1], config.warning_cyl_width, config.warning_cyl_dist)
+        robot_pose[0], robot_pose[1], target[0], target[1], 
+        direction_vec[0], direction_vec[1], config.warning_cyl_width, config.warning_cyl_dist)
 
     x_a, y_a, x_b, y_b, x_c, y_c, x_d, y_d = _determine_edge(
         stop_x_edge1, stop_y_edge1, stop_x_edge2, stop_y_edge2, stop_x_edge3, stop_y_edge3, stop_x_edge4, stop_y_edge4)
