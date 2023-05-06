@@ -248,7 +248,13 @@ class Robot:
 
     def onProximityStatus (self,topic_name, msg, timestamp):
         self.proximityStatus = msg.status
-    
+        if msg.status == lidar_pb.ProximityStatus.OK:
+            self.resume()
+        if msg.status == lidar_pb.ProximityStatus.WARNING:
+            self.slow()
+        if msg.status == lidar_pb.ProximityStatus.STOP:
+            self.stop()
+        
     
     def slow(self):
         self.slow_pub.send(robot_pb.no_args_func_(nothing = 1))

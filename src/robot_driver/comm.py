@@ -34,6 +34,7 @@ class messageARecevoir(Enum):
     CONFIRMATION_ACTION="d"
 
     MESSAGE_POUR_LOG="M"
+    REPORT_CAKE_PRESENCE="C"
 
 
 class Radio:
@@ -89,11 +90,12 @@ class Radio:
     
     def sendClawSignal (self,claw_pos):
         """Send a command to the claws of the robot
-        valueClaws is one char.
+        valueClaws is one char converted to an int.
         Accepted values are :
             'o' : open
             'g' : grab
             'c' : closed
+            'C' : check cake presence
         """
         message = b'g'+struct.pack("B",claw_pos)
         self.sendMessage(message)
@@ -114,16 +116,13 @@ class Radio:
 
     def sendTobogganSignal (self, valueToboggan):
         """Send a command to turn the slide on or off.
-        valueToboggan is a char
+        valueToboggan is a char converted to an int
         Accepted values are :
             'r' : rentré
-            's" : sorti
+            's' : sorti
         """
-        if valueToboggan in "rs":
-            message = b't'+struct.pack("c",valueToboggan)
-            self.sendMessage(message)
-        else :
-            print("Invalid value for toboggan : {}".format(valueToboggan))
+        message = b'T'+struct.pack("B",valueToboggan)
+        self.sendMessage(message)
 
     def sendPointDisplay (self,pointNumber):
         """Sends a number to be displayed by the display
@@ -222,6 +221,17 @@ class Radio:
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'd'+byteArray)
+            
+            case messageARecevoir.REPORT_CAKE_PRESENCE:
+                (is_cake,chksum)=struct.unpack("BB",byteArray)
+                sum = self.PROTOCOL_VERSION + ord('C')
+                for byte in byteArray[:-1]:
+                    sum+=byte
+                if sum%256 == chksum:
+                    self.handle_cake_presence_report(is_cake)
+                else:
+                    print("FAILED CHECKSUM : MessageError")
+                    print(b'C'+byteArray)
 
     def sendMessage(self,dataByteString):
         sum = self.PROTOCOL_VERSION
@@ -271,6 +281,10 @@ class Radio:
                             case messageARecevoir.MESSAGE_POUR_LOG.value:
                                 self.radioState=radioStates.WAITING_REST_OF_STRING_MESSAGE
                                 bytesMessage =b''
+                            case messageARecevoir.REPORT_CAKE_PRESENCE.value:
+                                numberOfExpectedBytes= 2
+                                typeReçu = messageARecevoir.REPORT_CAKE_PRESENCE
+                                self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
 
                             case '\n':
                                 pass
@@ -313,6 +327,9 @@ class Radio:
     
     def handle_checksum_error(self):
         print("Handle_checksum Unimplemented")
+
+    def handle_cake_presence_report(self,is_cake):
+        print("handle_cake_presence_report Unimplemented")
 
     def pince_cmd(self):
         print("Command_Pince Unimplemented")

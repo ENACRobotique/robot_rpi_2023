@@ -19,7 +19,7 @@ import generated.lidar_data_pb2 as lidar_pb
 import generated.robot_state_pb2 as robot_pb
 
 
-ANGLE_OFFSET = -pi/2 + 0.12
+ANGLE_OFFSET = -pi/2 - pi/4 + pi
 
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 

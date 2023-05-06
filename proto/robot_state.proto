@@ -18,14 +18,20 @@ message Position {
 
 message SetState {
     enum ClawState {
-        NONE = 0;
+        NONE_G = 0;
         CLAW_OPEN = 111;
         CLAW_CLOSED = 99;
         CLAW_GRAB = 103;
+        CLAW_CHECK_PRESENCE = 67;   
+    };
+    enum TobogganState {
+        NONE_T = 0;
+        TOBOGGAN_OPEN = 115;
+        TOBOGGAN_CLOSED = 114;
     };
     int32 plate_position = 1; // Position of the "plateau"
     int32 plate_number = 2; // Number of the action, value to display, ...
-    bool cerise_drop=3;
+    TobogganState cerise_drop=3;
     ClawState claw_state = 4;
 }
 
@@ -52,6 +58,7 @@ enum Color {
 message Side {
     Color color = 1;
 }
+
 
 
 
