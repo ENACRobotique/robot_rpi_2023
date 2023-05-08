@@ -18,9 +18,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids Modul
 import generated.lidar_data_pb2 as lidar_pb
 import generated.robot_state_pb2 as robot_pb
 
-
-ANGLE_OFFSET = -pi/2 - pi/4 + pi
-
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
 sub_position = ProtoSubscriber("set_position", robot_pb.Position)
@@ -84,11 +81,11 @@ def send_lidar_pos(x, y, theta):
     pos_msg = robot_pb.Position()
     pos_msg.x = float(x)
     pos_msg.y = float(y)
-    pos_msg.theta = radians(-theta) + ANGLE_OFFSET
+    pos_msg.theta = radians(-theta) + config.loca_theta_offset
     pub_lidar_pos.send(pos_msg, ecal_core.getmicroseconds()[1])
     # human readable version : 
     pub_lidar_pos_deg.send(
-        robot_pb.Position(x=float(x), y=float(y), theta=float(theta+degrees(ANGLE_OFFSET))), 
+        robot_pb.Position(x=float(x), y=float(y), theta=float(theta+degrees(config.loca_theta_offset))), 
         ecal_core.getmicroseconds()[1]) 
 
 def on_side_set(topic_name, side_msg, time):

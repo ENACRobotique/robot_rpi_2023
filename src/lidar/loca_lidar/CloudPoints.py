@@ -344,7 +344,8 @@ def amalgame_numpy_to_tuple(amalgames:AmalgamePolar_t) -> Tuple:
     return tuple(amalgames[:last_i+1]['center_polar'])
 
 if __name__ == '__main__':
-    al = obstacle_in_path((0.5, 0.5, 0.0), [(0.01, 0.01)], (-0.1, -0.1, 0.0))
+    #al = obstacle_in_path((0.5, 0.5, 0.0), [(0.01, 0.01)], (-0.1, -0.1, 0.0))
+    al = obstacle_in_path((1.62291,1.229, 0.0), [(1.777, 1.48)], (1.0, 0.65, 0.0))
     print(al)
     # left edge (0.41, 0.59)
     # right edge (0.59, 0.41)
