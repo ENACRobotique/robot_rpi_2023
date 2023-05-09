@@ -96,7 +96,6 @@ class Robot:
         self.smoothX = 0.0
         self.smoothY = 0.0
         self.smoothTheta = 0.0
-    
 
     def __repr__(self) -> str:
         return "Cooking Mama's status storage structure"
@@ -247,13 +246,15 @@ class Robot:
 
 
     def onProximityStatus (self,topic_name, msg, timestamp):
-        self.proximityStatus = msg.status
-        if msg.status == lidar_pb.ProximityStatus.OK:
-            self.resume()
-        if msg.status == lidar_pb.ProximityStatus.WARNING:
-            self.slow()
-        if msg.status == lidar_pb.ProximityStatus.STOP:
-            self.stop
+        # self.proximityStatus = msg.status
+        # self.debug_pub.send(str(msg.status))
+        # if msg.status == lidar_pb.ProximityStatus.OK:
+            # self.resume()
+        # if msg.status == lidar_pb.ProximityStatus.WARNING:
+            # self.slow()
+        # if msg.status == lidar_pb.ProximityStatus.STOP:
+            # self.stop()
+        pass
         
     
     def slow(self):

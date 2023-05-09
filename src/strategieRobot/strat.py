@@ -16,10 +16,12 @@ MATCH_DURATION = 100
 
 INIT_POS = 0.225, 0.225, 0
 POS1 = 0.500, 0.650, 0
-POS2 = 1.00, 0.650, 0
+POS2 = 0.95, 0.650, 0
 POS_PLATE_GREEN = 1.150, 0.225, 0
 POS_PUSH_CAKE = 0.5, 0.225, 0
-POS_PLATE_BLUE2 = 1.850, 0.225, 0
+POS_PLATE_BLUE2 = 1.850, 0.3, 0
+
+POS_TEST = 2.00, 1.50, 0
 
 class Parent:
     def __init__(self):
@@ -33,7 +35,7 @@ class Parent:
     def init_enter(self,local,previous_state):
         print("init enter")
         local.wake = time.time()
-        #self.robot.resetPos(*INIT_POS)
+        #tdself.robot.resetPos(*INIT_POS)
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         
     def init_leave(self,local,next_state):
@@ -50,6 +52,7 @@ class Parent:
     def gogreen_enter(self,local,previous_state):
         print("gogreen_enter")
         self.robot.setTargetPos(*POS1)
+        #self.robot.setTargetPos(*POS_TEST)
         local.green_substate = 0
 
     def loop_gogreen(self,local):
@@ -141,7 +144,7 @@ class Parent:
 if __name__ == "__main__":
     parent = Parent()
     g2s = G2S(parent)
-    #g2s.debug = True
+    g2s.debug = True
     g2s.start()
 
     while True:
