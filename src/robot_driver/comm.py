@@ -30,7 +30,7 @@ class radioStates(Enum):
 class messageARecevoir(Enum):
     REPORT_POSITION="p"
     REPORT_VITESSE="v"
-    DEBUT_MATCH="T"
+    STATES_BUTTONS="T"
     CONFIRMATION_ACTION="d"
 
     MESSAGE_POUR_LOG="M"
@@ -189,8 +189,8 @@ class Radio:
                 else:
                     print("FAILED CHECKSUM : MessageError")
                     print(b'v'+byteArray)
-            case messageARecevoir.DEBUT_MATCH:
-                (chksum,)=struct.unpack("B",byteArray)
+            case messageARecevoir.STATES_BUTTONS:
+                (tir,col,posDep,chksum,)=struct.unpack("BBBB",byteArray)
                 if chksum == ord('T')+self.PROTOCOL_VERSION:
                     print ("success : MATCH STARTED")
                     
@@ -270,9 +270,9 @@ class Radio:
                                 numberOfExpectedBytes=13#3 floats(4o) + 1o checksum
                                 typeReçu = messageARecevoir.REPORT_VITESSE
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
-                            case messageARecevoir.DEBUT_MATCH.value:
+                            case messageARecevoir.STATES_BUTTONS.value:
                                 numberOfExpectedBytes=1#1o checksum
-                                typeReçu = messageARecevoir.DEBUT_MATCH
+                                typeReçu = messageARecevoir.STATES_BUTTONS
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
                             case messageARecevoir.CONFIRMATION_ACTION.value:
                                 numberOfExpectedBytes=2#1o numAction + 1o checksum
