@@ -10,20 +10,31 @@ from strategy_test import G2S
 from robot import Robot, TEMPS_MINIMAL_TRIGGER, TEMPS_MAXIMAL_RECALLAGE, RecallageEtat
 #import navigation as nav
 
-
-
 MATCH_DURATION = 100
 
-INIT_POS = 0.225, 0.225, 0
-POS1 = 0.500, 0.650, 0
-POS2 = 1.00, 0.650, 0
-POS_PLATE_GREEN = 1.150, 0.225, 0
-POS_PUSH_CAKE = 0.5, 0.225, 0
-POS_PLATE_BLUE2 = 1.850, 0.225, 0
+DB = {
+    "POS1": (0.500, 0.650, 0), #croisement_NW
+    "POS2" : (0.95, 0.650, 0), #
+    "POS_PLATE_GREEN" : (1.150, 0.225, 0),
+    "POS_PUSH_CAKE" : (0.5, 0.225, 0),
+    "POS_PLATE_BLUE2" : (1.850, 0.3, 0),
+    "INIT_POS" : (0.225, 0.225, 0),
+    "POS_TEST" : (2.00, 1.50, 0),
+}
+
+DG = {
+    "POS1": (0.500, 1.3875), #croisement_NE
+    "POS2" : (0.95, 1.150, 0),  
+    "POS_PLATE_GREEN" : (1.150, 1.775, 0),
+    "POS_PUSH_CAKE" : (0.5, 1.775, 0),
+    "POS_PLATE_BLUE2" : (1.850, 1.775, 0),
+    "INIT_POS" : (0.225, 0.225, 0),
+    "POS_TEST" : (2.00, 1.50, 0),
+}
 
 class Parent:
     def __init__(self):
-        self.robot =Robot()
+        self.robot =Robot()        
         #self.navigation = nav.Navigation()
         self.match_start_time = time.time()
         self.robot.pointsEstimes = 5  # panier présent
@@ -33,7 +44,7 @@ class Parent:
     def init_enter(self,local,previous_state):
         print("init enter")
         local.wake = time.time()
-        #self.robot.resetPos(*INIT_POS)
+        #tdself.robot.resetPos(*INIT_POS)
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         
     def init_leave(self,local,next_state):
@@ -43,13 +54,21 @@ class Parent:
     def match_started(self,local):
         print(self.robot.x)
         # self.tempsDebutMatch is not None
-        if time.time() - local.wake > 2:
+        if time.time() - local.wake > 2:    #remplacer par tirette !!!
+            local.toboggan_open_time = time.time()
+            self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_OPEN) # type: ignore
+            if time.time() - local.toboggan_open_time > 2: #attend 2s avant de remonter le toboggan
+                self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED) # type: ignore
             print("oh boy")
+            if False:       #en fonction de l'état de l'interrupteur pour choisir le côté
+                self.d = DB
+            else:
+                self.d = DG
             return True
     
     def gogreen_enter(self,local,previous_state):
         print("gogreen_enter")
-        self.robot.setTargetPos(*POS1)
+        self.robot.setTargetPos(*self.d["POS1"])
         local.green_substate = 0
 
     def loop_gogreen(self,local):
@@ -57,12 +76,12 @@ class Parent:
             case 0:
                 if self.robot.hasReachedTarget():
                     local.green_substate = 1
-                    self.robot.setTargetPos(*POS2)
+                    self.robot.setTargetPos(*self.d["POS2"])
                     self.robot.updateScore()
             case 1:
                 if self.robot.hasReachedTarget():
                     local.green_substate = 2
-                    self.robot.setTargetPos(*POS_PLATE_GREEN)
+                    self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
             case 2:
                 if self.robot.hasReachedTarget():
                     print("claw: ", robot_pb.SetState.ClawState.CLAW_OPEN) # type: ignore
@@ -109,7 +128,7 @@ class Parent:
 
     
     def pushcake_enter(self,local,previous_state):
-        self.robot.setTargetPos(*POS_PUSH_CAKE)
+        self.robot.setTargetPos(*self.d["POS_PUSH_CAKE"])
 
     def cake_pushed(self,local):
         return self.robot.hasReachedTarget()
@@ -119,7 +138,7 @@ class Parent:
         self.robot.updateScore()
     
     def goblue_enter(self,local,RecalCake):
-        self.robot.setTargetPos(*POS_PLATE_BLUE2)
+        self.robot.setTargetPos(*self.d["POS_PLATE_BLUE2"])
 
     def at_blue(self,local):
         return self.robot.hasReachedTarget()
@@ -134,14 +153,20 @@ class Parent:
     
     def end_enter(self,local,previous_state):
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
+        self.robot.sendCostumeSignal()
         print("This is the End!")
         exit(0)
 
+    def store_cake_enter(self,local,previous_state):
+        self.robot.storeDisk()
+
+    def dropDisk_enter(self,local,previous_state):
+        self.robot.dropDiskFromStorage()
 
 if __name__ == "__main__":
     parent = Parent()
     g2s = G2S(parent)
-    #g2s.debug = True
+    g2s.debug = True
     g2s.start()
 
     while True:

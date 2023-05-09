@@ -1,5 +1,7 @@
 #init Init
 digraph statemachine {
+
+    //blue side state machine 
     Init [comment="enter:init_enter;leave:init_leave"]
     End  [comment="enter:end_enter"]
     GoGreen [comment="enter:gogreen_enter;loop:loop_gogreen"]

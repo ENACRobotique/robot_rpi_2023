@@ -71,6 +71,9 @@ class Robot:
         self.proximitySub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
         self.proximitySub.set_callback(self.onProximityStatus)
 
+        self.sendCostumeSignalSub = ProtoSubscriber("costume",robot_pb.no_args_func_)
+        self.sendCostumeSignalSub.set_callback(self.sendCostumeSignal)
+
         self.smoothPositionSub = ProtoSubscriber("smooth_pos", robot_pb.Position)
         self.smoothPositionSub.set_callback(self.onSmoothPos)
 
@@ -81,9 +84,17 @@ class Robot:
         self.claw_pub = ProtoPublisher("set_pince", robot_pb.SetState)
         self.score_pub = ProtoPublisher("set_score", robot_pb.Match)
 
+        self.on_store_disk_pub = ProtoPublisher("store",robot_pb.SetState)
+
+        self.on_drop_disk_pub = ProtoPublisher("drop",robot_pb.SetState)
+
+        self.on_toboggan_pub = ProtoPublisher("cerise",robot_pb.SetState)
+                
         self.slow_pub = ProtoPublisher("slow",robot_pb.no_args_func_)
         self.stop_pub = ProtoPublisher("stop",robot_pb.no_args_func_)
         self.resume_pub = ProtoPublisher("resume",robot_pb.no_args_func_)
+
+        self.sendCostumeSignal_pub = ProtoPublisher("costume",robot_pb.no_args_func_)
 
         self.debug_pub =StringPublisher("debug_msg")
 
@@ -96,7 +107,6 @@ class Robot:
         self.smoothX = 0.0
         self.smoothY = 0.0
         self.smoothTheta = 0.0
-    
 
     def __repr__(self) -> str:
         return "Cooking Mama's status storage structure"
@@ -247,13 +257,15 @@ class Robot:
 
 
     def onProximityStatus (self,topic_name, msg, timestamp):
-        self.proximityStatus = msg.status
-        if msg.status == lidar_pb.ProximityStatus.OK:
-            self.resume()
-        if msg.status == lidar_pb.ProximityStatus.WARNING:
-            self.slow()
-        if msg.status == lidar_pb.ProximityStatus.STOP:
-            self.stop()
+        # self.proximityStatus = msg.status
+        # self.debug_pub.send(str(msg.status))
+        # if msg.status == lidar_pb.ProximityStatus.OK:
+            # self.resume()
+        # if msg.status == lidar_pb.ProximityStatus.WARNING:
+            # self.slow()
+        # if msg.status == lidar_pb.ProximityStatus.STOP:
+            # self.stop()
+        pass
         
     
     def slow(self):
@@ -265,6 +277,15 @@ class Robot:
     def resume(self):
         self.resume_pub.send(robot_pb.no_args_func_(nothing = 1))
 
+    def sendCostumeSignal(self):
+        self.sendCostumeSignal_pub.send(robot_pb.no_args_func_(nothing = 1))
 
+    def storeDisk(self):
+        self.on_store_disk_pub.send(robot_pb.SetState)
 
+    def dropDiskFromStorage(self):
+        self.on_drop_disk_pub.send(robot_pb.SetState)
+
+    def setTobogganState(self,TobogganState):
+        self.on_toboggan_pub.send(robot_pb.SetState(TobogganState=TobogganState))
     
