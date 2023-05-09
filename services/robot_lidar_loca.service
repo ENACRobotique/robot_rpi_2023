@@ -1,10 +1,7 @@
 [Unit]
-Description= start all systems for the robot
-After=network.target network-online.target
-Wants=bridge.service
-Wants=lidar_loca.service
-Wants=lidar_fusion.service
-
+Description= ecal_loca_lidar
+After=network.target network-online.target robot_lidar_driver.service
+Requires=robot_lidar_driver.service
 
 [Service]
 Type=simple
@@ -14,14 +11,15 @@ Group=pi
 
 SupplementaryGroups=adm dialout cdrom sudo audio video plugdev games users input netdev gpio i2c spi
  
-ExecStart=/home/pi/robot_rpi_2023/services/heartbeat.py
- 
+ExecStart=python3 /home/pi/robot_rpi_2023/src/lidar/ecal_loca_lidar.py
+
 Restart=on-failure
 RestartSec=2 
 # Configures the time to wait before service is stopped forcefully.
 TimeoutStopSec=300
+StandardOutput=null
+StandardError=null
  
 [Install]
-WantedBy=multi-user.target
 
 
