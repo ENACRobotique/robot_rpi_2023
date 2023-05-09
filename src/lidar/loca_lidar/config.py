@@ -1,17 +1,20 @@
+from math import pi
+
 # general settings
 Debug = False #mainly visualisation tools
 
+loca_theta_offset = pi/4 #Implemented but refactor needed to include x,y offset
+
 #Check_obstacle settings
-# !! Careful : offset are not implemented yet (value different from 0 may not work)
-lidar_x_offset = 0.0
-lidar_y_offset = 0.0
-lidar_theta_offset = 0.0
+lidar_x_offset = 0.0 # !! Careful : offset are not implemented yet (value different from 0 may not work)
+lidar_y_offset = 0.0 # !! Careful : offset are not implemented yet (value different from 0 may not work)
+lidar_theta_offset = 3.14 + 0.1 #trigonometric angle in radians from 0° of table to 0° of lidar when robot 0° is aligned with table 0°
 
 # 10 cm offset from table edge
 table_x_min = 0.1 # meters
-table_x_max = 1.9 # meters
+table_x_max = 2.9 # meters
 table_y_min = 0.1 # meters
-table_y_max = 2.9 # meters
+table_y_max = 1.9 # meters
 # CloudPoints settings
 
 # obstacle cylinder settings
