@@ -3,13 +3,26 @@ from math import pi
 # general settings
 Debug = False #mainly visualisation tools
 
-loca_theta_offset = pi/4 #Implemented but refactor needed to include x,y offset
+loca_theta_offset =  -1.395# pi/4 #-2.18 : experimental value from evitement data of begining of may
 
 #Check_obstacle settings
 lidar_x_offset = 0.0 # !! Careful : offset are not implemented yet (value different from 0 may not work)
 lidar_y_offset = 0.0 # !! Careful : offset are not implemented yet (value different from 0 may not work)
-lidar_theta_offset = 3.14 + 0.1 #trigonometric angle in radians from 0° of table to 0° of lidar when robot 0° is aligned with table 0°
-
+lidar_theta_offset = 2.955 #HOW TO DETERMINE BELOW :
+# (0). It corresponds to trigonometric angle in radians from 0° of table to 0° of lidar when robot 0° is aligned with table 0°
+"""
+1.To determine experimentally :
+2. Place the robot, and find its pose ( precise position & rotation (using lidar_pos))
+3. Using lidar visualization, find some points (like fixed beacons) 
+4. In ObstaclesCalc.py, in the if name == main :
+5. Create ObstacleCalc object
+6. Vary its theta between 0 & 2*pi
+6.5. uncomment print in calc_obstacles_wrt_table
+7. check input of function 
+        calc_obstacles_wrt_table((robot pose), (beacons_lidar_polar_coords))
+    by compaying it between real beacon table coordinate & the one found by this function
+8. Find the precise theta by dichotomy
+"""
 # 10 cm offset from table edge
 table_x_min = 0.1 # meters
 table_x_max = 2.9 # meters
