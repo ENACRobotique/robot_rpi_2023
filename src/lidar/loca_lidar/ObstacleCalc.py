@@ -35,6 +35,7 @@ class ObstacleCalc():
             rot_mat = np.array([[np.cos(rot_angle), -np.sin(rot_angle)], [np.sin(rot_angle), np.cos(rot_angle)]])
             pt_wrt_table = np.dot(rot_mat, pt_wrt_lidar) + np.array([robot_wrt_table[0], robot_wrt_table[1]])
             # print("lidar", pt_wrt_lidar)
+            # print("table", pt_wrt_table)
             obstacles.append(pt_wrt_table)
 
         return obstacles
