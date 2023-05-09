@@ -28,6 +28,7 @@ class EcalRadio(comm.Radio):
         self.action_report_pub = ProtoPublisher('action',robot_pb.Action)
         self.message_pub = StringPublisher('debug_msg')
         self.cake_presence_pub = ProtoPublisher("cake_presence",robot_pb.Action)
+        self.ihm_pub = ProtoPublisher("ihm",robot_pb.IHM)
 
         # High level to Low level message transmition 
         # Create the subscribers & set the callbacks
@@ -92,6 +93,9 @@ class EcalRadio(comm.Radio):
     
     def handle_cake_presence_report(self,is_cake):
         self.cake_presence_pub.send(robot_pb.Action(action=is_cake))
+    
+    def handle_IHM(self, tirette, color, posdep):
+        self.ihm_pub.send(robot_pb.IHM(tirette=tirette, color=color, posdep=posdep))
     
     def on_set_position(self, topic_name, position, time):
         self.setTargetPosition(position.x, position.y, position.theta)
