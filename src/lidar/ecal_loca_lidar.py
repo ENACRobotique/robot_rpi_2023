@@ -3,7 +3,7 @@ import sys, os
 import time
 from typing import Tuple, Union, List
 import numpy as np
-from math import radians, pi
+from math import radians, pi, degrees
 import ecal.core.core as ecal_core
 from ecal.core.subscriber import ProtoSubscriber
 from ecal.core.publisher import ProtoPublisher, StringPublisher
@@ -18,12 +18,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids Modul
 import generated.lidar_data_pb2 as lidar_pb
 import generated.robot_state_pb2 as robot_pb
 
-
-ANGLE_OFFSET = -pi/2 - pi/4
-
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
-sub_speed = ProtoSubscriber("odom_speed", robot_pb.Position)
+sub_position = ProtoSubscriber("set_position", robot_pb.Position)
 sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
 sub_side = ProtoSubscriber("side", robot_pb.Side)
@@ -33,9 +30,10 @@ pub_filtered_pts = ProtoPublisher("lidar_filtered", lidar_pb.Lidar)
 pub_amalgames = ProtoPublisher("amalgames", lidar_pb.Lidar)
 pub_beacons = StringPublisher("beacons") # Only up to 5 points are sent, the index correspond to the fixed_point
 pub_lidar_pos = ProtoPublisher("lidar_pos", robot_pb.Position)
+pub_lidar_pos_deg = ProtoPublisher("deg_lidar_pos", robot_pb.Position)
 pub_obstacles = ProtoPublisher("obstacles_wrt_table", lidar_pb.Obstacles)
 
-last_known_speed = (0.0, 0.0, 0.0) #angle in degrees from where the robot is moving 
+last_known_dest = (0.0, 0.0, 0.0) #angle in degrees from where the robot is moving 
 last_known_lidar = (0, 0, 0) #x, y, theta (meters, degrees)
 robot_pose = (0.0, 0.0, 0.0) #x, y, theta (meters, degrees)
 OBSTACLE_CALC = ObstacleCalc(
@@ -83,8 +81,12 @@ def send_lidar_pos(x, y, theta):
     pos_msg = robot_pb.Position()
     pos_msg.x = float(x)
     pos_msg.y = float(y)
-    pos_msg.theta = radians(-theta) + ANGLE_OFFSET
+    pos_msg.theta = radians(-theta) + config.loca_theta_offset
     pub_lidar_pos.send(pos_msg, ecal_core.getmicroseconds()[1])
+    # human readable version : 
+    pub_lidar_pos_deg.send(
+        robot_pb.Position(x=float(x), y=float(y), theta=float(theta+degrees(config.loca_theta_offset))), 
+        ecal_core.getmicroseconds()[1]) 
 
 def on_side_set(topic_name, side_msg, time):
     global SIDE_SET, beacons_to_use, finder_to_use
@@ -98,9 +100,9 @@ def on_side_set(topic_name, side_msg, time):
         raise ValueError("ecal_loca_lidar - on_side_set - Invalid side value")
     SIDE_SET = True
 
-def on_robot_speed(topic_name, travel_msg, time):
-    global last_known_speed
-    last_known_speed = (travel_msg.x, travel_msg.y, travel_msg.theta)
+def on_robot_dest(topic_name, travel_msg, time):
+    global last_known_dest
+    last_known_dest = (travel_msg.x, travel_msg.y, travel_msg.theta)
 
 def on_robot_pos(topic_name, pos_msg, time):
     global robot_pose
@@ -108,7 +110,7 @@ def on_robot_pos(topic_name, pos_msg, time):
 
 
 def on_lidar_scan(topic_name, proto_msg, time):
-    global last_known_speed, robot_pose, last_known_lidar
+    global last_known_dest, robot_pose, last_known_lidar
 
     if robot_pose == (0.0, 0.0, 0.0):
         logging.warning("Robot pose not received yet - invalid obstacle avoidance")
@@ -127,7 +129,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
     #obstacle avoidance
     filtered_obs = [obs[i] for i in range(len(obs)) if mask[i]]
 
-    obstacle_consigne = cp.obstacle_in_path(robot_pose, filtered_obs, last_known_speed)
+    obstacle_consigne = cp.obstacle_in_path(robot_pose, filtered_obs, last_known_dest)
     send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
     send_obstacles_wrt_table(filtered_obs)
 
@@ -204,12 +206,12 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
             best_pose = min(poses_in_table, key=lambda x: cp.get_squared_dist_cartesian(robot_pose[:2], x))
             closest_pt_index = poses_in_table.index(best_pose)
             corr_out.update(list(lidar2table_set)[closest_pt_index])
-            print(best_pose)
+            print("multiple poses found : best one is : ", best_pose)
     return best_pose
    
 if __name__ == "__main__":
 
-    sub_speed.set_callback(on_robot_speed)
+    sub_position.set_callback(on_robot_dest)
     sub_lidar.set_callback(on_lidar_scan)
     sub_odom_pos.set_callback(on_robot_pos)
     sub_side.set_callback(on_side_set)
