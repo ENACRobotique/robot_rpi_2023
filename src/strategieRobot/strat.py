@@ -45,6 +45,7 @@ class Parent:
         print("init enter")
         local.wake = time.time()
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
+        self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED)
         
     def init_leave(self,local,next_state):
         self.match_start_time = time.time()
@@ -61,6 +62,16 @@ class Parent:
         if self.robot.tirette == robot_pb.IHM.TIRETTE_OUT:
             print("oh boy")
             return True
+    
+    def cerise_enter(self,local,previous_state):
+        self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_OPEN)
+        local.toboggan_open_time = time.time()
+    
+    def cerise_leave(self,local,next_state):
+        self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED)
+
+    def cerise_dropped(self, local):
+        return time.time() - local.toboggan_open_time > 2
     
     def gogreen_enter(self,local,previous_state):
         print("gogreen_enter")

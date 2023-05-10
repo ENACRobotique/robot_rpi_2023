@@ -4,6 +4,7 @@ digraph statemachine {
     //blue side state machine 
     Init [comment="enter:init_enter;leave:init_leave"]
     End  [comment="enter:end_enter"]
+    DropCerise [comment="enter:cerise_enter;leave:cerise_leave"]
     GoGreen [comment="enter:gogreen_enter;loop:loop_gogreen"]
     PushCake [comment="enter:pushcake_enter;leave:pushcake_leave"]
     GoBlue  [comment="enter:goblue_enter;leave:goblue_leave"]
@@ -13,7 +14,9 @@ digraph statemachine {
     RecalBlue [comment="enter:debut_recal"]
 
     Init -> RecalInit [label="match_started"]
-    RecalInit -> GoGreen [label="recal_ok"]
+    //Init -> GoGreen [label="match_started"]
+    RecalInit -> DropCerise [label="recal_ok"]
+    DropCerise -> GoGreen [label="cerise_dropped"]
     GoGreen -> RecalGreen [label="at_green"]
     RecalGreen -> PushCake [label="recal_ok"]
     PushCake -> RecalCake [label="cake_pushed"]
