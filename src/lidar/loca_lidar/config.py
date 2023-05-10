@@ -56,6 +56,7 @@ odometry_tolerance = 0.1 # meters tolerance of odometry from robot motor, used t
 
 # Fixed Points / Beacons coordinates
 
+unsymetrical_point_index = 3 # index of the point that can't be symetric with another point in known_points_in_mm
 blue_points_in_mm = ( #(x,y) | Made from Eurobot2023_Rules_FR_FInale, Blue Side
     (50, -94), #A (bottom left)     | (22+22+45+5) Bordure mur + Bordure Mur + Moitié + Moitié trou
     (1500, 2094), #B (middle top)
