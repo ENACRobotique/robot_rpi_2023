@@ -10,7 +10,7 @@ from strategy_test import G2S
 from robot import Robot, TEMPS_MINIMAL_TRIGGER, TEMPS_MAXIMAL_RECALLAGE, RecallageEtat
 #import navigation as nav
 
-MATCH_DURATION = 100
+MATCH_DURATION = 95
 
 DB = {
     "POS1": (0.500, 0.650, 0), #croisement_NW
@@ -23,12 +23,12 @@ DB = {
 }
 
 DG = {
-    "POS1": (0.500, 1.3875), #croisement_NE
-    "POS2" : (0.95, 1.150, 0),  
+    "POS1": (0.500, 1.350, 0), #croisement_NE
+    "POS2" : (0.95, 1.350, 0),  
     "POS_PLATE_GREEN" : (1.150, 1.775, 0),
     "POS_PUSH_CAKE" : (0.5, 1.775, 0),
-    "POS_PLATE_BLUE2" : (1.850, 1.775, 0),
-    "INIT_POS" : (0.225, 0.225, 0),
+    "POS_PLATE_BLUE2" : (1.850, 1.700, 0),
+    "INIT_POS" : (0.225, 1.775, 0),
     "POS_TEST" : (2.00, 1.50, 0),
 }
 
@@ -44,26 +44,22 @@ class Parent:
     def init_enter(self,local,previous_state):
         print("init enter")
         local.wake = time.time()
-        #tdself.robot.resetPos(*INIT_POS)
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         
     def init_leave(self,local,next_state):
         self.match_start_time = time.time()
+        if self.robot.color == robot_pb.IHM.BLUE:       #en fonction de l'état de l'interrupteur pour choisir le côté
+            self.d = DB
+        else:
+            self.d = DG
+        self.robot.resetPos(*self.d["INIT_POS"])
         print("init leave")
         
     def match_started(self,local):
         print(self.robot.x)
         # self.tempsDebutMatch is not None
-        if time.time() - local.wake > 2:    #remplacer par tirette !!!
-            local.toboggan_open_time = time.time()
-            self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_OPEN) # type: ignore
-            if time.time() - local.toboggan_open_time > 2: #attend 2s avant de remonter le toboggan
-                self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED) # type: ignore
+        if self.robot.tirette == robot_pb.IHM.TIRETTE_OUT:
             print("oh boy")
-            if False:       #en fonction de l'état de l'interrupteur pour choisir le côté
-                self.d = DB
-            else:
-                self.d = DG
             return True
     
     def gogreen_enter(self,local,previous_state):
