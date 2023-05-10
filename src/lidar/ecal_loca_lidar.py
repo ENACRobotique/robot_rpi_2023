@@ -188,8 +188,6 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
     best_pose = (0, 0, 0)
 
     # ###INITIAL FILTERING : remove correspondances that don't have the "mat central" (if it's present at least once) ###
-    # get values(=lidar_index) from dicts in set :
-    lidar_indexs = [list(d.values()) for d in lidar2table_set]
     # remove the correspondances that don't have the "mat central" 
     lidar2table_with_mat = [corr for corr in lidar2table_set 
                                 if config.unsymetrical_point_index in corr.values()]
