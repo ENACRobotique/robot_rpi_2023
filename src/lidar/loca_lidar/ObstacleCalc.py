@@ -31,11 +31,10 @@ class ObstacleCalc():
         rot_angle = (robot_wrt_table[2] + self.theta_offset)
         for pt in lidar_pts: # May be possible to vectorize with numpy to avoid for loop
             # From Lidar Frame to table frame directly
-            pt_wrt_lidar = self.polar_lidar_to_cartesian(pt)
-            rot_mat = np.array([[np.cos(rot_angle), -np.sin(rot_angle)], [np.sin(rot_angle), np.cos(rot_angle)]])
-            pt_wrt_table = np.dot(rot_mat, pt_wrt_lidar) + np.array([robot_wrt_table[0], robot_wrt_table[1]])
-            # print("lidar", pt_wrt_lidar)
-            # print("table", pt_wrt_table)
+            # pt_wrt_lidar = self.polar_lidar_to_cartesian(pt)
+            pt_wrt_table = self.lidar_polar2table_cart(robot_wrt_table, pt, rot_angle)
+            #print("lidar", pt_wrt_lidar)
+            #print("table", pt_wrt_table)
             obstacles.append(pt_wrt_table)
 
         return obstacles
@@ -64,59 +63,36 @@ class ObstacleCalc():
         return np.array([x, y])
     
     @staticmethod
-    def translate(x, y, tx, ty):
-        return (x + tx, y + ty)
+    def lidar_polar2table_cart(robot_wrt_table: tuple, lidar_pt: Tuple[float, float], rot_angle: float) -> List[float]:
+        pt_wrt_lidar = ObstacleCalc.polar_lidar_to_cartesian(lidar_pt)
+        rot_mat = np.array([[np.cos(rot_angle), -np.sin(rot_angle)], 
+                            [np.sin(rot_angle), np.cos(rot_angle)]])
+        #Formula below : Ax + d from https://youtu.be/TWTMoFvcBFc?t=116
+        pt_wrt_table = np.dot(rot_mat, pt_wrt_lidar) + np.array([robot_wrt_table[0], robot_wrt_table[1]])
+        return pt_wrt_table
 
     @staticmethod
-    def rotate(x, y, angle): #angle in radians !
-        c = np.cos(angle)
-        s = np.sin(angle)
-        return x * c - y * s, x * s + y * c
-    
-    @property
-    def t_lidar_to_robot(self): #transform matrix from lidar to robot
-        return np.array([
-        [np.cos(self.theta_offset), -np.sin(self.theta_offset), self.x_offset],
-        [np.sin(self.theta_offset), np.cos(self.theta_offset), self.y_offset],
-        [0, 0, 1]
-    ])
-
-    # @staticmethod
-    # @lru_cache(10)
-    def t_robot_to_table(self, robot_pose: Tuple[float, float, float]):
-        # transform matrix from robot to table
-        rad_theta = robot_pose[2] + self.theta_offset #TODO : remove shitty offset here
-        table_to_robot = np.array([
-        [np.cos(rad_theta), -np.sin(rad_theta), robot_pose[0]],
-        [np.sin(rad_theta), np.cos(rad_theta), robot_pose[1]],
-        [0, 0, 1]])
-        return np.linalg.inv(table_to_robot) #inverse table -> robot_to_table
-    
-    
-
-    def _lidar_wrt_robot(self, robot_wrt_table):
-        # create a homogeneous coordinate vector for this lidar point in lidar frame
-        v_C_B = np.array([robot_wrt_table[0], robot_wrt_table[1], 1])
-        # transform the homogeneous coordinate vector from Lidar Frame to Table Frame
-        v_C_A = np.dot(self.t_lidar_to_robot, v_C_B)
-        return (v_C_A[0], v_C_A[1]) 
+    def is_valid_lidar2table_transform(robot_pose:tuple, beacon_pose:tuple, expected_beacon_pose:tuple):
+        #robot_pose = (x,y, theta RADIANS) in table, beacon_pose = (r, theta radians) in lidar, expected_lidar_pose = (x,y) in table
+        # Return true if the lidar2table transform looks good (within 3cm error)
+        # Return false if it doesn't look good (but it might be localization problem !) and you need to tune config.lidar_theta_offset
+        print(robot_pose)
+        print(beacon_pose)
+        table_coord = ObstacleCalc.lidar_polar2table_cart(robot_pose, beacon_pose, robot_pose[2] + lidar_theta_offset)
+        #if np.isclose
+        print("expected", expected_beacon_pose)
+        print("calculated", table_coord)
+        return table_coord
 
 if __name__ == "__main__":
     for t_int in range(0, 10):
         theta = 2.9 + t_int/100
         print(theta)
         a = ObstacleCalc(0.0, 0.0, theta)
-    #a.calc_obstacles_wrt_table((1.84, 0.22, 0.0), 
-    #                           (
-    #    (1.79 ,180 + 56.52),
-    #    (1.76, 282), #expected (0.05, -0.094)
-    #    (2.03, 250) #expected (0.022, 1.0)
-    #    )) 
-
         a.calc_obstacles_wrt_table((2.04, 1.098, -0.15), 
             (
-            (2.07, 291.5),
-            (1.50, 57.0)
+            (2.07, 291.5), # beacon "mat central"
+            (1.50, 57.0) #beacon bottom_left_blue
             )
         ) 
 
