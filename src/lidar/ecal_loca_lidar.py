@@ -148,7 +148,18 @@ def on_lidar_scan(topic_name, proto_msg, time):
     if lidar_pose != (0, 0, 0):
         pub_beacons.send(str(lidar2table))
         send_lidar_pos(*lidar_pose)
+        #if debug
+            #check_obstacle_transform
+            #amalgames['center_polar']
 
+        #print(lidar2table)
+        #print(amalgames['center_polar'])
+        #for a in amalgames['center_polar']:
+        #    print("aaaa")
+        #    print()
+        #    table_coord = ObstacleCalc.lidar_polar2table_cart(lidar_pose, a, np.radians(lidar_pose[2]) + config.lidar_theta_offset)
+        #    print('bbbb')
+        #    print(table_coord)
     t2 = ecal_core.getmicroseconds()[1] - t
     # print("processing duration total in ms : ",t2)
 
@@ -175,6 +186,14 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
 
     poses = []
     best_pose = (0, 0, 0)
+
+    # ###INITIAL FILTERING : remove correspondances that don't have the "mat central" (if it's present at least once) ###
+    # remove the correspondances that don't have the "mat central" 
+    lidar2table_with_mat = [corr for corr in lidar2table_set 
+                                if config.unsymetrical_point_index in corr.values()]
+    # consider correspondances with mat central if it's present in at least one correspondance
+    lidar2table_set = lidar2table_with_mat if len(lidar2table_with_mat) > 0 else lidar2table_set
+    
     for i, corr in enumerate(lidar2table_set):
         lidar_pos = pf.lidar_pos_wrt_table(
             corr, amalgame_1.points, beacons_to_use.points)
@@ -209,6 +228,19 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
             print("multiple poses found : best one is : ", best_pose)
     return best_pose
    
+
+def check_obstacle_transform(lidar2table, amalgs_polar, robot_pose):
+        #check the first beacon for obstacle correct frame transformation
+        amalg_index = next(iter(lidar2table.keys()))
+        table_index = next(iter(lidar2table.values()))
+        beacon_wrt_lidar_polar = amalgs_polar[amalg_index]
+        expected_beacon_wrt_table = beacons_to_use.points[table_index]
+        print(expected_beacon_wrt_table)
+        print(beacon_wrt_lidar_polar)
+        OBSTACLE_CALC.is_valid_lidar2table_transform([*lidar_pose[0], *lidar_pose[1], np.radians(-lidar_pose[2]) + config.loca_theta_offset], 
+            beacon_wrt_lidar_polar,
+            expected_beacon_wrt_table
+            )
 if __name__ == "__main__":
 
     sub_position.set_callback(on_robot_dest)
