@@ -34,6 +34,8 @@ table_y_max = 1.9 # meters
 stop_cyl_width = 0.4 # meters
 stop_cyl_dist = 0.40 #meFbters
 
+stop_circular_dist = 0.3
+
 warning_cyl_width = 0.5 # meters
 warning_cyl_dist = 0.7 # meters
 

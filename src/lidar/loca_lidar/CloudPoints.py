@@ -132,6 +132,10 @@ def obstacle_in_path(robot_pose: Tuple, pts: List[List[Union[float, float]]], ta
             _is_on_left_edge(x_h, y_h, x_e, y_e, pt[0], pt[1])):
             max_alert = 1
 
+        # if within circle stop distance
+        if (get_squared_dist_polar(pt[0], pt[1], robot_pose[0], robot_pose[1]) ** 2 < config.stop_circular_dist):
+            return 2
+
     return max_alert # returns 0 if ok, 1 if warning, 2 if stop
 
 def _get_rectangle_edge(robot_x, robot_y, next_x, next_y, speed_x, speed_y, width, length):

@@ -149,7 +149,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
         pub_beacons.send(str(lidar2table))
         send_lidar_pos(*lidar_pose)
         #if debug
-            #check_obstacle_transform
+        check_obstacle_transform(lidar2table, amalgames['center_polar'], robot_pose)
             #amalgames['center_polar']
 
         #print(lidar2table)
