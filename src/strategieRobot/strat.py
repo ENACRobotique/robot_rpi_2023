@@ -52,6 +52,7 @@ class Parent:
     def init_loop(self,local):
         if (local.increment*5 + local.initEnterTime) < time.time():
             self.robot.pointsEstimes = (8000 if self.robot.color==robot_pb.IHM.BLUE else 6000) + (42 if local.increment%2 ==0 else 69)
+            local.increment+=1
             self.robot.updateScore()
         
     def init_leave(self,local,next_state):
