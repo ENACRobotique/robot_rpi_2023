@@ -239,10 +239,10 @@ def check_obstacle_transform(lidar2table, amalgs_polar, robot_pose):
         print(beacon_wrt_lidar_polar)
         OBSTACLE_CALC.is_valid_lidar2table_transform([*lidar_pose[0], *lidar_pose[1], np.radians(-lidar_pose[2]) + config.loca_theta_offset], 
             beacon_wrt_lidar_polar,
-            expected_beacon_wrt_table
-            )
-if __name__ == "__main__":
+            expected_beacon_wrt_table)
+        
 
+if __name__ == "__main__":
     sub_position.set_callback(on_robot_dest)
     sub_lidar.set_callback(on_lidar_scan)
     sub_odom_pos.set_callback(on_robot_pos)
