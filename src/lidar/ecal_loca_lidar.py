@@ -237,7 +237,8 @@ def check_obstacle_transform(lidar2table, amalgs_polar, robot_pose):
         expected_beacon_wrt_table = beacons_to_use.points[table_index]
         print(expected_beacon_wrt_table)
         print(beacon_wrt_lidar_polar)
-        OBSTACLE_CALC.is_valid_lidar2table_transform([*lidar_pose[0], *lidar_pose[1], np.radians(-lidar_pose[2]) + config.loca_theta_offset], 
+        print("angle", robot_pose[2])
+        OBSTACLE_CALC.is_valid_lidar2table_transform([robot_pose[0], robot_pose[1],np.radians(robot_pose[2]) + config.lidar_theta_offset], 
             beacon_wrt_lidar_polar,
             expected_beacon_wrt_table)
         
