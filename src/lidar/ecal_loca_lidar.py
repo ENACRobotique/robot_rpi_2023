@@ -149,7 +149,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
         pub_beacons.send(str(lidar2table))
         send_lidar_pos(*lidar_pose)
         #if debug
-        check_obstacle_transform(lidar2table, amalgames['center_polar'], robot_pose)
+        check_obstacle_transform(lidar2table, amalgames['center_polar'], lidar_pose)
             #amalgames['center_polar']
 
         #print(lidar2table)
@@ -235,10 +235,7 @@ def check_obstacle_transform(lidar2table, amalgs_polar, robot_pose):
         table_index = next(iter(lidar2table.values()))
         beacon_wrt_lidar_polar = amalgs_polar[amalg_index]
         expected_beacon_wrt_table = beacons_to_use.points[table_index]
-        print(expected_beacon_wrt_table)
-        print(beacon_wrt_lidar_polar)
-        print("angle", robot_pose[2])
-        OBSTACLE_CALC.is_valid_lidar2table_transform([robot_pose[0], robot_pose[1],np.radians(robot_pose[2]) + config.lidar_theta_offset], 
+        OBSTACLE_CALC.is_valid_lidar2table_transform([*robot_pose[0], *robot_pose[1], - np.radians(robot_pose[2]) + config.loca_theta_offset], 
             beacon_wrt_lidar_polar,
             expected_beacon_wrt_table)
         

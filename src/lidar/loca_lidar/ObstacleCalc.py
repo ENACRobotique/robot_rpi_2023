@@ -76,8 +76,9 @@ class ObstacleCalc():
         #robot_pose = (x,y, theta RADIANS) in table, beacon_pose = (r, theta radians) in lidar, expected_lidar_pose = (x,y) in table
         # Return true if the lidar2table transform looks good (within 3cm error)
         # Return false if it doesn't look good (but it might be localization problem !) and you need to tune config.lidar_theta_offset
-        print(robot_pose)
-        print(beacon_pose)
+        print("robot", robot_pose)
+        print("beacon", beacon_pose)
+        print("expected", expected_beacon_pose)
         table_coord = ObstacleCalc.lidar_polar2table_cart(robot_pose, beacon_pose, robot_pose[2] + lidar_theta_offset)
         #if np.isclose
         print("expected", expected_beacon_pose)
