@@ -35,6 +35,7 @@ stop_cyl_width = 0.4 # meters
 stop_cyl_dist = 0.40 #meFbters
 
 stop_circular_dist = 0.3
+robot_radius = 0.15 # meters #from robot/lidar center for avoidance purposes
 
 warning_cyl_width = 0.5 # meters
 warning_cyl_dist = 0.7 # meters
