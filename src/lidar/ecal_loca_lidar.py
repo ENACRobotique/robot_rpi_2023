@@ -115,6 +115,10 @@ def on_lidar_scan(topic_name, proto_msg, time):
     if robot_pose == (0.0, 0.0, 0.0):
         logging.warning("Robot pose not received yet - invalid obstacle avoidance")
 
+    if last_known_dest == (0.0, 0.0, 0.0):
+        logging.warning("Robot destination not received yet - invalid obstacle avoidance")
+    
+
     t = ecal_core.getmicroseconds()[1]
     # Filter lidar_scan
     lidar_scan =  np.rec.fromarrays([proto_msg.distances, proto_msg.angles], dtype=PolarPts)

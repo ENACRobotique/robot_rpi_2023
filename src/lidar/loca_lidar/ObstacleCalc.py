@@ -28,13 +28,14 @@ class ObstacleCalc():
         # !! Filter the obstacles outside the table
         # !! theta angle is parallel to the y axis currently
         obstacles = []
-        rot_angle = (robot_wrt_table[2] + self.theta_offset)
+        print("theta_off", self.theta_offset)
+        rot_angle = (robot_wrt_table[2] + self.theta_offset) # radians
         for pt in lidar_pts: # May be possible to vectorize with numpy to avoid for loop
             # From Lidar Frame to table frame directly
             # pt_wrt_lidar = self.polar_lidar_to_cartesian(pt)
             pt_wrt_table = self.lidar_polar2table_cart(robot_wrt_table, pt, rot_angle)
-            #print("lidar", pt_wrt_lidar)
-            #print("table", pt_wrt_table)
+            # print("lidar", pt)
+            # print("table", pt_wrt_table)
             obstacles.append(pt_wrt_table)
 
         return obstacles
@@ -76,9 +77,6 @@ class ObstacleCalc():
         #robot_pose = (x,y, theta RADIANS) in table, beacon_pose = (r, theta radians) in lidar, expected_lidar_pose = (x,y) in table
         # Return true if the lidar2table transform looks good (within 3cm error)
         # Return false if it doesn't look good (but it might be localization problem !) and you need to tune config.lidar_theta_offset
-        print("robot", robot_pose)
-        print("beacon", beacon_pose)
-        print("expected", expected_beacon_pose)
         table_coord = ObstacleCalc.lidar_polar2table_cart(robot_pose, beacon_pose, robot_pose[2] + lidar_theta_offset)
         #if np.isclose
         print("expected", expected_beacon_pose)
@@ -86,14 +84,14 @@ class ObstacleCalc():
         return table_coord
 
 if __name__ == "__main__":
-    for t_int in range(0, 10):
-        theta = 2.9 + t_int/100
+    for t_int in range(0, 63):
+        theta = t_int/10 #2.9 + t_int/100
         print(theta)
         a = ObstacleCalc(0.0, 0.0, theta)
-        a.calc_obstacles_wrt_table((2.04, 1.098, -0.15), 
+        a.calc_obstacles_wrt_table((0.212, 0.235, -0.022), 
             (
-            (2.07, 291.5), # beacon "mat central"
-            (1.50, 57.0) #beacon bottom_left_blue
+            (0.76, 333), # beacon "mat central" (-0.022, 1.000)
+            (0.359, 110) #beacon bottom_left_blue (0.050, -0.094)
             )
         ) 
 

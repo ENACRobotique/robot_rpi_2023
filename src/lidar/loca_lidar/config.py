@@ -1,4 +1,4 @@
-from math import pi
+from math import pi, radians
 
 # general settings
 Debug = False #mainly visualisation tools
@@ -8,7 +8,7 @@ loca_theta_offset =  -1.395# pi/4 #-2.18 : experimental value from evitement dat
 #Check_obstacle settings
 lidar_x_offset = 0.0 # !! Careful : offset are not implemented yet (value different from 0 may not work)
 lidar_y_offset = 0.0 # !! Careful : offset are not implemented yet (value different from 0 may not work)
-lidar_theta_offset = 2.955 #HOW TO DETERMINE BELOW :
+lidar_theta_offset =  radians(45.12) # 2.955 #HOW TO DETERMINE BELOW :
 # (0). It corresponds to trigonometric angle in radians from 0° of table to 0° of lidar when robot 0° is aligned with table 0°
 """
 1.To determine experimentally :
@@ -34,7 +34,7 @@ table_y_max = 1.9 # meters
 stop_cyl_width = 0.4 # meters
 stop_cyl_dist = 0.40 #meFbters
 
-stop_circular_dist = 0.3
+stop_circular_dist = 0.35 # meters
 robot_radius = 0.15 # meters #from robot/lidar center for avoidance purposes
 
 warning_cyl_width = 0.5 # meters

@@ -132,7 +132,7 @@ def obstacle_in_path(robot_pose: Tuple, pts: List[List[Union[float, float]]], ta
             max_alert = 1
 
         # if within circle stop distance
-        dist_from_lidar = get_squared_dist_polar((pt[0], pt[1]), (robot_pose[0], robot_pose[1])) ** 2
+        dist_from_lidar = np.sqrt(get_squared_dist_cartesian((pt[0], pt[1]), (robot_pose[0], robot_pose[1])))
         if ( dist_from_lidar < config.stop_circular_dist
             and dist_from_lidar > config.robot_radius):
             return 2
