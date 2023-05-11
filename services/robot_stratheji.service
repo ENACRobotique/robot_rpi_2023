@@ -14,3 +14,4 @@ SupplementaryGroups=adm dialout cdrom sudo audio video plugdev games users input
 ExecStart=python3 /home/pi/robot_rpi_2023/src/strategieRobot/strat.py
  
 [Install]
+WantedBy=multi-user.target
