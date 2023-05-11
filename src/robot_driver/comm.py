@@ -191,16 +191,16 @@ class Radio:
                     print(b'v'+byteArray)
             case messageARecevoir.STATES_BUTTONS:
                 (tir,col,posDep,chksum,)=struct.unpack("BBBB",byteArray)
-                if chksum == ord('T')+self.PROTOCOL_VERSION:
-                    print ("success : MATCH STARTED")
-                    
-                    self.handle_match_report()
+                if chksum == (ord('T')+tir+col+posDep+self.PROTOCOL_VERSION) % 256:                 
+                    self.handle_IHM(tir, col, posDep)
 
-                    data = {
-                        "timestamp": time(),
-                        "match":"MATCH STARTED"
-                    }
-                    self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT_PLOT_JUGGLER) ) # send to plot juggler
+                    # data = {
+                    #     "timestamp": time(),
+                    #     "tirette": tir,
+                    #     "color": col,
+                    #     "posdep": posDep,
+                    # }
+                    # self.plot_socket.sendto( json.dumps(data).encode(), (IP, PORT_PLOT_JUGGLER) ) # send to plot juggler
 
                 else:
                     print("FAILED CHECKSUM : MessageError")
@@ -271,7 +271,7 @@ class Radio:
                                 typeReçu = messageARecevoir.REPORT_VITESSE
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
                             case messageARecevoir.STATES_BUTTONS.value:
-                                numberOfExpectedBytes=1#1o checksum
+                                numberOfExpectedBytes=4#1o checksum
                                 typeReçu = messageARecevoir.STATES_BUTTONS
                                 self.radioState=radioStates.WAITING_REST_OF_NORMAL_MESSAGE
                             case messageARecevoir.CONFIRMATION_ACTION.value:
@@ -333,6 +333,9 @@ class Radio:
 
     def pince_cmd(self):
         print("Command_Pince Unimplemented")
+    
+    def handle_IHM(self, tirette, color, posdep):
+        print("handle_IHM Unimplemented")
     
 
 

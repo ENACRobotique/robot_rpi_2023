@@ -46,6 +46,22 @@ message Match {
     int32 score = 2;
 }
 
+message IHM {
+ enum TiretteState {
+    T_NONE = 0;
+    TIRETTE_IN = 100;
+    TIRETTE_OUT = 101;
+ }
+ enum Color {
+    C_NONE = 0;
+    BLUE = 98;
+    GREEN = 103;
+ }
+ TiretteState tirette = 1;
+ Color color = 2;
+ int32 posdep = 3;
+};
+
 message Action {
     int32 action = 1;
 }

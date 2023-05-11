@@ -28,6 +28,7 @@ class EcalRadio(comm.Radio):
         self.action_report_pub = ProtoPublisher('action',robot_pb.Action)
         self.message_pub = StringPublisher('debug_msg')
         self.cake_presence_pub = ProtoPublisher("cake_presence",robot_pb.Action)
+        self.ihm_pub = ProtoPublisher("ihm",robot_pb.IHM)
 
         # High level to Low level message transmition 
         # Create the subscribers & set the callbacks
@@ -59,7 +60,7 @@ class EcalRadio(comm.Radio):
         self.toboggan_sub.set_callback(self.on_toboggan)
         
         self.costume_sub = ProtoSubscriber("costume",robot_pb.no_args_func_)
-        self.costume_sub.set_callback(self.sendCostumeSignal)
+        self.costume_sub.set_callback(self.on_costume)
  
         self.score_sub = ProtoSubscriber("set_score", robot_pb.Match)
         self.score_sub.set_callback(self.on_score)
@@ -92,6 +93,9 @@ class EcalRadio(comm.Radio):
     
     def handle_cake_presence_report(self,is_cake):
         self.cake_presence_pub.send(robot_pb.Action(action=is_cake))
+    
+    def handle_IHM(self, tirette, color, posdep):
+        self.ihm_pub.send(robot_pb.IHM(tirette=tirette, color=color, posdep=posdep))
     
     def on_set_position(self, topic_name, position, time):
         self.setTargetPosition(position.x, position.y, position.theta)
@@ -130,6 +134,9 @@ class EcalRadio(comm.Radio):
     
     def on_stop(self,topic_name,nothing,time):
         self.sendStopSignal()
+
+    def on_costume(self, topic, nothing, time):
+        self.sendCostumeSignal()
 
     
         

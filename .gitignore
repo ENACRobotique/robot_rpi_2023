@@ -1,4 +1,3 @@
-_build
 .vscode
 __pycache__/
 *.pyc

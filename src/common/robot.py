@@ -38,6 +38,9 @@ class Robot:
         self.lastTargetY = 0.0
         self.lastTargetTheta = 0.0
 
+        self.tirette = robot_pb.IHM.T_NONE
+        self.color = robot_pb.IHM.C_NONE
+
         self.proximityStatus = None
 
         self.lastCommandNumber = None
@@ -77,6 +80,9 @@ class Robot:
         self.smoothPositionSub = ProtoSubscriber("smooth_pos", robot_pb.Position)
         self.smoothPositionSub.set_callback(self.onSmoothPos)
 
+        self.ihmSub = ProtoSubscriber("ihm",robot_pb.IHM)
+        self.ihmSub.set_callback(self.on_ihm)
+
         self.pubSide = ProtoPublisher("side",robot_pb.Side)
 
         self.set_target_pos_pub = ProtoPublisher("set_position", robot_pb.Position)
@@ -88,7 +94,7 @@ class Robot:
 
         self.on_drop_disk_pub = ProtoPublisher("drop",robot_pb.SetState)
 
-        self.on_toboggan_pub = ProtoPublisher("cerise",robot_pb.SetState)
+        self.on_toboggan_pub = ProtoPublisher("set_toboggan",robot_pb.SetState)
                 
         self.slow_pub = ProtoPublisher("slow",robot_pb.no_args_func_)
         self.stop_pub = ProtoPublisher("stop",robot_pb.no_args_func_)
@@ -266,7 +272,10 @@ class Robot:
         # if msg.status == lidar_pb.ProximityStatus.STOP:
             # self.stop()
         pass
-        
+    
+    def on_ihm(self, topic_name, msg: robot_pb.IHM, timestamp):
+        self.tirette = msg.tirette
+        self.color = msg.color
     
     def slow(self):
         self.slow_pub.send(robot_pb.no_args_func_(nothing = 1))
@@ -286,6 +295,6 @@ class Robot:
     def dropDiskFromStorage(self):
         self.on_drop_disk_pub.send(robot_pb.SetState)
 
-    def setTobogganState(self,TobogganState):
-        self.on_toboggan_pub.send(robot_pb.SetState(TobogganState=TobogganState))
+    def setTobogganState(self,toboggan_state):
+        self.on_toboggan_pub.send(robot_pb.SetState(cerise_drop=toboggan_state))
     
