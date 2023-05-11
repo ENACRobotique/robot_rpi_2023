@@ -56,7 +56,7 @@ class Parent:
             self.robot.updateScore()
         
     def init_leave(self,local,next_state):
-        self.robot.pointsEstimes = 0
+        self.robot.pointsEstimes = 5
         self.match_start_time = time.time()
         if self.robot.color == robot_pb.IHM.BLUE:       #en fonction de l'état de l'interrupteur pour choisir le côté
             self.d = DB
