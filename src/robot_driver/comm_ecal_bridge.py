@@ -60,7 +60,7 @@ class EcalRadio(comm.Radio):
         self.toboggan_sub.set_callback(self.on_toboggan)
         
         self.costume_sub = ProtoSubscriber("costume",robot_pb.no_args_func_)
-        self.costume_sub.set_callback(self.sendCostumeSignal)
+        self.costume_sub.set_callback(self.on_costume)
  
         self.score_sub = ProtoSubscriber("set_score", robot_pb.Match)
         self.score_sub.set_callback(self.on_score)
@@ -134,6 +134,9 @@ class EcalRadio(comm.Radio):
     
     def on_stop(self,topic_name,nothing,time):
         self.sendStopSignal()
+
+    def on_costume(self, topic, nothing, time):
+        self.sendCostumeSignal()
 
     
         
