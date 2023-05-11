@@ -150,7 +150,7 @@ class G2S:
         self.GoGreen = State("GoGreen", on_enter=self.parent.gogreen_enter, on_loop=self.parent.loop_gogreen)
         self.DropCerise = State("DropCerise", on_enter=self.parent.cerise_enter, on_leave=self.parent.cerise_leave)
         self.End = State("End", on_enter=self.parent.end_enter)
-        self.Init = State("Init", on_enter=self.parent.init_enter, on_leave=self.parent.init_leave)
+        self.Init = State("Init", on_enter=self.parent.init_enter, on_loop=self.parent.init_loop, on_leave=self.parent.init_leave)
         self.InitToRecalInit = Transition("InitToRecalInit", self.RecalInit, self.parent.match_started)
         self.Init.add_transition(self.InitToRecalInit)
         self.RecalInitToDropCerise = Transition("RecalInitToDropCerise", self.DropCerise, self.parent.recal_ok)

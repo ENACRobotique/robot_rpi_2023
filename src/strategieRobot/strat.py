@@ -46,8 +46,16 @@ class Parent:
         local.wake = time.time()
         self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
         self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED)
+        local.initEnterTime=time.time()
+        local.increment =1
+
+    def init_loop(self,local):
+        if (local.increment*5 + local.initEnterTime) < time.time():
+            self.robot.pointsEstimes = (8000 if self.robot.color==robot_pb.IHM.BLUE else 6000) + (42 if local.increment%2 ==0 else 69)
+            self.robot.updateScore()
         
     def init_leave(self,local,next_state):
+        self.robot.pointsEstimes = 0
         self.match_start_time = time.time()
         if self.robot.color == robot_pb.IHM.BLUE:       #en fonction de l'état de l'interrupteur pour choisir le côté
             self.d = DB
