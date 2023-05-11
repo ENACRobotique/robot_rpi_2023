@@ -78,6 +78,9 @@ class Parent:
     
     def cerise_leave(self,local,next_state):
         self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED)
+        self.robot.pointsEstimes+=15
+        self.robot.cerisesEnStock =0
+        self.robot.updateScore()
 
     def cerise_dropped(self, local):
         return time.time() - local.toboggan_open_time > 2
