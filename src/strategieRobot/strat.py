@@ -1,6 +1,6 @@
 import sys, os
 import time
-from math import sqrt,pi 
+from math import sqrt,pi, radians
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../_build'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '../common'))
@@ -13,22 +13,22 @@ from robot import Robot, TEMPS_MINIMAL_TRIGGER, TEMPS_MAXIMAL_RECALLAGE, Recalla
 MATCH_DURATION = 95
 
 DB = {
-    "POS1": (0.500, 0.650, 0), #croisement_NW
+    "POS1": (0.500, 0.650, radians(80)), #croisement_NW
     "POS2" : (0.95, 0.650, 0), #
     "POS_PLATE_GREEN" : (1.150, 0.225, 0),
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
     "POS_PLATE_BLUE2" : (1.850, 0.3, 0),
-    "INIT_POS" : (0.225, 0.225, 0),
+    "INIT_POS" : (0.150, 0.225, radians(135)),
     "POS_TEST" : (2.00, 1.50, 0),
 }
 
 DG = {
-    "POS1": (0.500, 1.350, 0), #croisement_NE
+    "POS1": (0.500, 1.350, radians(80)), #croisement_NE
     "POS2" : (0.95, 1.350, 0),  
     "POS_PLATE_GREEN" : (1.150, 1.775, 0),
     "POS_PUSH_CAKE" : (0.5, 1.775, 0),
     "POS_PLATE_BLUE2" : (1.850, 1.700, 0),
-    "INIT_POS" : (0.225, 1.775, 0),
+    "INIT_POS" : (0.150, 1.775, radians(135)),
     "POS_TEST" : (2.00, 1.50, 0),
 }
 
