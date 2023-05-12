@@ -20,30 +20,44 @@ last_position = [0.0, 0.0, 0.0] # (x, y, theta)
 lidar_sub = None
 odom_position_pub = None
 proximity_status_pub = None
+lidar_scan_filtered_pub = None
+
+def send_lidar_scan(pub, distances, angles):
+    lidar_msg = lidar_data.Lidar()
+    lidar_msg.angle_increment = float(-1.0) # prevent empty message when sending empty lidar scan (eg no obstacle found)
+    lidar_msg.angles.extend(angles)
+    lidar_msg.distances.extend(distances)
+    pub.send(lidar_msg, ecal_core.getmicroseconds()[1])
 
 
 def compute_distances(topic_name, msg, time):
     global last_status
     global last_position
     global proximity_status_pub
+    global lidar_scan_filtered_pub
 
     distances = np.array(msg.distances)
     angles = np.radians(np.array(msg.angles))
 
-    # Filter points that are too far or too close to be useful
+    # Filter points that are too far or too close to be useful -> BASIC filter
     indexes = np.logical_and(distances > MIN_RADIUS, distances <= MAX_RADIUS).nonzero()
-    distances_filter = distances[indexes]
-    angles_filter = angles[indexes] - LIDAR_OFFSET
+    basic_distances_filter = distances[indexes]
+    raw_basic_angles_filter = angles[indexes] # angles without lidar offset
+    basic_angles_filter = angles[indexes] - LIDAR_OFFSET
 
     # Coordinate transform to remove points outside the table
-    x = distances_filter * np.cos(angles_filter + last_position[2]) + last_position[0]
-    y = distances_filter * np.sin(angles_filter + last_position[2]) + last_position[1]
+    x = basic_distances_filter * np.cos(basic_angles_filter + last_position[2]) + last_position[0]
+    y = basic_distances_filter * np.sin(basic_angles_filter + last_position[2]) + last_position[1]
     cond_x = np.logical_and(x > TOLERANCE, x < (3.0 - TOLERANCE))
     cond_y = np.logical_and(y > TOLERANCE, y < (2.0 - TOLERANCE))
     indexes = np.logical_and(cond_x, cond_y).nonzero()
     
-    distances_filter = distances_filter[indexes]
+    distances_filter = basic_distances_filter[indexes]
 
+    # send lidar points that are detected on table (for visualization debug purposes)
+    send_lidar_scan(lidar_scan_filtered_pub, 
+                    basic_distances_filter[indexes], 
+                    np.rad2deg(raw_basic_angles_filter[indexes] % 360)) # convert to positive deg angles
 
     msg = lidar_data.Proximity()
     if len(distances_filter) == 0:
@@ -115,6 +129,7 @@ if __name__ == '__main__':
 
     proximity_status_pub = ProtoPublisher("proximity_status", lidar_data.Proximity)
     lidar_sub = ProtoSubscriber("lidar_data", lidar_data.Lidar)
+    lidar_scan_filtered_pub = ProtoPublisher("lidar_filtered", lidar_data.Lidar)
     lidar_sub.set_callback(compute_distances)
     odom_position_sub = ProtoSubscriber('odom_pos', robot_data.Position)
     odom_position_sub.set_callback(get_position)
