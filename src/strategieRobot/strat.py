@@ -17,7 +17,7 @@ DB = {
     "POS2" : (0.95, 0.650, 0), #
     "POS_PLATE_GREEN" : (1.150, 0.225, 0),
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
-    "POS_PLATE_BLUE2" : (1.850, 0.3, 0),
+    "POS_PLATE_BLUE2" : (1.850, 0.25, 0),
     "INIT_POS" : (0.150, 0.225, radians(135)),
     "POS_TEST" : (2.00, 1.50, 0),
 }
