@@ -25,7 +25,6 @@ sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
 sub_side = ProtoSubscriber("side", robot_pb.Side)
 
-pub_stop_cons = ProtoPublisher("proximity_status", lidar_pb.Proximity) # pub_stop_cons = ProtoPublisher("stop_cons", lidar_pb.Action)
 pub_filtered_pts = ProtoPublisher("lidar_filtered", lidar_pb.Lidar)
 pub_amalgames = ProtoPublisher("amalgames", lidar_pb.Lidar)
 pub_beacons = StringPublisher("beacons") # Only up to 5 points are sent, the index correspond to the fixed_point
@@ -58,18 +57,6 @@ def send_obstacles_wrt_table(obstacles: List[List[Union[float, float]]]):
     msg.y.extend(y)
     pub_obstacles.send(msg, ecal_core.getmicroseconds()[1])
     
-def send_stop_cons(closest_distance: float, action: int):
-    msg = lidar_pb.Proximity()
-    if action == 0:
-        msg.status = lidar_pb.ProximityStatus.OK
-    elif action == 1:
-        msg.status = lidar_pb.ProximityStatus.WARNING
-    elif action == 2:
-        msg.status = lidar_pb.ProximityStatus.STOP
-    else:
-        raise ValueError("ecal_loca_lidar - send_stop_cons - Invalid action value")
-    pub_stop_cons.send(msg, ecal_core.getmicroseconds()[1])
-
 def send_lidar_scan(pub, distances, angles):
     lidar_msg = lidar_pb.Lidar()
     lidar_msg.angle_increment = float(-1.0) # prevent empty message when sending empty lidar scan (eg no obstacle found)
@@ -132,9 +119,6 @@ def on_lidar_scan(topic_name, proto_msg, time):
 
     #obstacle avoidance
     filtered_obs = [obs[i] for i in range(len(obs)) if mask[i]]
-
-    obstacle_consigne = cp.obstacle_in_path(robot_pose, filtered_obs, last_known_dest)
-    #send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
     send_obstacles_wrt_table(filtered_obs)
 
     # Obstacle Calculation

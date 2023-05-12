@@ -74,7 +74,6 @@ def compute_distances(topic_name, msg, time):
     last_status = current_status 
 
 
-
     """
     # Check if there are still point left before applying reduction operation
     if len(pts_filter) > 0:
