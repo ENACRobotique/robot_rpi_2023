@@ -181,22 +181,21 @@ class Robot:
             self.recallageEtat = RecallageEtat.IDLE
             return RecallageEtat.ERREUR
         
-        match self.recallageEtat:
 
-            case RecallageEtat.IDLE :
-                self.debutRecallageTemps = time()
-                self.recallageEtat = RecallageEtat.ATTENTE
-                return RecallageEtat.ATTENTE
+        if self.recallageEtat == RecallageEtat.IDLE :
+            self.debutRecallageTemps = time()
+            self.recallageEtat = RecallageEtat.ATTENTE
+            return RecallageEtat.ATTENTE
 
-            case RecallageEtat.ATTENTE:
-                if (time()-self.debutRecallageTemps)>TEMPS_MINIMAL_RECALLAGE :
-                    if self.isLidarPosCoherent():
-                        self.resetPos(self.smoothX, self.smoothY, self.smoothTheta)
-                        self.recallageEtat = RecallageEtat.IDLE
-                        return RecallageEtat.OK
-                    else :
-                        self.recallageEtat = RecallageEtat.IDLE
-                        return RecallageEtat.ERREUR
+        elif self.recallageEtat == RecallageEtat.ATTENTE:
+            if (time()-self.debutRecallageTemps)>TEMPS_MINIMAL_RECALLAGE :
+                if self.isLidarPosCoherent():
+                    self.resetPos(self.smoothX, self.smoothY, self.smoothTheta)
+                    self.recallageEtat = RecallageEtat.IDLE
+                    return RecallageEtat.OK
+                else :
+                    self.recallageEtat = RecallageEtat.IDLE
+                    return RecallageEtat.ERREUR
                 
         
 

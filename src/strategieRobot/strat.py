@@ -44,8 +44,8 @@ class Parent:
     def init_enter(self,local,previous_state):
         print("init enter")
         local.wake = time.time()
-        self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
-        self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED)
+        self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)# type: ignore
+        self.robot.setTobogganState(robot_pb.SetState.TOBOGGAN_CLOSED)
         local.initEnterTime=time.time()
         local.increment =1
 
@@ -73,11 +73,11 @@ class Parent:
             return True
     
     def cerise_enter(self,local,previous_state):
-        self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_OPEN)
+        self.robot.setTobogganState(robot_pb.SetState.TOBOGGAN_OPEN)
         local.toboggan_open_time = time.time()
     
     def cerise_leave(self,local,next_state):
-        self.robot.setTobogganState(robot_pb.SetState.TobogganState.TOBOGGAN_CLOSED)
+        self.robot.setTobogganState(robot_pb.SetState.TOBOGGAN_CLOSED)
         self.robot.pointsEstimes+=15
         self.robot.cerisesEnStock =0
         self.robot.updateScore()
@@ -91,25 +91,24 @@ class Parent:
         local.green_substate = 0
 
     def loop_gogreen(self,local):
-        match local.green_substate:
-            case 0:
-                if self.robot.hasReachedTarget():
-                    local.green_substate = 1
-                    self.robot.setTargetPos(*self.d["POS2"])
-                    self.robot.updateScore()
-            case 1:
-                if self.robot.hasReachedTarget():
-                    local.green_substate = 2
-                    self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
-            case 2:
-                if self.robot.hasReachedTarget():
-                    print("claw: ", robot_pb.SetState.ClawState.CLAW_OPEN) # type: ignore
-                    self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_OPEN)# type: ignore
-                    local.claw_open_time = time.time()
-                    local.green_substate = 3
-            case 3:
-                   if time.time() - local.claw_open_time > 0.5:
-                     local.green_substate = 4  
+        if local.green_substate == 0:
+            if self.robot.hasReachedTarget():
+                local.green_substate = 1
+                self.robot.setTargetPos(*self.d["POS2"])
+                self.robot.updateScore()
+        elif local.green_substate == 1:
+            if self.robot.hasReachedTarget():
+                local.green_substate = 2
+                self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
+        elif local.green_substate == 2:
+            if self.robot.hasReachedTarget():
+                print("claw: ", robot_pb.SetState.CLAW_OPEN) # type: ignore
+                self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)# type: ignore
+                local.claw_open_time = time.time()
+                local.green_substate = 3
+        elif local.green_substate == 3:
+               if time.time() - local.claw_open_time > 0.5:
+                 local.green_substate = 4  
 
     def at_green(self,local):
         return local.green_substate == 4 
@@ -171,7 +170,7 @@ class Parent:
             return True
     
     def end_enter(self,local,previous_state):
-        self.robot.setClaw(robot_pb.SetState.ClawState.CLAW_CLOSED)# type: ignore
+        self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)# type: ignore
         self.robot.sendCostumeSignal()
         print("This is the End!")
         exit(0)
