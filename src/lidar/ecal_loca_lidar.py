@@ -134,7 +134,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
     filtered_obs = [obs[i] for i in range(len(obs)) if mask[i]]
 
     obstacle_consigne = cp.obstacle_in_path(robot_pose, filtered_obs, last_known_dest)
-    send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
+    #send_stop_cons(-1, obstacle_consigne) # TODO : implement closest distance (currently sending -1)
     send_obstacles_wrt_table(filtered_obs)
 
     # Obstacle Calculation

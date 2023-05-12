@@ -30,6 +30,7 @@ def compute_distances(topic_name, msg, time):
 
     # Check cylinder location and send messages to robot
     msg = lidar_data.Proximity()
+    msg.closest_distance = closest
     if closest <= STOP_RADIUS:
         print('STOP')
         msg.status = lidar_data.ProximityStatus.STOP
