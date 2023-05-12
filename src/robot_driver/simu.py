@@ -99,6 +99,7 @@ class Radio(threading.Thread):
         x and y are in meters
         theta is in radians"""
         self.pos = x, y, theta
+        self.target_reached = True
     
     def sendStopSignal (self):
         """Sends a command to stop the robot."""
