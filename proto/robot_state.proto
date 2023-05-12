@@ -26,8 +26,8 @@ message SetState {
     };
     enum TobogganState {
         NONE_T = 0;
-        TOBOGGAN_OPEN = 115;
-        TOBOGGAN_CLOSED = 114;
+        TOBOGGAN_OPEN = 114;
+        TOBOGGAN_CLOSED = 115;
     };
     int32 plate_position = 1; // Position of the "plateau"
     int32 plate_number = 2; // Number of the action, value to display, ...
