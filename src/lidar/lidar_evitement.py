@@ -25,22 +25,22 @@ def compute_distances(topic_name, msg, time):
     # Check if there are still point left before applying reduction operation
     if len(pts_filter) > 0:
         closest = np.min(pts_filter)
-    else:
-        closest = STOP_RADIUS
 
-    # Check cylinder location and send messages to robot
-    msg = lidar_data.Proximity()
-    msg.closest_distance = closest
-    if closest <= STOP_RADIUS:
-        print('STOP')
-        msg.status = lidar_data.ProximityStatus.STOP
-    elif closest <= SLOW_RADIUS:
-        print('SLOW')
-        msg.status = lidar_data.ProximityStatus.WARNING
-    else:
-        print('OK')
-        msg.status = lidar_data.ProximityStatus.OK
-    proximity_status_pub.send(msg)
+        # Check cylinder location and send messages to robot
+        msg = lidar_data.Proximity()
+        msg.closest_distance = closest
+
+        if closest <= STOP_RADIUS:
+            print('STOP')
+            msg.status = lidar_data.ProximityStatus.STOP
+        elif closest <= SLOW_RADIUS:
+            print('SLOW')
+            msg.status = lidar_data.ProximityStatus.WARNING
+        else:
+            print('OK')
+            msg.status = lidar_data.ProximityStatus.OK
+            
+        proximity_status_pub.send(msg)
     
 
 lidar_sub.set_callback(compute_distances)
