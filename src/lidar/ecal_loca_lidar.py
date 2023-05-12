@@ -20,7 +20,6 @@ import generated.robot_state_pb2 as robot_pb
 
 ecal_core.initialize(sys.argv, "loca_lidar_ecal_interface")
 
-sub_position = ProtoSubscriber("set_position", robot_pb.Position)
 sub_odom_pos = ProtoSubscriber("odom_pos", robot_pb.Position)
 sub_lidar = ProtoSubscriber("lidar_data", lidar_pb.Lidar)
 sub_side = ProtoSubscriber("side", robot_pb.Side)
@@ -87,9 +86,6 @@ def on_side_set(topic_name, side_msg, time):
         raise ValueError("ecal_loca_lidar - on_side_set - Invalid side value")
     SIDE_SET = True
 
-def on_robot_dest(topic_name, travel_msg, time):
-    global last_known_dest
-    last_known_dest = (travel_msg.x, travel_msg.y, travel_msg.theta)
 
 def on_robot_pos(topic_name, pos_msg, time):
     global robot_pose
@@ -110,21 +106,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
     # Filter lidar_scan
     lidar_scan =  np.rec.fromarrays([proto_msg.distances, proto_msg.angles], dtype=PolarPts)
     basic_filtered_scan = cp.basic_filter_pts(lidar_scan)
-    pos_filtered_scan = cp.position_filter_pts(basic_filtered_scan, 
-                        robot_pose[0], robot_pose[1], robot_pose[2])
-    obs = OBSTACLE_CALC.calc_obstacles_wrt_table(robot_pose, pos_filtered_scan) #type: ignore
-    mask = OBSTACLE_CALC.mask_filter_obs(obs) # truth list if on table 
-    # TODO : rework position_filter_pts to return a mask instead of giving the work to OBSTACLE_CALC
-    pos_filtered_scan = pos_filtered_scan[mask]
 
-    #obstacle avoidance
-    filtered_obs = [obs[i] for i in range(len(obs)) if mask[i]]
-    send_obstacles_wrt_table(filtered_obs)
-
-    # Obstacle Calculation
-    # Sending filtered & amalgames data for visualization
-    send_lidar_scan(pub_filtered_pts, pos_filtered_scan['distance'], pos_filtered_scan['angle']) # Display filtered data for debugging purposes
-    # amalgames don't use position filter because it removes points outside the table
     amalgames = cp.amalgames_from_cloud(basic_filtered_scan)
     amalgames = cp.filter_amalgame_size(amalgames)
     send_lidar_scan(pub_amalgames, amalgames['center_polar']['distance'], amalgames['center_polar']['angle']) # Display filtered data for debugging purposes
@@ -136,18 +118,7 @@ def on_lidar_scan(topic_name, proto_msg, time):
     if lidar_pose != (0, 0, 0):
         pub_beacons.send(str(lidar2table))
         send_lidar_pos(*lidar_pose)
-        #if debug
-        check_obstacle_transform(lidar2table, amalgames['center_polar'], lidar_pose)
-            #amalgames['center_polar']
 
-        #print(lidar2table)
-        #print(amalgames['center_polar'])
-        #for a in amalgames['center_polar']:
-        #    print("aaaa")
-        #    print()
-        #    table_coord = ObstacleCalc.lidar_polar2table_cart(lidar_pose, a, np.radians(lidar_pose[2]) + config.lidar_theta_offset)
-        #    print('bbbb')
-        #    print(table_coord)
     t2 = ecal_core.getmicroseconds()[1] - t
     # print("processing duration total in ms : ",t2)
 
@@ -217,19 +188,7 @@ def calculate_lidar_pose(amalgame_scan, robot_pose = (0.0, 0.0, 0.0), corr_out =
     return best_pose
    
 
-def check_obstacle_transform(lidar2table, amalgs_polar, robot_pose):
-        #check the first beacon for obstacle correct frame transformation
-        amalg_index = next(iter(lidar2table.keys()))
-        table_index = next(iter(lidar2table.values()))
-        beacon_wrt_lidar_polar = amalgs_polar[amalg_index]
-        expected_beacon_wrt_table = beacons_to_use.points[table_index]
-        OBSTACLE_CALC.is_valid_lidar2table_transform([*robot_pose[0], *robot_pose[1], - np.radians(robot_pose[2]) + config.loca_theta_offset], 
-            beacon_wrt_lidar_polar,
-            expected_beacon_wrt_table)
-        
-
 if __name__ == "__main__":
-    sub_position.set_callback(on_robot_dest)
     sub_lidar.set_callback(on_lidar_scan)
     sub_odom_pos.set_callback(on_robot_pos)
     sub_side.set_callback(on_side_set)
