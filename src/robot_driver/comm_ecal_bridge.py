@@ -5,10 +5,16 @@ import sys, time
 
 import generated.robot_state_pb2 as robot_pb
 import generated.lidar_data_pb2 as lidar_pb
-import comm
+
+import sys
+
+if len(sys.argv) > 1 and sys.argv[1] == "sim":
+    from simu import Radio
+else:
+    from comm import Radio
 
 
-class EcalRadio(comm.Radio):
+class EcalRadio(Radio):
     def __init__(self):
         super().__init__()
 
@@ -90,32 +96,32 @@ class EcalRadio(comm.Radio):
     
     def on_set_position(self, topic_name, position, time):
         self.setTargetPosition(position.x, position.y, position.theta)
-        print("position",position)
+        #print("position",position)
         
     def on_claw_command(self,topic_name,setstate, time):
         self.sendClawSignal(setstate.claw_state)
-        print("claw",setstate.claw_state)
+        #print("claw",setstate.claw_state)
 
         
     def on_store_disk(self,topic_name,setstate, time):
         self.sendStoreDiscsInsideSignal(setstate.plate_position, setstate.plate_number)
-        print("store",setstate.plate_position,setstate.plate_number)
+        #print("store",setstate.plate_position,setstate.plate_number)
 
     def on_drop_disk(self,topic_name,setstate, time):
         self.sendPicDiscFromStorage(setstate.plate_position, setstate.plate_number)
-        print("drop",setstate.plate_position,setstate.plate_number)
+        #print("drop",setstate.plate_position,setstate.plate_number)
         
     def on_toboggan(self,topic_name,setstate, time):
         self.sendTobogganSignal(setstate.cerise_drop)
-        print("cerise",setstate.cerise_drop)
+        #print("cerise",setstate.cerise_drop)
         
     def on_score(self,topic_name,match, time):
         self.sendPointDisplay(match.score)
-        print("score",match.score)
+        #print("score",match.score)
     
     def on_reset_pos(self,topic_name,position, time):
         self.resetPosition(position.x,position.y,position.theta)
-        print("reset pos",position)
+        #print("reset pos",position)
         
     def on_proximity_status(self,topic_name,msg,time):
         if msg.status == lidar_pb.ProximityStatus.OK:
