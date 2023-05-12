@@ -11,14 +11,16 @@ MIN_RADIUS = 20.0e-2     # Filter points on robot
 SLOW_RADIUS = 60.0e-2   # Warning radius: start sending slow messages
 STOP_RADIUS = 40.0e-2   # Panic radius: immediately send stop messages
 
-print('Starting ultimate-fallback collision avoidance')
-ecal_core.initialize(sys.argv, "lidar_evitement")
 
-lidar_sub = ProtoSubscriber("lidar_data", lidar_data.Lidar)
-proximity_status_pub = ProtoPublisher("proximity_status", lidar_data.Proximity)
+last_status = 'stop'
+lidar_sub = None
+proximity_status_pub = None
 
 
 def compute_distances(topic_name, msg, time):
+    global last_status
+    global proximity_status_pub
+
     pts = np.array(msg.distances)
     pts_filter = pts[(pts>MIN_RADIUS)] # Removing points closer than MIN_RADIUS
 
@@ -31,22 +33,30 @@ def compute_distances(topic_name, msg, time):
         msg.closest_distance = closest
 
         if closest <= STOP_RADIUS:
-            print('STOP')
+            current_status = 'stop'
             msg.status = lidar_data.ProximityStatus.STOP
         elif closest <= SLOW_RADIUS:
-            print('SLOW')
+            current_status = 'slow'
             msg.status = lidar_data.ProximityStatus.WARNING
         else:
-            print('OK')
+            current_status = 'ok'
             msg.status = lidar_data.ProximityStatus.OK
-            
-        proximity_status_pub.send(msg)
+
+        if current_status == last_status:
+            proximity_status_pub.send(msg)
+            print(current_status)
+        
+        last_status = current_status
     
+if __name__ == '__main__':
+    print('Starting ultimate-fallback collision avoidance')
+    ecal_core.initialize(sys.argv, "lidar_evitement")
 
-lidar_sub.set_callback(compute_distances)
+    proximity_status_pub = ProtoPublisher("proximity_status", lidar_data.Proximity)
+    lidar_sub = ProtoSubscriber("lidar_data", lidar_data.Lidar)
+    lidar_sub.set_callback(compute_distances)
 
-while ecal_core.ok():
-    time.sleep(0.01)
+    while ecal_core.ok():
+        time.sleep(0.01)
 
-ecal_core.finalize()
-
+    ecal_core.finalize()
