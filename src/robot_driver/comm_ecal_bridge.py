@@ -37,15 +37,6 @@ class EcalRadio(comm.Radio):
 
         self.reset_pos_sub = ProtoSubscriber("reset",robot_pb.Position)
         self.reset_pos_sub.set_callback(self.on_reset_pos)
-        
-        self.slow_sub = ProtoSubscriber("slow",robot_pb.no_args_func_)
-        self.slow_sub.set_callback(self.on_slow)
-        
-        self.stop_sub = ProtoSubscriber("stop",robot_pb.no_args_func_)
-        self.stop_sub.set_callback(self.on_stop)
-        
-        self.resume_sub = ProtoSubscriber("resume",robot_pb.no_args_func_)
-        self.resume_sub.set_callback(self.on_resume)
 
         self.pince_sub = ProtoSubscriber("set_pince", robot_pb.SetState)
         self.pince_sub.set_callback(self.on_claw_command)
@@ -69,7 +60,7 @@ class EcalRadio(comm.Radio):
         # self.end_match_sub.set_callback(self.on_end_match)
         
         self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
-        #self.proximity_sub.set_callback()
+        self.proximity_sub.set_callback(self.on_proximity_status)
 
         time.sleep(1.0)
         self.odom_speed_pub.send(robot_pb.Speed(vx=0, vy=0, vtheta=0)) # send a first message to 'initialize' the topic (needed for lidar_fusion_smooth)
@@ -126,14 +117,13 @@ class EcalRadio(comm.Radio):
         self.resetPosition(position.x,position.y,position.theta)
         print("reset pos",position)
         
-    def on_slow(self,topic_name,nothing,time):
-        self.sendSlowDownSignal()
-    
-    def on_resume(self,topic_name,nothing,time):
-        self.sendResumeSignal()
-    
-    def on_stop(self,topic_name,nothing,time):
-        self.sendStopSignal()
+    def on_proximity_status(self,topic_name,msg,time):
+        if msg.status == lidar_pb.ProximityStatus.OK:
+            self.sendResumeSignal()
+        elif msg.status == lidar_pb.ProximityStatus.WARNING:
+            self.sendSlowDownSignal()
+        elif msg.status == lidar_pb.ProximityStatus.STOP:
+            self.sendStopSignal()
 
     def on_costume(self, topic, nothing, time):
         self.sendCostumeSignal()
