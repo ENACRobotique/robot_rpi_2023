@@ -31,7 +31,6 @@ pub_lidar_pos = ProtoPublisher("lidar_pos", robot_pb.Position)
 pub_lidar_pos_deg = ProtoPublisher("deg_lidar_pos", robot_pb.Position)
 pub_obstacles = ProtoPublisher("obstacles_wrt_table", lidar_pb.Obstacles)
 
-last_known_dest = (0.0, 0.0, 0.0) #angle in degrees from where the robot is moving 
 last_known_lidar = (0, 0, 0) #x, y, theta (meters, degrees)
 robot_pose = (0.0, 0.0, 0.0) #x, y, theta (meters, degrees)
 OBSTACLE_CALC = ObstacleCalc(
@@ -97,9 +96,6 @@ def on_lidar_scan(topic_name, proto_msg, time):
 
     if robot_pose == (0.0, 0.0, 0.0):
         logging.warning("Robot pose not received yet - invalid obstacle avoidance")
-
-    if last_known_dest == (0.0, 0.0, 0.0):
-        logging.warning("Robot destination not received yet - invalid obstacle avoidance")
     
 
     t = ecal_core.getmicroseconds()[1]
