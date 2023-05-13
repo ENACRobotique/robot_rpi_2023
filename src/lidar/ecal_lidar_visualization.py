@@ -5,9 +5,13 @@ from ecal.core.subscriber import ProtoSubscriber, StringSubscriber
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Button
+from matplotlib.patches import Rectangle
+from math import atan2, pi
+from lidar_evitement import LIDAR_OFFSET
 import sys, os 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../..')) # Avoids ModuleNotFoundError when finding generated folder
 import generated.lidar_data_pb2 as lidar_data
+import generated.robot_state_pb2 as robot_data
 
 
 class LidarCloudDisplay(): 
@@ -115,6 +119,26 @@ class CorrespondanceDisplay():
 
 # real_position
 
+# ------ BEGIN UGLY CODE WARNING ------ #
+last_position = None # x, y, theta
+def update_last_position(topic_name, msg, time):
+    global last_position
+    if last_position is not None:
+        last_position[0] = msg.x
+        last_position[1] = msg.y
+        last_position[2] = msg.theta
+    else:
+        last_position = [msg.x, msg.y, msg.theta]
+def transform_mesh(cx, cy):
+    cx_t = list(map(lambda x: x - last_position[0], cx))
+    cy_t = list(map(lambda y: y - last_position[1], cy))
+    c_theta = list(map(lambda v: atan2(v[1], v[0]), zip(cx_t, cy_t)))
+    c_rho = list(map(lambda v: (v[0] ** 2 + v[1] ** 2) ** 0.5, zip(cx_t, cy_t)))
+    c_theta_t = list(map(lambda t: t - last_position[2] + LIDAR_OFFSET, c_theta))
+    return c_theta_t, c_rho
+# ------ END CODE WARNING ------ #
+
+
 if __name__ == "__main__":
     print("visualization node")
     # Init ecal Communication
@@ -127,7 +151,21 @@ if __name__ == "__main__":
         LidarCloudDisplay(fig, 'amalgames', 'b', 0.5),
     )
     corr_disp = CorrespondanceDisplay(cloud_pts[2])
-    zoom_butt = Zoom(fig, 3.5)
+    zoom_butt = Zoom(fig, 3.1)
+    
+    # Fixed table coordinates in table axes (first point is repeated to complete the shape)
+    tabx = [
+        [0.0, 3.0, 3.0, 0.0, 0.0], # table
+        [0.0, 0.0, -0.2, -0.2, 0.0], # panier 1
+        [0.0, 0.0, -0.2, -0.2, 0.0] # panier 2
+    ]
+    taby = [
+        [0.0, 0.0, 2.0, 2.0, 0.0],
+        [0.0, 0.45, 0.45, 0.0, 0.0],
+        [1.55, 2.0, 2.0, 1.55, 1.55]
+    ]
+    odom_pos_sub = ProtoSubscriber('odom_pos', robot_data.Position)
+    odom_pos_sub.set_callback(update_last_position)
 
     # Init matplotlib plot
     plt.show(block=False)
@@ -147,7 +185,17 @@ if __name__ == "__main__":
                 
         #display lidar2table
         corr_disp.display(ax)
-                    
+
+        # Draw crude table at the right position and rotation
+        # ------ BEGIN UGLY CODE WARNING ------ #
+        try:
+            for cx, cy in zip(tabx, taby):
+                ct, cr = transform_mesh(cx, cy)
+                ax.plot(ct, cr, color='black')
+        except:
+            pass
+        # ------ END CODE WARNING ------ #
+                            
 
         plt.pause(0.1)
 
