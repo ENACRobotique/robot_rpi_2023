@@ -1,11 +1,6 @@
 [Unit]
-Description= start all systems for the robot
+Description= record data with ecal 
 After=network.target network-online.target
-Wants=robot_bridge.service
-Wants=robot_lidar_loca.service
-Wants=robot_lidar_fusion.service
-Wants=robot_stratheji.service
-Wants=robot_record.service
 
 [Service]
 Type=simple
@@ -15,14 +10,11 @@ Group=pi
 
 SupplementaryGroups=adm dialout cdrom sudo audio video plugdev games users input netdev gpio i2c spi
  
-ExecStart=/home/pi/robot_rpi_2023/services/heartbeat.py
- 
+ExecStart=python3 /home/pi/robot_rpi_2023/src/common/launch_autorecorder.py
+
 Restart=on-failure
 RestartSec=2 
 # Configures the time to wait before service is stopped forcefully.
 TimeoutStopSec=300
  
 [Install]
-WantedBy=multi-user.target
-
-

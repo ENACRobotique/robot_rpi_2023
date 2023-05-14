@@ -330,9 +330,6 @@ class Radio:
 
     def handle_cake_presence_report(self,is_cake):
         print("handle_cake_presence_report Unimplemented")
-
-    def pince_cmd(self):
-        print("Command_Pince Unimplemented")
     
     def handle_IHM(self, tirette, color, posdep):
         print("handle_IHM Unimplemented")

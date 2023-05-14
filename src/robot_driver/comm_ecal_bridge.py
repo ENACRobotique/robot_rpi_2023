@@ -30,7 +30,6 @@ class EcalRadio(Radio):
         # Low level to High level message transmition
         self.odom_position_pub = ProtoPublisher('odom_pos', robot_pb.Position)
         self.odom_speed_pub = ProtoPublisher('odom_speed',robot_pb.Speed)
-        self.match_report_pub = ProtoPublisher('match_start',robot_pb.Match)
         self.action_report_pub = ProtoPublisher('action',robot_pb.Action)
         self.message_pub = StringPublisher('debug_msg')
         self.cake_presence_pub = ProtoPublisher("cake_presence",robot_pb.Action)
@@ -46,12 +45,6 @@ class EcalRadio(Radio):
 
         self.pince_sub = ProtoSubscriber("set_pince", robot_pb.SetState)
         self.pince_sub.set_callback(self.on_claw_command)
-
-        self.trieuse_store_sub = ProtoSubscriber("store_disk", robot_pb.SetState)
-        self.trieuse_store_sub.set_callback(self.on_store_disk)
-
-        self.trieuse_drop_sub = ProtoSubscriber("drop_disk", robot_pb.SetState)
-        self.trieuse_drop_sub.set_callback(self.on_drop_disk)
         
         self.toboggan_sub = ProtoSubscriber("set_toboggan", robot_pb.SetState)
         self.toboggan_sub.set_callback(self.on_toboggan)
@@ -62,14 +55,14 @@ class EcalRadio(Radio):
         self.score_sub = ProtoSubscriber("set_score", robot_pb.Match)
         self.score_sub.set_callback(self.on_score)
 
-        # self.end_match_sub = ProtoSubscriber("end_match", robot_pb.Match)
-        # self.end_match_sub.set_callback(self.on_end_match)
-        
         self.proximity_sub = ProtoSubscriber("proximity_status",lidar_pb.Proximity)
         self.proximity_sub.set_callback(self.on_proximity_status)
 
         time.sleep(1.0)
         self.odom_speed_pub.send(robot_pb.Speed(vx=0, vy=0, vtheta=0)) # send a first message to 'initialize' the topic (needed for lidar_fusion_smooth)
+        
+        # self.end_match_sub = ProtoSubscriber("end_match", robot_pb.Match)
+        # self.end_match_sub.set_callback(self.on_end_match)
         
 
     ####  Reception from robot
@@ -94,6 +87,7 @@ class EcalRadio(Radio):
     def handle_IHM(self, tirette, color, posdep):
         self.ihm_pub.send(robot_pb.IHM(tirette=tirette, color=color, posdep=posdep))
     
+    #Send cmd to robot
     def on_set_position(self, topic_name, position, time):
         self.setTargetPosition(position.x, position.y, position.theta)
         #print("position",position)
@@ -102,14 +96,6 @@ class EcalRadio(Radio):
         self.sendClawSignal(setstate.claw_state)
         #print("claw",setstate.claw_state)
 
-        
-    def on_store_disk(self,topic_name,setstate, time):
-        self.sendStoreDiscsInsideSignal(setstate.plate_position, setstate.plate_number)
-        #print("store",setstate.plate_position,setstate.plate_number)
-
-    def on_drop_disk(self,topic_name,setstate, time):
-        self.sendPicDiscFromStorage(setstate.plate_position, setstate.plate_number)
-        #print("drop",setstate.plate_position,setstate.plate_number)
         
     def on_toboggan(self,topic_name,setstate, time):
         self.sendTobogganSignal(setstate.cerise_drop)
@@ -134,17 +120,14 @@ class EcalRadio(Radio):
     def on_costume(self, topic, nothing, time):
         self.sendCostumeSignal()
 
-    
-        
+
     # def on_end_match(self,topic_name,match, time):
     #     self.(match.)
     #     print("",)
-        
 
 
 if __name__ == "__main__":
     radio = EcalRadio()
-    test_pub = ProtoPublisher('set_position',robot_pb.Position)
     while ecal_core.ok():
         time.sleep(0.1)
 
