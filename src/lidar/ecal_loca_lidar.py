@@ -77,10 +77,10 @@ def send_lidar_pos(x, y, theta):
 def on_tirette_set(topic_name, side_msg, time):
 #def on_side_set(topic_name, side_msg, time):
     global SIDE_SET, beacons_to_use, finder_to_use
-    if side_msg.color == lidar_pb.IHM.Color.BLUE and beacons_to_use != BLUE_BEACONS:
+    if side_msg.color == robot_pb.IHM.BLUE and beacons_to_use != BLUE_BEACONS:
         beacons_to_use = BLUE_BEACONS
         finder_to_use = BLUE_FINDER
-    elif side_msg.color == lidar_pb.IHM.Color.GREEN and beacons_to_use != GREEN_BEACONS:
+    elif side_msg.color == robot_pb.IHM.GREEN and beacons_to_use != GREEN_BEACONS:
         beacons_to_use = GREEN_BEACONS
         finder_to_use = GREEN_FINDER
     else:
