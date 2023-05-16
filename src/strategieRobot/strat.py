@@ -70,7 +70,6 @@ class Parent:
         print("init leave")
         
     def match_started(self,local):
-        print(self.robot.x)
         # self.tempsDebutMatch is not None
         if self.robot.tirette == robot_pb.IHM.TIRETTE_OUT:
             print("oh boy")
@@ -97,23 +96,28 @@ class Parent:
     def loop_gogreen(self,local):
         if local.green_substate == 0:
             if self.robot.hasReachedTarget():
+                print("POS1 reached, goto POS2")
                 self.robot.setTargetPos(*self.d["POS2"])
                 self.robot.updateScore()
                 local.green_substate += 1
         elif local.green_substate == 1:
             if self.robot.hasReachedTarget():
+                print("POS2 reached, goto POS3")
                 self.robot.setTargetPos(*self.d["POS3"])
                 local.green_substate += 1
         elif local.green_substate == 2:
             if self.robot.hasReachedTarget():
+                print("POS3 reached, goto POS_PLATE_GREEN")
                 self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
                 local.green_substate += 1
         elif local.green_substate == 3:
             if self.robot.hasReachedTarget():
-                print("claw: ", robot_pb.SetState.CLAW_OPEN) # type: ignore
+                print("POS_PLATE_GREEN reached. Claw: ", robot_pb.SetState.CLAW_OPEN) # type: ignore
                 self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)# type: ignore
                 local.claw_open_time = time.time()
                 local.green_substate += 1
+            else:
+                print(f"waiting to reach POS_PLATE_GREEN. pos: {self.robot.x}, {self.robot.y}, {self.robot.theta}")
         elif local.green_substate == 4:
             if time.time() - local.claw_open_time > 0.5:
                 local.green_substate += 1 
@@ -159,8 +163,9 @@ class Parent:
     
     def pushcake_loop(self, local):
         if local.substate == 0 and self.robot.hasReachedTarget():
+            print("POS_PUSH_CAKE reached, goto POS_PUSH_CAKE_DONE")
             self.robot.setTargetPos(*self.d["POS_PUSH_CAKE_DONE"])
-            local.green_substate += 1
+            local.substate += 1
 
     def cake_pushed(self,local):
         return local.substate == 1 and self.robot.hasReachedTarget()
@@ -187,6 +192,7 @@ class Parent:
         self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)# type: ignore
         self.robot.sendCostumeSignal()
         print("This is the End!")
+        time.sleep(2)
         exit(0)
 
     def store_cake_enter(self,local,previous_state):
@@ -198,7 +204,7 @@ class Parent:
 if __name__ == "__main__":
     parent = Parent()
     g2s = G2S(parent)
-    g2s.debug = True
+    g2s.debug = False
     g2s.start()
 
     while True:
