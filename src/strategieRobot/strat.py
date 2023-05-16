@@ -13,22 +13,24 @@ from robot import Robot, TEMPS_MINIMAL_TRIGGER, TEMPS_MAXIMAL_RECALLAGE, Recalla
 MATCH_DURATION = 95
 
 DB = {
-    "POS1": (0.500, 0.650, radians(80)), #croisement_NW
-    "POS2" : (0.95, 0.650, 0), #
+    "INIT_POS" : (0.160, 0.225, radians(135)),
+    "POS1": (0.500, 0.650, radians(135)), #croisement_NW
+    "POS2" : (0.85, 0.650, radians(135)), #
+    "POS3" : (1.150, 0.225, radians(135)),
     "POS_PLATE_GREEN" : (1.150, 0.225, 0),
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
     "POS_PLATE_BLUE2" : (1.850, 0.25, 0),
-    "INIT_POS" : (0.150, 0.225, radians(135)),
     "POS_TEST" : (2.00, 1.50, 0),
 }
 
 DG = {
-    "POS1": (0.500, 1.350, radians(80)), #croisement_NE
-    "POS2" : (0.95, 1.350, 0),  
+    "INIT_POS" : (0.160, 1.775, radians(135)),
+    "POS1": (0.500, 1.350, radians(135)), #croisement_NE
+    "POS2" : (0.85, 1.350, radians(135)),  
+    "POS3" : (1.150, 1.775, radians(135)),
     "POS_PLATE_GREEN" : (1.150, 1.775, 0),
     "POS_PUSH_CAKE" : (0.5, 1.775, 0),
     "POS_PLATE_BLUE2" : (1.850, 1.700, 0),
-    "INIT_POS" : (0.150, 1.775, radians(135)),
     "POS_TEST" : (2.00, 1.50, 0),
 }
 
@@ -93,25 +95,29 @@ class Parent:
     def loop_gogreen(self,local):
         if local.green_substate == 0:
             if self.robot.hasReachedTarget():
-                local.green_substate = 1
                 self.robot.setTargetPos(*self.d["POS2"])
                 self.robot.updateScore()
+                local.green_substate += 1
         elif local.green_substate == 1:
             if self.robot.hasReachedTarget():
-                local.green_substate = 2
-                self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
+                self.robot.setTargetPos(*self.d["POS3"])
+                local.green_substate += 1
         elif local.green_substate == 2:
+            if self.robot.hasReachedTarget():
+                self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
+                local.green_substate += 1
+        elif local.green_substate == 3:
             if self.robot.hasReachedTarget():
                 print("claw: ", robot_pb.SetState.CLAW_OPEN) # type: ignore
                 self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)# type: ignore
                 local.claw_open_time = time.time()
-                local.green_substate = 3
-        elif local.green_substate == 3:
-               if time.time() - local.claw_open_time > 0.5:
-                 local.green_substate = 4  
+                local.green_substate += 1
+        elif local.green_substate == 4:
+            if time.time() - local.claw_open_time > 0.5:
+                local.green_substate += 1 
 
     def at_green(self,local):
-        return local.green_substate == 4 
+        return local.green_substate == 5
     
     def recal_ok(self,local):
         if (time.time()- local.temps_debut_recal) >  TEMPS_MAXIMAL_RECALLAGE :
