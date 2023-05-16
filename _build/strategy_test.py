@@ -148,7 +148,7 @@ class G2S:
         self.PushCake = State("PushCake", on_enter=self.parent.pushcake_enter, on_loop=self.parent.pushcake_loop, on_leave=self.parent.pushcake_leave)
         self.GoGreen = State("GoGreen", on_enter=self.parent.gogreen_enter, on_loop=self.parent.loop_gogreen)
         self.DropCerise = State("DropCerise", on_enter=self.parent.cerise_enter, on_leave=self.parent.cerise_leave)
-        self.End = State("End", on_enter=self.parent.end_enter)
+        self.End = State("End", on_enter=self.parent.end_enter, on_loop=self.parent.end_loop)
         self.Init = State("Init", on_enter=self.parent.init_enter, on_loop=self.parent.init_loop, on_leave=self.parent.init_leave)
         self.InitToDropCerise = Transition("InitToDropCerise", self.DropCerise, self.parent.match_started)
         self.Init.add_transition(self.InitToDropCerise)

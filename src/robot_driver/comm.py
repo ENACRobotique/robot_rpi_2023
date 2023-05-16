@@ -42,6 +42,7 @@ class Radio:
         self.PROTOCOL_VERSION =1
         self.continueListening = False
         self.serialObject = serial.Serial (port = PORT_NAME, baudrate=115200, timeout =1)
+        self.serial_lock = threading.Lock()
         self.radioState = radioStates.WAITING_FIRST_BYTE
         self.listeningThread = threading.Thread(target=self.listen)
         self.plot_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -238,7 +239,10 @@ class Radio:
         for i in dataByteString:
             sum+=i
         message=b"\n\n"+dataByteString+struct.pack("B",sum%256)
+        self.serial_lock.acquire()
         self.serialObject.write(message)
+        self.serial_lock.release()
+
 
     def listen(self):
         print("Starting Listening")

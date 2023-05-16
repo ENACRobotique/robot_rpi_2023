@@ -3,7 +3,7 @@ digraph statemachine {
 
     //blue side state machine 
     Init [comment="enter:init_enter;loop:init_loop;leave:init_leave"]
-    End  [comment="enter:end_enter"]
+    End  [comment="enter:end_enter;loop:end_loop"]
     DropCerise [comment="enter:cerise_enter;leave:cerise_leave"]
     GoGreen [comment="enter:gogreen_enter;loop:loop_gogreen"]
     PushCake [comment="enter:pushcake_enter;loop:pushcake_loop;leave:pushcake_leave"]

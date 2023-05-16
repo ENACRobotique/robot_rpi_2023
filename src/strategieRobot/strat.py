@@ -16,7 +16,7 @@ DB = {
     "INIT_POS" : (0.160, 0.225, radians(135)),
     "POS1": (0.500, 0.650, radians(135)), #croisement_NW
     "POS2" : (0.85, 0.650, radians(135)), #
-    "POS3" : (1.150, 0.225, radians(135)),
+    "POS3" : (1.200, 0.225, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 0.225, 0),
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
     "POS_PUSH_CAKE_DONE" : (0.7, 0.225, 0),
@@ -28,7 +28,7 @@ DG = {
     "INIT_POS" : (0.160, 1.775, radians(135)),
     "POS1": (0.500, 1.350, radians(135)), #croisement_NE
     "POS2" : (0.85, 1.350, radians(135)),  
-    "POS3" : (1.150, 1.775, radians(135)),
+    "POS3" : (1.200, 1.775, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 1.775, 0),
     "POS_PUSH_CAKE" : (0.5, 1.775, 0),
     "POS_PUSH_CAKE_DONE" : (0.7, 1.775, 0),
@@ -52,6 +52,7 @@ class Parent:
         self.robot.setTobogganState(robot_pb.SetState.TOBOGGAN_CLOSED)
         local.initEnterTime=time.time()
         local.increment =1
+
 
     def init_loop(self,local):
         if (local.increment*5 + local.initEnterTime) < time.time():
@@ -192,15 +193,14 @@ class Parent:
     def end_enter(self,local,previous_state):
         self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)# type: ignore
         self.robot.sendCostumeSignal()
-        print("This is the End!")
-        time.sleep(2)
-        exit(0)
+        local.t = time.time()
+    
+    def end_loop(self, local):
+        if time.time() - local.t > 1:
+            self.robot.sendCostumeSignal()
+            local.t = time.time()
+            print("This is the End!")
 
-    def store_cake_enter(self,local,previous_state):
-        self.robot.storeDisk()
-
-    def dropDisk_enter(self,local,previous_state):
-        self.robot.dropDiskFromStorage()
 
 if __name__ == "__main__":
     parent = Parent()
