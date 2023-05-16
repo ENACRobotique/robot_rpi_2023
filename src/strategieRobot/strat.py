@@ -14,24 +14,36 @@ MATCH_DURATION = 95
 
 DB = {
     "INIT_POS" : (0.160, 0.225, radians(135)),
+
     "POS1": (0.500, 0.650, radians(135)), #croisement_NW
     "POS2" : (0.85, 0.650, radians(135)), #
     "POS3" : (1.200, 0.225, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 0.225, 0),
+
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
     "POS_PUSH_CAKE_DONE" : (0.7, 0.225, 0),
+
+    "POS_TOWARD_MARRON": (1.200, 0.225, -radians(87)),
+    "POS_MARRON": (1.125, 0.56, -radians(87)),
+
     "POS_PLATE_BLUE2" : (1.850, 0.25, 0),
     "POS_TEST" : (2.00, 1.50, 0),
 }
 
 DG = {
     "INIT_POS" : (0.160, 1.775, radians(135)),
+
     "POS1": (0.500, 1.350, radians(135)), #croisement_NE
     "POS2" : (0.85, 1.350, radians(135)),  
     "POS3" : (1.200, 1.775, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 1.775, 0),
+
     "POS_PUSH_CAKE" : (0.5, 1.775, 0),
     "POS_PUSH_CAKE_DONE" : (0.7, 1.775, 0),
+
+    "POS_TOWARD_MARRON": (1.200, 1.775, radians(87)),
+    "POS_MARRON": (1.125, 1.44, radians(87)),
+
     "POS_PLATE_BLUE2" : (1.850, 1.700, 0),
     "POS_TEST" : (2.00, 1.50, 0),
 }
@@ -159,22 +171,81 @@ class Parent:
 
     
     def pushcake_enter(self,local,previous_state):
-        self.robot.setTargetPos(*self.d["POS_PUSH_CAKE"])
+        self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
         local.substate = 0
     
     def pushcake_loop(self, local):
-        if local.substate == 0 and self.robot.hasReachedTarget():
-            print("POS_PUSH_CAKE reached, goto POS_PUSH_CAKE_DONE")
-            self.robot.setTargetPos(*self.d["POS_PUSH_CAKE_DONE"])
-            local.substate += 1
+        if local.substate == 0:
+            if self.robot.hasReachedTarget():
+                self.robot.setTargetPos(*self.d["POS_PUSH_CAKE"])
+                local.substate += 1
+        elif local.substate == 1:
+            if self.robot.hasReachedTarget():
+                print("POS_PUSH_CAKE reached, goto POS_PUSH_CAKE_DONE")
+                self.robot.setTargetPos(*self.d["POS_PUSH_CAKE_DONE"])
+                local.substate += 1
 
     def cake_pushed(self,local):
-        return local.substate == 1 and self.robot.hasReachedTarget()
+        return local.substate == 2 and self.robot.hasReachedTarget()
 
     def pushcake_leave(self,local,next_state):
+        print("pushcake leave")
         self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)
         self.robot.pointsEstimes += 6
         self.robot.updateScore()
+
+    def marron_enter(self, local, prev):
+        print("enter marron, goto POS_PLATE_GREEN")
+        local.substate = 0
+        self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
+
+    def marron_loop(self, local):
+        if local.substate == 0:
+            if self.robot.hasReachedTarget():
+                print("POS_PLATE_GREEN reached, goto POS_TOWARD_MARRON")
+                local.substate += 1
+                self.robot.setTargetPos(*self.d["POS_TOWARD_MARRON"])
+                self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)
+        elif local.substate == 1:
+            if self.robot.hasReachedTarget():
+                print("POS_TOWARD_MARRON reached, goto POS_MARRON")###
+                local.substate += 1
+                self.robot.setTargetPos(*self.d["POS_MARRON"])
+        elif local.substate == 2:
+            if self.robot.hasReachedTarget():
+                print("POS_MARRON reached, goto POS_TOWARD_MARRON")
+                local.substate += 1
+                self.robot.setClaw(robot_pb.SetState.CLAW_GRAB)
+                local.time_claw = time.time()
+        elif local.substate == 3:
+            if time.time() - local.time_claw > 0.5:
+                local.substate += 1
+                self.robot.setTargetPos(*self.d["POS_TOWARD_MARRON"])
+        elif local.substate == 4:
+            if self.robot.hasReachedTarget():
+                print("POS_TOWARD_MARRON reached, goto POS_PLATE_GREEN")
+                local.substate += 1
+                self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
+        elif local.substate == 5:
+            if self.robot.hasReachedTarget():
+                print("POS_PLATE_GREEN reached, goto POS_PUSH_CAKE")
+                local.substate += 1
+                self.robot.setTargetPos(*self.d["POS_PUSH_CAKE"])
+                self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)
+        elif local.substate == 6:
+            if self.robot.hasReachedTarget():
+                print("POS_PUSH_CAKE reached, goto POS_PUSH_CAKE_DONE")
+                local.substate += 1
+                self.robot.setTargetPos(*self.d["POS_PUSH_CAKE_DONE"])
+        elif local.substate == 7:
+            if self.robot.hasReachedTarget():
+                print("POS_PUSH_CAKE_DONE reached.")
+                local.substate += 1
+                self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)
+
+
+    def marron_grabbed(self, local):
+        return local.substate == 8
     
     def goblue_enter(self,local,RecalCake):
         self.robot.setTargetPos(*self.d["POS_PLATE_BLUE2"])
