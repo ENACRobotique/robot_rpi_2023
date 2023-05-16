@@ -16,15 +16,15 @@ DB = {
     "INIT_POS" : (0.160, 0.225, radians(135)),
 
     "POS1": (0.500, 0.650, radians(135)), #croisement_NW
-    "POS2" : (0.85, 0.650, radians(135)), #
+    "POS2" : (0.75, 0.550, radians(135)), #
     "POS3" : (1.200, 0.225, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 0.225, 0),
 
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
     "POS_PUSH_CAKE_DONE" : (0.7, 0.225, 0),
 
-    "POS_TOWARD_MARRON": (1.200, 0.225, -radians(87)),
-    "POS_MARRON": (1.125, 0.56, -radians(87)),
+    "POS_TOWARD_MARRON": (1.125, 0.400, -radians(90)),
+    "POS_MARRON": (1.125, 0.56, -radians(90)),
 
     "POS_PLATE_BLUE2" : (1.850, 0.25, 0),
     "POS_TEST" : (2.00, 1.50, 0),
@@ -34,15 +34,15 @@ DG = {
     "INIT_POS" : (0.160, 1.775, radians(135)),
 
     "POS1": (0.500, 1.350, radians(135)), #croisement_NE
-    "POS2" : (0.85, 1.350, radians(135)),  
+    "POS2" : (0.75, 1.450, radians(135)),  
     "POS3" : (1.200, 1.775, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 1.775, 0),
 
     "POS_PUSH_CAKE" : (0.5, 1.775, 0),
     "POS_PUSH_CAKE_DONE" : (0.7, 1.775, 0),
 
-    "POS_TOWARD_MARRON": (1.200, 1.775, radians(87)),
-    "POS_MARRON": (1.125, 1.44, radians(87)),
+    "POS_TOWARD_MARRON": (1.125, 1.600, radians(90)),
+    "POS_MARRON": (1.125, 1.44, radians(90)),
 
     "POS_PLATE_BLUE2" : (1.850, 1.700, 0),
     "POS_TEST" : (2.00, 1.50, 0),
@@ -67,7 +67,7 @@ class Parent:
 
 
     def init_loop(self,local):
-        if (local.increment*5 + local.initEnterTime) < time.time():
+        if (local.increment*1 + local.initEnterTime) < time.time():
             self.robot.pointsEstimes = (80 if self.robot.color==robot_pb.IHM.BLUE else 60) + (2 if local.increment%2 ==0 else 1)
             local.increment+=1
             self.robot.updateScore()
@@ -190,54 +190,63 @@ class Parent:
 
     def pushcake_leave(self,local,next_state):
         print("pushcake leave")
-        self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)
+        #self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)
         self.robot.pointsEstimes += 6
         self.robot.updateScore()
 
     def marron_enter(self, local, prev):
-        print("enter marron, goto POS_PLATE_GREEN")
+        print("enter marron, goto POS_TOWARD_MARRON")
         local.substate = 0
-        self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
+        self.robot.setTargetPos(*self.d["POS_TOWARD_MARRON"])
+        self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)
 
     def marron_loop(self, local):
         if local.substate == 0:
             if self.robot.hasReachedTarget():
-                print("POS_PLATE_GREEN reached, goto POS_TOWARD_MARRON")
+                #print("POS_PLATE_GREEN reached, goto POS_TOWARD_MARRON")
                 local.substate += 1
-                self.robot.setTargetPos(*self.d["POS_TOWARD_MARRON"])
-                self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)
+                #self.robot.setTargetPos(*self.d["POS_TOWARD_MARRON"])
+                #self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)
         elif local.substate == 1:
             if self.robot.hasReachedTarget():
-                print("POS_TOWARD_MARRON reached, goto POS_MARRON")###
+                local.substate += 1
+        elif local.substate == 2:
+            if self.robot.recallage() == RecallageEtat.OK:
+                print("recalage at POS_TOWARD_MARRON, goto POS_TOWARD_MARRON")###
+                local.substate += 1
+                self.robot.setTargetPos(*self.d["POS_TOWARD_MARRON"])
+        elif local.substate == 3:
+            if self.robot.hasReachedTarget():
+                print("POS_TOWARD_MARRON reached, goto POS_MARRON")
                 local.substate += 1
                 self.robot.setTargetPos(*self.d["POS_MARRON"])
-        elif local.substate == 2:
+        elif local.substate == 4:
             if self.robot.hasReachedTarget():
                 print("POS_MARRON reached, goto POS_TOWARD_MARRON")
                 local.substate += 1
                 self.robot.setClaw(robot_pb.SetState.CLAW_GRAB)
                 local.time_claw = time.time()
-        elif local.substate == 3:
+        elif local.substate == 5:
             if time.time() - local.time_claw > 0.5:
                 local.substate += 1
                 self.robot.setTargetPos(*self.d["POS_TOWARD_MARRON"])
-        elif local.substate == 4:
+        elif local.substate == 6:
             if self.robot.hasReachedTarget():
                 print("POS_TOWARD_MARRON reached, goto POS_PLATE_GREEN")
                 local.substate += 1
                 self.robot.setTargetPos(*self.d["POS_PLATE_GREEN"])
-        elif local.substate == 5:
+        elif local.substate == 7:
             if self.robot.hasReachedTarget():
                 print("POS_PLATE_GREEN reached, goto POS_PUSH_CAKE")
                 local.substate += 1
                 self.robot.setTargetPos(*self.d["POS_PUSH_CAKE"])
                 self.robot.setClaw(robot_pb.SetState.CLAW_OPEN)
-        elif local.substate == 6:
+        elif local.substate == 8:
             if self.robot.hasReachedTarget():
                 print("POS_PUSH_CAKE reached, goto POS_PUSH_CAKE_DONE")
                 local.substate += 1
                 self.robot.setTargetPos(*self.d["POS_PUSH_CAKE_DONE"])
-        elif local.substate == 7:
+        elif local.substate == 9:
             if self.robot.hasReachedTarget():
                 print("POS_PUSH_CAKE_DONE reached.")
                 local.substate += 1
@@ -245,7 +254,7 @@ class Parent:
 
 
     def marron_grabbed(self, local):
-        return local.substate == 8
+        return local.substate == 10
     
     def goblue_enter(self,local,RecalCake):
         self.robot.setTargetPos(*self.d["POS_PLATE_BLUE2"])
