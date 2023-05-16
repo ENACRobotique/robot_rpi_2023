@@ -145,7 +145,7 @@ class G2S:
         self.RecalCake = State("RecalCake", on_enter=self.parent.debut_recal)
         self.RecalGreen = State("RecalGreen", on_enter=self.parent.debut_recal)
         self.GoBlue = State("GoBlue", on_enter=self.parent.goblue_enter, on_leave=self.parent.goblue_leave)
-        self.PushCake = State("PushCake", on_enter=self.parent.pushcake_enter, on_leave=self.parent.pushcake_leave)
+        self.PushCake = State("PushCake", on_enter=self.parent.pushcake_enter, on_loop=self.parent.pushcake_loop, on_leave=self.parent.pushcake_leave)
         self.GoGreen = State("GoGreen", on_enter=self.parent.gogreen_enter, on_loop=self.parent.loop_gogreen)
         self.DropCerise = State("DropCerise", on_enter=self.parent.cerise_enter, on_leave=self.parent.cerise_leave)
         self.End = State("End", on_enter=self.parent.end_enter)

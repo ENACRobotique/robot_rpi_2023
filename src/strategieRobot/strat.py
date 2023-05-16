@@ -19,6 +19,7 @@ DB = {
     "POS3" : (1.150, 0.225, radians(135)),
     "POS_PLATE_GREEN" : (1.150, 0.225, 0),
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
+    "POS_PUSH_CAKE_DONE" : (0.7, 0.225, 0),
     "POS_PLATE_BLUE2" : (1.850, 0.25, 0),
     "POS_TEST" : (2.00, 1.50, 0),
 }
@@ -30,6 +31,7 @@ DG = {
     "POS3" : (1.150, 1.775, radians(135)),
     "POS_PLATE_GREEN" : (1.150, 1.775, 0),
     "POS_PUSH_CAKE" : (0.5, 1.775, 0),
+    "POS_PUSH_CAKE_DONE" : (0.7, 1.775, 0),
     "POS_PLATE_BLUE2" : (1.850, 1.700, 0),
     "POS_TEST" : (2.00, 1.50, 0),
 }
@@ -153,9 +155,15 @@ class Parent:
     
     def pushcake_enter(self,local,previous_state):
         self.robot.setTargetPos(*self.d["POS_PUSH_CAKE"])
+        local.substate = 0
+    
+    def pushcake_loop(self, local):
+        if local.substate == 0 and self.robot.hasReachedTarget():
+            self.robot.setTargetPos(*self.d["POS_PUSH_CAKE_DONE"])
+            local.green_substate += 1
 
     def cake_pushed(self,local):
-        return self.robot.hasReachedTarget()
+        return local.substate == 1 and self.robot.hasReachedTarget()
 
     def pushcake_leave(self,local,next_state):
         self.robot.pointsEstimes += 6

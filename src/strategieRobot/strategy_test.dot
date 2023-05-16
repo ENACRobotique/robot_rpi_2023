@@ -6,7 +6,7 @@ digraph statemachine {
     End  [comment="enter:end_enter"]
     DropCerise [comment="enter:cerise_enter;leave:cerise_leave"]
     GoGreen [comment="enter:gogreen_enter;loop:loop_gogreen"]
-    PushCake [comment="enter:pushcake_enter;leave:pushcake_leave"]
+    PushCake [comment="enter:pushcake_enter;loop:pushcake_loop;leave:pushcake_leave"]
     GoBlue  [comment="enter:goblue_enter;leave:goblue_leave"]
     //RecalInit [comment="enter:debut_recal"]
     RecalGreen [comment="enter:debut_recal"]
