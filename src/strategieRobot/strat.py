@@ -16,7 +16,7 @@ DB = {
     "INIT_POS" : (0.160, 0.225, radians(135)),
 
     "POS1": (0.500, 0.650, radians(135)), #croisement_NW
-    "POS2" : (0.75, 0.550, radians(135)), #
+    "POS2" : (0.800, 0.600, radians(135)), #
     "POS3" : (1.200, 0.225, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 0.225, 0),
 
@@ -34,7 +34,7 @@ DG = {
     "INIT_POS" : (0.160, 1.775, radians(135)),
 
     "POS1": (0.500, 1.350, radians(135)), #croisement_NE
-    "POS2" : (0.75, 1.450, radians(135)),  
+    "POS2" : (0.800, 1.400, radians(135)),  
     "POS3" : (1.200, 1.775, radians(135)),
     "POS_PLATE_GREEN" : (1.200, 1.775, 0),
 
@@ -251,6 +251,8 @@ class Parent:
                 print("POS_PUSH_CAKE_DONE reached.")
                 local.substate += 1
                 self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)
+                self.robot.pointsEstimes+=3
+                self.robot.updateScore()
 
 
     def marron_grabbed(self, local):
@@ -271,6 +273,8 @@ class Parent:
             return True
     
     def end_enter(self,local,previous_state):
+        self.robot.pointsEstimes+=5
+        self.robot.updateScore()
         self.robot.setClaw(robot_pb.SetState.CLAW_CLOSED)# type: ignore
         self.robot.sendCostumeSignal()
         local.t = time.time()
