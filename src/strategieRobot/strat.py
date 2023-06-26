@@ -17,8 +17,8 @@ DB = {
 
     "POS1": (0.500, 0.650, radians(135)), #croisement_NW
     "POS2" : (0.800, 0.600, radians(135)), #
-    "POS3" : (1.200, 0.225, radians(135)),
-    "POS_PLATE_GREEN" : (1.200, 0.225, 0),
+    "POS3" : (1.200, 0.260, radians(135)),
+    "POS_PLATE_GREEN" : (1.200, 0.260, 0),
 
     "POS_PUSH_CAKE" : (0.5, 0.225, 0),
     "POS_PUSH_CAKE_DONE" : (0.7, 0.225, 0),
