@@ -1,4 +1,5 @@
-# Place this file in /etc/netplan/ and run "netplan apply"
+# - Install "network-manager"
+# - Place this file in /etc/netplan/ and run "netplan apply"
 network:
     version: 2
     renderer: NetworkManager
