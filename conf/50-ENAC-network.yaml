@@ -6,19 +6,31 @@ network:
     ethernets:
       eth0:
         dhcp4: true
+        dhcp6: false
         optional: true
+        link-local: [ ipv4 ]
+      lo:
+        routes:
+          - to: 239.0.0.0/24
+            via: 0.0.0.0
+            metric: 1000
     wifis:
         wlan0:
             dhcp4: true
+            dhcp6: false
             optional: true
+            link-local: [ ipv4 ]
             addresses: [10.5.141.1/24]
             access-points:
                 "Robot_ENAC":
-                    password: "t'as cru quoi toi?"
+                    password: "PasSw0rd"
                     mode: ap
+#                robot:
+#                    password: "mange de la raclette"
             routes:
               - to: 239.0.0.0/4
                 scope: link
-                    #dhcp4: true
-                #robot:
-                #    password: "ta mère en slip de bain"
+                via: 0.0.0.0
+                metric: 1
+
+
